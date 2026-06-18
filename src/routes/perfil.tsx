@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Camera, LogOut, Search, Star, X } from "lucide-react";
+import { Camera, LogOut, Search, Star, X, Zap } from "lucide-react";
 import { useApp } from "@/lib/app-context";
 import { investors, globalUsers, findUserByCode } from "@/lib/data";
 
@@ -18,7 +18,7 @@ function PerfilPage() {
   const {
     username, fullName, avatar, setAvatar, isPremium, setIsPremium,
     friendCode, favoriteReferenteId, isPortfolioPublic, setIsPortfolioPublic,
-    friendCodes, addFriend, removeFriend,
+    friendCodes, addFriend, removeFriend, streak,
   } = useApp();
   const fileRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
@@ -191,6 +191,39 @@ function PerfilPage() {
           </div>
         </div>
         <MiniChart />
+      </section>
+
+      {/* Streak card */}
+      <section className="bg-card rounded-2xl p-5 shadow-soft">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[10px] tracking-widest" style={{ color: "var(--muted-foreground)" }}>RACHA DE LECTURA</p>
+            <p className="text-4xl font-semibold mt-1 tabular-nums" style={{ color: "var(--gold)" }}>{streak.current}</p>
+            <p className="text-xs mt-1" style={{ color: "var(--navy)" }}>días consecutivos leyendo</p>
+            <p className="text-[11px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>
+              Récord personal · {streak.longest} días
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-1.5">
+            {[7, 30, 100].map((m) => {
+              const earned = streak.longest >= m;
+              return (
+                <span
+                  key={m}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold tabular-nums"
+                  style={{
+                    background: earned ? "var(--gold)" : "var(--muted)",
+                    color: earned ? "var(--navy)" : "var(--muted-foreground)",
+                    opacity: earned ? 1 : 0.6,
+                  }}
+                >
+                  <Zap size={9} fill={earned ? "var(--navy)" : "currentColor"} color={earned ? "var(--navy)" : "currentColor"} />
+                  {m}
+                </span>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
       {/* Plan + logout */}

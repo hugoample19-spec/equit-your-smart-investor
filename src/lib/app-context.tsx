@@ -52,6 +52,12 @@ type AppState = {
   removeFriend: (code: string) => void;
   chats: Record<string, ChatMessage[]>;
   sendMessage: (code: string, text: string) => void;
+  // streak
+  streak: { current: number; longest: number; lastReadDate: string | null };
+  markNewsRead: () => void;
+  // referentes update tracker
+  seenFilingDates: Record<string, string>;
+  markFilingSeen: (investorId: string, date: string) => void;
 };
 
 const Ctx = createContext<AppState | null>(null);
@@ -86,6 +92,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isPortfolioPublic, setPortfolioPublicState] = useState(true);
   const [friendCodes, setFriendCodes] = useState<string[]>([]);
   const [chats, setChats] = useState<Record<string, ChatMessage[]>>({});
+  const [streak, setStreak] = useState<{ current: number; longest: number; lastReadDate: string | null }>({ current: 0, longest: 0, lastReadDate: null });
+  const [seenFilingDates, setSeenFilingDates] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -103,6 +111,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPortfolioPublicState(load<boolean>("equit_portfolio_public", true));
     setFriendCodes(load<string[]>("equit_friends", ["47392810", "82910374", "65103982"]));
     setChats(load<Record<string, ChatMessage[]>>("equit_chats", {}));
+    setStreak(load("equit_streak", { current: 0, longest: 0, lastReadDate: null as string | null }));
+    setSeenFilingDates(load<Record<string, string>>("equit_seen_filings", {}));
   }, []);
 
   const setAvatar = (s: string | null) => {
@@ -145,6 +155,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const markNewsRead = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    setStreak((prev) => {
+      if (prev.lastReadDate === today) return prev;
+      const y = new Date(); y.setDate(y.getDate() - 1);
+      const yesterday = y.toISOString().slice(0, 10);
+      const current = prev.lastReadDate === yesterday ? prev.current + 1 : 1;
+      const next = { current, longest: Math.max(current, prev.longest), lastReadDate: today };
+      save("equit_streak", next);
+      return next;
+    });
+  };
+
+  const markFilingSeen = (investorId: string, date: string) => {
+    setSeenFilingDates((prev) => {
+      if (prev[investorId] === date) return prev;
+      const next = { ...prev, [investorId]: date };
+      save("equit_seen_filings", next);
+      return next;
+    });
+  };
+
   return (
     <Ctx.Provider value={{
       username, setUsername, fullName, setFullName,
@@ -155,6 +187,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isPortfolioPublic, setIsPortfolioPublic,
       friendCodes, addFriend, removeFriend,
       chats, sendMessage,
+      streak, markNewsRead,
+      seenFilingDates, markFilingSeen,
     }}>
       {children}
     </Ctx.Provider>

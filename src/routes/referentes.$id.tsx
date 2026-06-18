@@ -1,7 +1,10 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Lock, Star } from "lucide-react";
-import { investors } from "@/lib/data";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { investors, investorCiks } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
+import { getThirteenF } from "@/lib/investors.functions";
 
 export const Route = createFileRoute("/referentes/$id")({
   head: ({ params }) => {
@@ -22,13 +25,32 @@ export const Route = createFileRoute("/referentes/$id")({
   notFoundComponent: () => <p className="pt-10 text-center text-sm">Referente no encontrado</p>,
 });
 
+function formatFilingDate(d: string | null) {
+  if (!d) return null;
+  try {
+    return new Date(d).toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" });
+  } catch { return d; }
+}
+
 function InvestorDetail() {
   const data = Route.useLoaderData() as { investor: typeof investors[number] };
   const investor = data.investor;
-  const { isPremium, setPendingCopy, favoriteReferenteId, setFavoriteReferente } = useApp();
+  const { isPremium, setPendingCopy, favoriteReferenteId, setFavoriteReferente, markFilingSeen } = useApp();
   const navigate = useNavigate();
   const locked = investor.locked && !isPremium;
   const isFav = favoriteReferenteId === investor.id;
+  const cik = investorCiks[investor.id];
+
+  const { data: real } = useQuery({
+    queryKey: ["13f", investor.id],
+    queryFn: () => getThirteenF({ data: { cik: cik! } }),
+    enabled: !!cik && !locked,
+    staleTime: 6 * 60 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (real?.filingDate && !real.fallback) markFilingSeen(investor.id, real.filingDate);
+  }, [real?.filingDate, real?.fallback, investor.id, markFilingSeen]);
 
   if (locked) {
     return (
@@ -53,6 +75,12 @@ function InvestorDetail() {
     setPendingCopy(investor);
     navigate({ to: "/wallet" });
   };
+
+  const useReal = real && !real.fallback && real.holdings.length > 0;
+  const fmt = (n: number) =>
+    n >= 1_000_000_000 ? `€${(n / 1_000_000_000).toFixed(2)}B` :
+    n >= 1_000_000 ? `€${(n / 1_000_000).toFixed(1)}M` :
+    `€${n.toLocaleString("es-ES")}`;
 
   return (
     <div className="space-y-5 pb-6">
@@ -82,23 +110,52 @@ function InvestorDetail() {
       </div>
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
-        <h2 className="font-semibold mb-4" style={{ color: "var(--navy)" }}>Cartera</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold" style={{ color: "var(--navy)" }}>Cartera</h2>
+          {useReal && (
+            <span className="text-[9px] tracking-widest font-semibold px-2 py-1 rounded-full" style={{ background: "var(--muted)", color: "var(--navy)" }}>
+              13F · SEC
+            </span>
+          )}
+        </div>
         <ul className="space-y-3">
-          {investor.holdings.map((h: typeof investor.holdings[number]) => (
-            <li key={h.ticker} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-bold" style={{ background: "var(--muted)", color: "var(--navy)" }}>
-                {h.ticker}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{h.name}</p>
-                <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>{h.pct.toFixed(1)}% · €{(h.pct * 1000).toFixed(0)}</p>
-              </div>
-              <span className="text-sm font-semibold tabular-nums" style={{ color: h.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
-                {h.perf >= 0 ? "+" : ""}{h.perf.toFixed(1)}%
-              </span>
-            </li>
-          ))}
+          {useReal
+            ? real!.holdings.map((h) => (
+                <li key={h.ticker} className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-bold" style={{ background: "var(--muted)", color: "var(--navy)" }}>
+                    {h.ticker.slice(0, 5)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{h.name}</p>
+                    <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                      {h.shares.toLocaleString("es-ES")} acc · {fmt(h.value)}
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--navy)" }}>
+                    {h.pct.toFixed(1)}%
+                  </span>
+                </li>
+              ))
+            : investor.holdings.map((h) => (
+                <li key={h.ticker} className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-bold" style={{ background: "var(--muted)", color: "var(--navy)" }}>
+                    {h.ticker}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{h.name}</p>
+                    <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>{h.pct.toFixed(1)}% · €{(h.pct * 1000).toFixed(0)}</p>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums" style={{ color: h.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
+                    {h.perf >= 0 ? "+" : ""}{h.perf.toFixed(1)}%
+                  </span>
+                </li>
+              ))}
         </ul>
+        {useReal && real!.filingDate && (
+          <p className="text-[10px] mt-4 text-center tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+            ACTUALIZADO · {formatFilingDate(real!.filingDate)}
+          </p>
+        )}
       </section>
 
       <button

@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueries } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { Zap } from "lucide-react";
 import { getMarketNews } from "@/lib/news.functions";
+import { useApp } from "@/lib/app-context";
 
 export const Route = createFileRoute("/noticias")({
   head: () => ({
@@ -39,6 +42,7 @@ async function translateToSpanish(text: string): Promise<string> {
 }
 
 function NoticiasPage() {
+  const { streak, markNewsRead } = useApp();
   const { data, isLoading } = useQuery({
     queryKey: ["market-news"],
     queryFn: () => getMarketNews(),
@@ -58,12 +62,47 @@ function NoticiasPage() {
   });
 
   const today = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short" }).replace(".", "").toUpperCase();
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const readToday = streak.lastReadDate === todayISO;
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (readToday) return;
+    if (Notification.permission === "default") Notification.requestPermission().catch(() => {});
+    if (Notification.permission !== "granted") return;
+    const now = new Date();
+    const target = new Date(); target.setHours(19, 0, 0, 0);
+    if (target.getTime() <= now.getTime()) return;
+    const ms = target.getTime() - now.getTime();
+    const t = setTimeout(() => {
+      const nowISO = new Date().toISOString().slice(0, 10);
+      if (streak.lastReadDate === nowISO) return;
+      try {
+        new Notification("Equit", {
+          body: `Llevas ${streak.current} días seguidos informándote. Lee una noticia para mantener tu racha.`,
+        });
+      } catch { /* noop */ }
+    }, ms);
+    return () => clearTimeout(t);
+  }, [readToday, streak.current, streak.lastReadDate]);
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Noticias</h1>
-        <p className="text-[11px] tracking-widest font-semibold mt-2" style={{ color: "var(--muted-foreground)" }}>HOY · {today}</p>
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Noticias</h1>
+          <p className="text-[11px] tracking-widest font-semibold mt-2" style={{ color: "var(--muted-foreground)" }}>HOY · {today}</p>
+        </div>
+        {streak.current > 0 && (
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+            style={{ background: "var(--muted)", color: "var(--navy)" }}
+            title={`Racha: ${streak.current} días`}
+          >
+            <Zap size={12} fill="var(--gold)" color="var(--gold)" strokeWidth={2} />
+            <span className="text-xs font-semibold tabular-nums">{streak.current}</span>
+          </div>
+        )}
       </div>
 
       {isLoading ? (
@@ -82,7 +121,7 @@ function NoticiasPage() {
                   <span className="text-[10px] tracking-widest font-bold" style={{ color: "var(--gold)" }}>{n.cat}</span>
                   <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>{n.time}</span>
                 </div>
-                <a href={n.url} target="_blank" rel="noopener noreferrer" className="block">
+                <a href={n.url} target="_blank" rel="noopener noreferrer" onClick={() => markNewsRead()} className="block">
                   <h2 className="text-base font-semibold mt-2 leading-snug" style={{ color: "var(--navy)" }}>{title}</h2>
                   {summary && (
                     <p className="text-sm mt-1.5 leading-relaxed line-clamp-3" style={{ color: "var(--muted-foreground)" }}>{summary}</p>
