@@ -1086,30 +1086,146 @@ function SellScreen({
 
 /* ============================== Helpers ============================== */
 
-function Sparkline({ data }: { data: number[] }) {
-  if (data.length < 2) return null;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const W = 320;
-  const H = 64;
-  const pts = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * W;
-      const y = H - ((v - min) / range) * H;
-      return `${x},${y}`;
-    })
-    .join(" ");
-  const up = data[data.length - 1] >= data[0];
+const RANGES: ChartRange[] = ["1D", "1W", "1M", "3M", "1Y"];
+
+function PriceChart({ ticker }: { ticker: string }) {
+  const [range, setRange] = useState<ChartRange>("1M");
+  const getHistoryFn = useServerFn(getHistory);
+  const q = useQuery({
+    queryKey: ["history", ticker, range],
+    queryFn: () => getHistoryFn({ data: { ticker, range } }),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const data = q.data?.points ?? [];
+  const isReference = q.data?.reference;
+  const hasData = data.length > 1;
+  const first = hasData ? data[0].price : 0;
+  const last = hasData ? data[data.length - 1].price : 0;
+  const up = last >= first;
+  const color = up ? "var(--success)" : "var(--danger)";
+  const hasVolume = hasData && data.some((d) => d.volume > 0);
+  const gradId = `pcgrad-${ticker.replace(/[^a-zA-Z0-9]/g, "")}-${range}`;
+
+  const fmtAxisPrice = (n: number) =>
+    n >= 1000 ? n.toFixed(0) : n >= 10 ? n.toFixed(2) : n.toFixed(3);
+  const fmtTime = (t: number) => {
+    const d = new Date(t);
+    if (range === "1D") return d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+    if (range === "1W") return d.toLocaleDateString("es-ES", { weekday: "short" });
+    if (range === "1Y") return d.toLocaleDateString("es-ES", { month: "short" });
+    return d.toLocaleDateString("es-ES", { day: "2-digit", month: "short" });
+  };
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-16 mt-3">
-      <polyline
-        fill="none"
-        stroke={up ? "var(--success)" : "var(--danger)"}
-        strokeWidth={2}
-        points={pts}
-      />
-    </svg>
+    <section className="bg-card rounded-2xl p-4 shadow-soft">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-semibold tracking-wide" style={{ color: "var(--navy)" }}>
+          GRÁFICO {range}
+        </p>
+        {hasData && (
+          <p className="text-xs tabular-nums font-medium" style={{ color }}>
+            {up ? "+" : ""}
+            {(((last - first) / first) * 100).toFixed(2)}%
+          </p>
+        )}
+      </div>
+
+      <div className="h-48 -mx-1">
+        {q.isLoading ? (
+          <div className="h-full w-full rounded bg-black/5 animate-pulse" />
+        ) : !hasData ? (
+          <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">
+            Sin datos para este periodo
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 4, right: 36, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={color} stopOpacity={0.35} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(0,0,0,0.08)" strokeDasharray="2 4" vertical={false} />
+              <XAxis
+                dataKey="t"
+                type="number"
+                domain={["dataMin", "dataMax"]}
+                tickFormatter={fmtTime}
+                tick={{ fontSize: 10, fill: "rgba(0,0,0,0.5)" }}
+                axisLine={false}
+                tickLine={false}
+                minTickGap={32}
+              />
+              <YAxis
+                orientation="right"
+                domain={["auto", "auto"]}
+                tickFormatter={fmtAxisPrice}
+                tick={{ fontSize: 10, fill: "rgba(0,0,0,0.5)" }}
+                axisLine={false}
+                tickLine={false}
+                width={36}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+                labelFormatter={(t) => new Date(Number(t)).toLocaleString("es-ES")}
+                formatter={(v: number) => [fmtEUR(v), "Precio"]}
+              />
+              <Area
+                type="monotone"
+                dataKey="price"
+                stroke={color}
+                strokeWidth={2}
+                fill={`url(#${gradId})`}
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      {hasVolume && (
+        <div className="h-14 -mx-1 mt-1">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data} margin={{ top: 0, right: 36, left: 0, bottom: 0 }}>
+              <XAxis dataKey="t" hide />
+              <YAxis hide />
+              <Bar dataKey="volume" fill={color} opacity={0.45} isAnimationActive={false} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      <div className="flex gap-1 mt-3">
+        {RANGES.map((r) => (
+          <button
+            key={r}
+            onClick={() => setRange(r)}
+            className="flex-1 py-1.5 rounded-md text-[11px] font-semibold border"
+            style={{
+              background: range === r ? "var(--navy)" : "transparent",
+              color: range === r ? "var(--cream)" : "var(--navy)",
+              borderColor: range === r ? "var(--navy)" : "var(--border)",
+            }}
+          >
+            {r}
+          </button>
+        ))}
+      </div>
+
+      {isReference && (
+        <p className="text-[10px] text-muted-foreground mt-2">
+          Gráfico no disponible · precio de referencia
+        </p>
+      )}
+    </section>
   );
 }
 
