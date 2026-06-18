@@ -23,7 +23,8 @@ export const Route = createFileRoute("/referentes/$id")({
 });
 
 function InvestorDetail() {
-  const { investor } = Route.useLoaderData();
+  const data = Route.useLoaderData() as { investor: typeof investors[number] };
+  const investor = data.investor;
   const { isPremium, setPendingCopy } = useApp();
   const navigate = useNavigate();
   const locked = investor.locked && !isPremium;
