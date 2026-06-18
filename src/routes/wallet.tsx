@@ -48,13 +48,12 @@ type Screen =
   | { kind: "sell"; ticker: string };
 
 function WalletPage() {
-  const { state, ready, setupStarting, reset, buy, sell } = useWallet();
+  const { state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds } = useWallet();
   const [screen, setScreen] = useState<Screen>({ kind: "home" });
 
   const ownedTickers = useMemo(() => Object.keys(state.positions), [state.positions]);
   const tickersToFetch = useMemo(() => {
     const base = new Set<string>(ownedTickers);
-    // For non-home screens we'll also need the catalog; cheaper to always fetch all when buying
     if (screen.kind === "buyList") CATALOG.forEach((c) => base.add(c.ticker));
     if (screen.kind === "buy" || screen.kind === "detail" || screen.kind === "sell")
       base.add(screen.ticker);
@@ -67,6 +66,7 @@ function WalletPage() {
     queryFn: () => getPricesFn({ data: { tickers: tickersToFetch } }),
     enabled: tickersToFetch.length > 0,
     staleTime: 60_000,
+    refetchInterval: 60_000,
     refetchOnWindowFocus: false,
   });
 
@@ -139,11 +139,11 @@ function WalletPage() {
     <HomeScreen
       state={state}
       prices={prices}
-      loadingPrices={pricesQuery.isLoading}
-      onRefresh={() => pricesQuery.refetch()}
       onBuy={() => setScreen({ kind: "buyList" })}
       onReset={reset}
       onOpenAsset={(t) => setScreen({ kind: "detail", ticker: t })}
+      onAddFunds={addFunds}
+      onWithdrawFunds={withdrawFunds}
     />
   );
 }
