@@ -8,23 +8,54 @@ export type CatalogAsset = {
   display: string;
   name: string;
   category: AssetCategory;
+  sector?: string;
 };
 
 export const CATALOG: CatalogAsset[] = [
-  // Stocks
-  { ticker: "AAPL", display: "AAPL", name: "Apple", category: "stocks" },
-  { ticker: "MSFT", display: "MSFT", name: "Microsoft", category: "stocks" },
-  { ticker: "NVDA", display: "NVDA", name: "Nvidia", category: "stocks" },
-  { ticker: "TSLA", display: "TSLA", name: "Tesla", category: "stocks" },
-  { ticker: "AMZN", display: "AMZN", name: "Amazon", category: "stocks" },
-  { ticker: "GOOGL", display: "GOOGL", name: "Alphabet", category: "stocks" },
-  { ticker: "META", display: "META", name: "Meta", category: "stocks" },
-  { ticker: "NFLX", display: "NFLX", name: "Netflix", category: "stocks" },
-  { ticker: "ITX.MC", display: "ITX", name: "Inditex", category: "stocks" },
-  { ticker: "SAN.MC", display: "SAN", name: "Santander", category: "stocks" },
-  { ticker: "BBVA.MC", display: "BBVA", name: "BBVA", category: "stocks" },
-  { ticker: "BKT.MC", display: "BNK", name: "Bankinter", category: "stocks" },
-  { ticker: "REP.MC", display: "REP", name: "Repsol", category: "stocks" },
+  // === Tech US ===
+  { ticker: "AAPL", display: "AAPL", name: "Apple", category: "stocks", sector: "Tech US" },
+  { ticker: "MSFT", display: "MSFT", name: "Microsoft", category: "stocks", sector: "Tech US" },
+  { ticker: "NVDA", display: "NVDA", name: "Nvidia", category: "stocks", sector: "Tech US" },
+  { ticker: "GOOGL", display: "GOOGL", name: "Alphabet", category: "stocks", sector: "Tech US" },
+  { ticker: "META", display: "META", name: "Meta", category: "stocks", sector: "Tech US" },
+  { ticker: "AMZN", display: "AMZN", name: "Amazon", category: "stocks", sector: "Tech US" },
+  { ticker: "NFLX", display: "NFLX", name: "Netflix", category: "stocks", sector: "Tech US" },
+  { ticker: "TSLA", display: "TSLA", name: "Tesla", category: "stocks", sector: "Tech US" },
+  { ticker: "AMD", display: "AMD", name: "AMD", category: "stocks", sector: "Tech US" },
+  { ticker: "INTC", display: "INTC", name: "Intel", category: "stocks", sector: "Tech US" },
+  { ticker: "ORCL", display: "ORCL", name: "Oracle", category: "stocks", sector: "Tech US" },
+  { ticker: "CRM", display: "CRM", name: "Salesforce", category: "stocks", sector: "Tech US" },
+  { ticker: "ADBE", display: "ADBE", name: "Adobe", category: "stocks", sector: "Tech US" },
+  { ticker: "UBER", display: "UBER", name: "Uber", category: "stocks", sector: "Tech US" },
+  { ticker: "SPOT", display: "SPOT", name: "Spotify", category: "stocks", sector: "Tech US" },
+  { ticker: "SNAP", display: "SNAP", name: "Snap", category: "stocks", sector: "Tech US" },
+  { ticker: "PLTR", display: "PLTR", name: "Palantir", category: "stocks", sector: "Tech US" },
+  // === Finanzas US ===
+  { ticker: "JPM", display: "JPM", name: "JPMorgan Chase", category: "stocks", sector: "Finanzas US" },
+  { ticker: "GS", display: "GS", name: "Goldman Sachs", category: "stocks", sector: "Finanzas US" },
+  { ticker: "BAC", display: "BAC", name: "Bank of America", category: "stocks", sector: "Finanzas US" },
+  { ticker: "V", display: "V", name: "Visa", category: "stocks", sector: "Finanzas US" },
+  { ticker: "MA", display: "MA", name: "Mastercard", category: "stocks", sector: "Finanzas US" },
+  // === Consumo US ===
+  { ticker: "KO", display: "KO", name: "Coca-Cola", category: "stocks", sector: "Consumo US" },
+  { ticker: "MCD", display: "MCD", name: "McDonald's", category: "stocks", sector: "Consumo US" },
+  { ticker: "NKE", display: "NKE", name: "Nike", category: "stocks", sector: "Consumo US" },
+  { ticker: "DIS", display: "DIS", name: "Disney", category: "stocks", sector: "Consumo US" },
+  { ticker: "SBUX", display: "SBUX", name: "Starbucks", category: "stocks", sector: "Consumo US" },
+  // === España ===
+  { ticker: "ITX.MC", display: "ITX", name: "Inditex", category: "stocks", sector: "España" },
+  { ticker: "SAN.MC", display: "SAN", name: "Santander", category: "stocks", sector: "España" },
+  { ticker: "BBVA.MC", display: "BBVA", name: "BBVA", category: "stocks", sector: "España" },
+  { ticker: "BKT.MC", display: "BKT", name: "Bankinter", category: "stocks", sector: "España" },
+  { ticker: "REP.MC", display: "REP", name: "Repsol", category: "stocks", sector: "España" },
+  // === Europa ===
+  { ticker: "ASML", display: "ASML", name: "ASML (Países Bajos)", category: "stocks", sector: "Europa" },
+  { ticker: "MC.PA", display: "MC", name: "LVMH", category: "stocks", sector: "Europa" },
+  { ticker: "OR.PA", display: "OR", name: "L'Oréal", category: "stocks", sector: "Europa" },
+  { ticker: "SAP", display: "SAP", name: "SAP (Alemania)", category: "stocks", sector: "Europa" },
+  { ticker: "SIE.DE", display: "SIE", name: "Siemens", category: "stocks", sector: "Europa" },
+  { ticker: "VOW3.DE", display: "VOW3", name: "Volkswagen", category: "stocks", sector: "Europa" },
+  { ticker: "SHEL", display: "SHEL", name: "Shell", category: "stocks", sector: "Europa" },
   // ETFs
   { ticker: "SPY", display: "SPY", name: "S&P 500", category: "etfs" },
   { ticker: "QQQ", display: "QQQ", name: "Nasdaq 100", category: "etfs" },
@@ -34,15 +65,15 @@ export const CATALOG: CatalogAsset[] = [
   { ticker: "GLD", display: "GLD", name: "Gold ETF", category: "etfs" },
   { ticker: "TLT", display: "TLT", name: "US Treasury Bonds", category: "etfs" },
   { ticker: "IEMG", display: "IEMG", name: "Emerging Markets", category: "etfs" },
-  { ticker: "EZU", display: "EURL", name: "Eurozone", category: "etfs" },
-  // Commodities
+  { ticker: "EZU", display: "EZU", name: "Eurozone", category: "etfs" },
+  { ticker: "SOXX", display: "SOXX", name: "Semiconductores", category: "etfs" },
+  // Commodities (reference prices)
   { ticker: "GC=F", display: "XAU", name: "Oro (XAU/USD)", category: "commodities" },
   { ticker: "SI=F", display: "XAG", name: "Plata (XAG/USD)", category: "commodities" },
   { ticker: "CL=F", display: "WTI", name: "Petróleo WTI", category: "commodities" },
   { ticker: "NG=F", display: "NG", name: "Gas Natural", category: "commodities" },
   { ticker: "HG=F", display: "HG", name: "Cobre", category: "commodities" },
   { ticker: "ZW=F", display: "ZW", name: "Trigo", category: "commodities" },
-  { ticker: "SOXX", display: "SOXX", name: "Semiconductores", category: "commodities" },
   // Criptos
   { ticker: "BTC-USD", display: "BTC", name: "Bitcoin", category: "crypto" },
   { ticker: "ETH-USD", display: "ETH", name: "Ethereum", category: "crypto" },
