@@ -1,11 +1,11 @@
 // Trading wallet state with localStorage persistence.
 import { useEffect, useState, useCallback } from "react";
 
-export type AssetCategory = "stocks" | "etfs" | "commodities" | "alt";
+export type AssetCategory = "stocks" | "etfs" | "commodities" | "crypto";
 
 export type CatalogAsset = {
-  ticker: string; // Yahoo symbol used to fetch
-  display: string; // ticker shown to user (e.g. SAN not SAN.MC)
+  ticker: string;
+  display: string;
   name: string;
   category: AssetCategory;
 };
@@ -43,14 +43,14 @@ export const CATALOG: CatalogAsset[] = [
   { ticker: "HG=F", display: "HG", name: "Cobre", category: "commodities" },
   { ticker: "ZW=F", display: "ZW", name: "Trigo", category: "commodities" },
   { ticker: "SOXX", display: "SOXX", name: "Semiconductores", category: "commodities" },
-  // Real Estate & Alt
-  { ticker: "VNQ", display: "VNQ", name: "US Real Estate ETF", category: "alt" },
-  { ticker: "VNQI", display: "VNQI", name: "Global Real Estate", category: "alt" },
-  { ticker: "O", display: "O", name: "Realty Income", category: "alt" },
-  { ticker: "AMT", display: "AMT", name: "American Tower", category: "alt" },
-  { ticker: "PLD", display: "PLD", name: "Prologis", category: "alt" },
-  { ticker: "BTC-USD", display: "BTC", name: "Bitcoin", category: "alt" },
-  { ticker: "ETH-USD", display: "ETH", name: "Ethereum", category: "alt" },
+  // Criptos
+  { ticker: "BTC-USD", display: "BTC", name: "Bitcoin", category: "crypto" },
+  { ticker: "ETH-USD", display: "ETH", name: "Ethereum", category: "crypto" },
+  { ticker: "SOL-USD", display: "SOL", name: "Solana", category: "crypto" },
+  { ticker: "BNB-USD", display: "BNB", name: "Binance Coin", category: "crypto" },
+  { ticker: "XRP-USD", display: "XRP", name: "Ripple", category: "crypto" },
+  { ticker: "DOGE-USD", display: "DOGE", name: "Dogecoin", category: "crypto" },
+  { ticker: "ADA-USD", display: "ADA", name: "Cardano", category: "crypto" },
 ];
 
 export const findAsset = (ticker: string) => CATALOG.find((a) => a.ticker === ticker);

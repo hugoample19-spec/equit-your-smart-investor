@@ -498,7 +498,7 @@ function BuyListScreen({
     { key: "stocks", label: "Acciones" },
     { key: "etfs", label: "ETFs" },
     { key: "commodities", label: "Materias primas" },
-    { key: "alt", label: "Real Estate & Alt." },
+    { key: "crypto", label: "Criptos" },
   ];
   const list = CATALOG.filter(
     (a) =>
