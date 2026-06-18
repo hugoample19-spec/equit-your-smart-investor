@@ -17,7 +17,7 @@ export const Route = createFileRoute("/referentes/")({
 function ReferentesPage() {
   const { isPremium, favoriteReferenteId, setFavoriteReferente } = useApp();
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Referentes</h1>
         <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>Aprende y copia a los grandes</p>
