@@ -19,30 +19,49 @@ const fmt = (n: number) => n.toLocaleString("es-ES", { minimumFractionDigits: 2,
 
 function HomePage() {
   const { username, friendCodes } = useApp();
+  const summary = usePortfolioSummary();
 
   const myFriends = globalUsers
     .filter((u) => friendCodes.includes(u.code))
     .sort((a, b) => b.perf - a.perf);
   const global = [...globalUsers].sort((a, b) => b.perf - a.perf).slice(0, 8);
 
+  const eur = summary.totalValue.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const [intPart, decPart] = eur.split(",");
+  const gainColor = summary.dailyGain >= 0 ? "#5BD2A5" : "#FF7A8A";
+  const gainSign = summary.dailyGain >= 0 ? "+" : "";
+
   return (
     <div className="space-y-6">
       {/* Portfolio card */}
       <section className="rounded-3xl p-6 shadow-card" style={{ background: "var(--navy)", color: "var(--cream)" }}>
         <p className="text-xs" style={{ color: "rgba(250,248,245,0.6)" }}>Hola, {username}</p>
-        <h1 className="mt-2 text-[40px] leading-none font-semibold tracking-tight">€12.847<span style={{ color: "var(--gold)" }}>,</span>32</h1>
-        <p className="mt-3 text-sm" style={{ color: "#5BD2A5" }}>
-          +€284,12 · +2,26% <span style={{ color: "rgba(250,248,245,0.5)" }} className="ml-1">hoy</span>
-        </p>
+        {summary.hasWallet ? (
+          <>
+            <h1 className="mt-2 text-[40px] leading-none font-semibold tracking-tight tabular-nums">
+              €{intPart}<span style={{ color: "var(--gold)" }}>,</span>{decPart ?? "00"}
+            </h1>
+            <p className="mt-3 text-sm" style={{ color: gainColor }}>
+              {gainSign}€{Math.abs(summary.dailyGain).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · {gainSign}{summary.dailyPct.toFixed(2)}%
+              <span style={{ color: "rgba(250,248,245,0.5)" }} className="ml-1">hoy</span>
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="mt-2 text-[40px] leading-none font-semibold tracking-tight">€0<span style={{ color: "var(--gold)" }}>,</span>00</h1>
+            <p className="mt-3 text-sm" style={{ color: "rgba(250,248,245,0.6)" }}>Aún no has creado tu cartera</p>
+          </>
+        )}
         <div className="mt-5 flex gap-2">
-          <button className="flex-1 py-2.5 rounded-full border text-sm font-medium" style={{ borderColor: "rgba(250,248,245,0.25)", color: "var(--cream)" }}>
-            Crear portfolio
-          </button>
-          <button className="flex-1 py-2.5 rounded-full border text-sm font-medium" style={{ borderColor: "rgba(250,248,245,0.25)", color: "var(--cream)" }}>
-            Depositar
-          </button>
+          <Link to="/wallet" className="flex-1 py-2.5 rounded-full border text-sm font-medium text-center" style={{ borderColor: "rgba(250,248,245,0.25)", color: "var(--cream)" }}>
+            {summary.hasWallet ? "Ver cartera" : "Crear portfolio"}
+          </Link>
+          <Link to="/wallet" className="flex-1 py-2.5 rounded-full border text-sm font-medium text-center" style={{ borderColor: "rgba(250,248,245,0.25)", color: "var(--cream)" }}>
+            Operar
+          </Link>
         </div>
       </section>
+
 
       {/* Trending stocks */}
       <section>
