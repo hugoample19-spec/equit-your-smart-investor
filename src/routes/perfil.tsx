@@ -41,30 +41,45 @@ function PerfilPage() {
   return (
     <div className="space-y-5 pb-6">
       <div className="flex flex-col items-center pt-2">
-        <button onClick={() => fileRef.current?.click()} className="relative w-24 h-24 rounded-full overflow-hidden flex items-center justify-center shadow-card" style={{ background: "var(--navy)" }}>
-          {avatar ? (
-            <img src={avatar} alt={fullName} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-2xl font-semibold" style={{ color: "var(--cream)" }}>{initials}</span>
-          )}
-          <span className="absolute bottom-0 left-0 w-7 h-7 rounded-full flex items-center justify-center border-2" style={{ background: "var(--gold)", borderColor: "var(--cream)" }}>
-            <Camera size={12} color="var(--navy)" />
-          </span>
-          {/* Favorite referente badge top-right */}
-          <span className="absolute -top-1 -right-1 w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border-2" style={{ background: "var(--cream)", borderColor: "var(--cream)" }}>
+        <div className="relative w-24 h-24">
+          <div className="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center shadow-card" style={{ background: "var(--navy)" }}>
+            {avatar ? (
+              <img src={avatar} alt={fullName} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-2xl font-semibold" style={{ color: "var(--cream)" }}>{initials}</span>
+            )}
+          </div>
+
+          {/* Camera button — bottom-left */}
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            aria-label="Cambiar foto"
+            className="absolute -bottom-0.5 -left-0.5 w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-soft"
+            style={{ background: "var(--gold)", borderColor: "var(--cream)" }}
+          >
+            <Camera size={14} color="var(--navy)" />
+          </button>
+
+          {/* Favorite referente badge — bottom-right */}
+          <span
+            className="absolute -bottom-0.5 -right-0.5 w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border-2 z-10 shadow-soft"
+            style={{ background: "var(--cream)", borderColor: "var(--cream)" }}
+          >
             {favRef ? (
               <img src={favRef.photo} alt={favRef.name} className="w-full h-full object-cover" />
             ) : (
               <Star size={14} color="var(--gold)" />
             )}
           </span>
-        </button>
+        </div>
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
         <h1 className="mt-3 text-xl font-semibold" style={{ color: "var(--navy)" }}>{fullName}</h1>
         <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>@{username}</p>
         <p className="text-base font-semibold mt-1 tabular-nums" style={{ color: "var(--gold)" }}>#{friendCode}</p>
         <p className="text-[10px] tracking-wider" style={{ color: "var(--muted-foreground)" }}>TU CÓDIGO DE AMIGO</p>
       </div>
+
 
       {/* Settings — privacy toggle */}
       <section className="bg-card rounded-2xl p-5 shadow-soft">
