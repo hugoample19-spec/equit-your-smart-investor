@@ -40,22 +40,32 @@ function ReferentesPage() {
               </button>
               <Link to="/referentes/$id" params={{ id: i.id }}>
                 <div className="aspect-[3/4] relative">
-                  <img src={i.photo} alt={i.name} className="w-full h-full object-cover" />
+                  <img
+                    src={i.photo}
+                    alt={i.name}
+                    className="w-full h-full object-cover"
+                    style={locked ? { filter: "blur(14px)", transform: "scale(1.1)" } : undefined}
+                  />
                   <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(26,26,46,0) 35%, rgba(26,26,46,0.85) 100%)" }} />
-                  <div className="absolute bottom-0 left-0 right-0 p-3 text-left">
-                    <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--gold)" }}>{i.fund}</p>
-                    <p className="text-sm font-semibold leading-tight" style={{ color: "var(--cream)" }}>{i.name}</p>
-                    <p className="text-xs font-semibold mt-0.5" style={{ color: "var(--cream)" }}>{i.netWorth}</p>
-                  </div>
                   {locked && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center backdrop-blur-md text-center p-3" style={{ background: "rgba(26,26,46,0.55)" }}>
-                      <Lock size={22} style={{ color: "var(--gold)" }} />
-                      <p className="mt-2 text-[10px] font-semibold tracking-wider" style={{ color: "var(--cream)" }}>🔒 EQUIT PREMIUM</p>
-                      <p className="text-[10px]" style={{ color: "rgba(250,248,245,0.8)" }}>€3,99/mes</p>
+                    <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(26,26,46,0.35)" }}>
+                      <div className="flex flex-col items-center text-center px-3">
+                        <Lock size={20} style={{ color: "var(--gold)" }} />
+                        <p className="mt-1.5 text-[9px] font-semibold tracking-wider" style={{ color: "var(--gold)" }}>EQUIT PREMIUM</p>
+                        <p className="text-[10px]" style={{ color: "rgba(250,248,245,0.85)" }}>€3,99/mes</p>
+                      </div>
                     </div>
                   )}
+                  <div className="absolute bottom-0 left-0 right-0 p-3 text-left z-10">
+                    <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--gold)" }}>{i.fund}</p>
+                    <p className="text-sm font-semibold leading-tight" style={{ color: "var(--cream)" }}>{i.name}</p>
+                    {!locked && (
+                      <p className="text-xs font-semibold mt-0.5" style={{ color: "var(--cream)" }}>{i.netWorth}</p>
+                    )}
+                  </div>
                 </div>
               </Link>
+
             </div>
           );
         })}
