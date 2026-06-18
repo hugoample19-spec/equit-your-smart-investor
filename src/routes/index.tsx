@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Trophy, ArrowUpRight, Lock } from "lucide-react";
+import { Trophy, ArrowUpRight, Lock, Users } from "lucide-react";
 import { useApp } from "@/lib/app-context";
-import { investors, leaderboard } from "@/lib/data";
+import { investors, globalUsers, trendingStocks } from "@/lib/data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -16,7 +16,13 @@ export const Route = createFileRoute("/")({
 const fmt = (n: number) => n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function HomePage() {
-  const { username } = useApp();
+  const { username, friendCodes } = useApp();
+
+  const myFriends = globalUsers
+    .filter((u) => friendCodes.includes(u.code))
+    .sort((a, b) => b.perf - a.perf);
+  const global = [...globalUsers].sort((a, b) => b.perf - a.perf).slice(0, 8);
+
   return (
     <div className="space-y-6">
       {/* Portfolio card */}
@@ -33,6 +39,34 @@ function HomePage() {
           <button className="flex-1 py-2.5 rounded-full border text-sm font-medium" style={{ borderColor: "rgba(250,248,245,0.25)", color: "var(--cream)" }}>
             Depositar
           </button>
+        </div>
+      </section>
+
+      {/* Trending stocks */}
+      <section>
+        <div className="mb-3">
+          <h2 className="text-lg font-semibold" style={{ color: "var(--navy)" }}>Lo más comprado</h2>
+          <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Las acciones que más agregan los usuarios esta semana</p>
+        </div>
+        <div className="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 snap-x">
+          {trendingStocks.map((s) => (
+            <div key={s.ticker} className="snap-start min-w-[140px] w-[140px] rounded-2xl bg-card shadow-soft p-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold text-white" style={{ background: s.color }}>
+                  {s.ticker.slice(0, 3)}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold leading-tight" style={{ color: "var(--navy)" }}>{s.ticker}</p>
+                  <p className="text-[10px] truncate" style={{ color: "var(--muted-foreground)" }}>{s.name}</p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-1">
+                <Users size={11} style={{ color: "var(--gold)" }} />
+                <p className="text-xs font-semibold tabular-nums" style={{ color: "var(--gold)" }}>+{s.users}</p>
+                <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>esta semana</span>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -71,30 +105,55 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Leaderboard */}
+      {/* Mis amigos leaderboard */}
+      <section className="rounded-3xl bg-card shadow-soft p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Users size={18} style={{ color: "var(--navy)" }} />
+          <h2 className="font-semibold" style={{ color: "var(--navy)" }}>Mis amigos</h2>
+        </div>
+        {myFriends.length === 0 ? (
+          <p className="text-xs text-center py-4" style={{ color: "var(--muted-foreground)" }}>
+            Añade amigos desde tu perfil para verlos aquí
+          </p>
+        ) : (
+          <LeaderboardList rows={myFriends} />
+        )}
+      </section>
+
+      {/* Global leaderboard */}
       <section className="rounded-3xl bg-card shadow-soft p-5">
         <div className="flex items-center gap-2 mb-4">
           <Trophy size={18} style={{ color: "var(--gold)" }} />
-          <h2 className="font-semibold" style={{ color: "var(--navy)" }}>Leaderboard semanal</h2>
+          <h2 className="font-semibold" style={{ color: "var(--navy)" }}>Global</h2>
         </div>
-        <ul className="space-y-3">
-          {leaderboard.map((row) => (
-            <li key={row.rank} className="flex items-center gap-3">
-              <span className="text-sm font-bold tabular-nums w-7" style={{ color: row.rank === 1 ? "var(--gold)" : "var(--navy)" }}>
-                {String(row.rank).padStart(2, "0")}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{row.handle}</p>
-                <p className="text-[10px] tracking-wider font-medium" style={{ color: "var(--muted-foreground)" }}>{row.strategy}</p>
-              </div>
-              <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--success)" }}>+{fmt(row.perf)}%</span>
-            </li>
-          ))}
-        </ul>
+        <LeaderboardList rows={global} />
       </section>
 
       <PremiumBanner />
     </div>
+  );
+}
+
+function LeaderboardList({ rows }: { rows: typeof globalUsers }) {
+  return (
+    <ul className="space-y-3">
+      {rows.map((u, idx) => (
+        <li key={u.code}>
+          <Link to="/u/$code" params={{ code: u.code }} className="flex items-center gap-3">
+            <span className="text-sm font-bold tabular-nums w-7" style={{ color: idx === 0 ? "var(--gold)" : "var(--navy)" }}>
+              {String(idx + 1).padStart(2, "0")}
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{u.handle}</p>
+              <p className="text-[10px] tracking-wider font-medium" style={{ color: "var(--muted-foreground)" }}>{u.strategy}</p>
+            </div>
+            <span className="text-sm font-semibold tabular-nums" style={{ color: u.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
+              {u.perf >= 0 ? "+" : ""}{fmt(u.perf)}%
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
 

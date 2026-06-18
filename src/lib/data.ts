@@ -135,51 +135,52 @@ export const investors: Investor[] = [
   },
 ];
 
-export const leaderboard = [
-  { rank: 1, handle: "@martagrowth", strategy: "GROWTH AGRESIVO", perf: 18.4 },
-  { rank: 2, handle: "@javiervalue", strategy: "DIVIDENDOS EU", perf: 14.7 },
-  { rank: 3, handle: "@luciatech", strategy: "TECH MOMENTUM", perf: 12.3 },
+export type GlobalUser = {
+  code: string;
+  handle: string;
+  name: string;
+  strategy: string;
+  perf: number;
+  totalValue: number;
+  isPublic: boolean;
+  favoriteReferenteId: string | null;
+  distribution: { ticker: string; pct: number }[];
+};
+
+export const globalUsers: GlobalUser[] = [
+  { code: "47392810", handle: "@martagrowth", name: "Marta López", strategy: "GROWTH AGRESIVO", perf: 28.4, totalValue: 24210, isPublic: true, favoriteReferenteId: "wood", distribution: [{ ticker: "NVDA", pct: 32 }, { ticker: "TSLA", pct: 22 }, { ticker: "AAPL", pct: 18 }, { ticker: "MSFT", pct: 15 }, { ticker: "PLTR", pct: 13 }] },
+  { code: "82910374", handle: "@javiervalue", name: "Javier Ruiz", strategy: "DIVIDENDOS EU", perf: 22.7, totalValue: 18430, isPublic: true, favoriteReferenteId: "buffett", distribution: [{ ticker: "ITX", pct: 28 }, { ticker: "BBVA", pct: 22 }, { ticker: "IBE", pct: 20 }, { ticker: "REP", pct: 18 }, { ticker: "TEF", pct: 12 }] },
+  { code: "65103982", handle: "@luciatech", name: "Lucía Pérez", strategy: "TECH MOMENTUM", perf: 18.3, totalValue: 9870, isPublic: false, favoriteReferenteId: "druckenmiller", distribution: [{ ticker: "NVDA", pct: 35 }, { ticker: "MSFT", pct: 25 }, { ticker: "GOOGL", pct: 20 }, { ticker: "META", pct: 20 }] },
+  { code: "31847209", handle: "@carlosbtc", name: "Carlos Vidal", strategy: "CRYPTO CORE", perf: 14.2, totalValue: 5640, isPublic: true, favoriteReferenteId: "musk", distribution: [{ ticker: "BTC", pct: 50 }, { ticker: "ETH", pct: 30 }, { ticker: "SOL", pct: 20 }] },
+  { code: "98217364", handle: "@elenaesg", name: "Elena Soto", strategy: "ESG GLOBAL", perf: 9.8, totalValue: 12300, isPublic: true, favoriteReferenteId: "dalio", distribution: [{ ticker: "IBE", pct: 30 }, { ticker: "NEE", pct: 25 }, { ticker: "ORSTED", pct: 20 }, { ticker: "ENPH", pct: 25 }] },
+  { code: "11203948", handle: "@pabloindex", name: "Pablo Gil", strategy: "INDEX SIMPLE", perf: 7.6, totalValue: 32100, isPublic: true, favoriteReferenteId: "buffett", distribution: [{ ticker: "SPY", pct: 60 }, { ticker: "VWO", pct: 25 }, { ticker: "GLD", pct: 15 }] },
+  { code: "55720193", handle: "@noeliaai", name: "Noelia Ruiz", strategy: "AI THEMATIC", perf: 5.4, totalValue: 4200, isPublic: false, favoriteReferenteId: "wood", distribution: [{ ticker: "NVDA", pct: 40 }, { ticker: "MSFT", pct: 30 }, { ticker: "PLTR", pct: 30 }] },
+  { code: "73649120", handle: "@diegobear", name: "Diego Sanz", strategy: "DEFENSIVO", perf: 3.1, totalValue: 7820, isPublic: true, favoriteReferenteId: "lynch", distribution: [{ ticker: "KO", pct: 30 }, { ticker: "JNJ", pct: 25 }, { ticker: "PG", pct: 25 }, { ticker: "WMT", pct: 20 }] },
+  { code: "29183746", handle: "@sofiasmall", name: "Sofía Marín", strategy: "SMALL CAPS", perf: -2.4, totalValue: 3450, isPublic: true, favoriteReferenteId: "lynch", distribution: [{ ticker: "HOOD", pct: 35 }, { ticker: "ROKU", pct: 25 }, { ticker: "PATH", pct: 25 }, { ticker: "COIN", pct: 15 }] },
+  { code: "40918273", handle: "@danielmacro", name: "Daniel Vega", strategy: "MACRO", perf: -5.8, totalValue: 6710, isPublic: true, favoriteReferenteId: "soros", distribution: [{ ticker: "TLT", pct: 40 }, { ticker: "GLD", pct: 30 }, { ticker: "DXY", pct: 30 }] },
+];
+
+export const trendingStocks = [
+  { ticker: "NVDA", name: "Nvidia", users: 1284, color: "#76B900" },
+  { ticker: "TSLA", name: "Tesla", users: 982, color: "#CC0000" },
+  { ticker: "AAPL", name: "Apple", users: 874, color: "#1A1A2E" },
+  { ticker: "BTC", name: "Bitcoin", users: 712, color: "#F7931A" },
+  { ticker: "MSFT", name: "Microsoft", users: 643, color: "#00A4EF" },
+  { ticker: "GOOGL", name: "Alphabet", users: 521, color: "#4285F4" },
+  { ticker: "META", name: "Meta", users: 487, color: "#0866FF" },
+  { ticker: "ITX", name: "Inditex", users: 392, color: "#1A1A2E" },
 ];
 
 export const news = [
-  {
-    cat: "MERCADOS",
-    time: "hace 24 min",
-    title: "El IBEX 35 supera los 12.400 puntos y marca máximos del año",
-    summary: "La banca lidera las subidas mientras Inditex aporta un nuevo récord en sesión europea.",
-  },
-  {
-    cat: "CRIPTO",
-    time: "hace 1 h",
-    title: "Bitcoin rompe los $74.000 con flujos récord en ETFs spot",
-    summary: "BlackRock IBIT acumula más de $2.400M en una semana mientras la oferta en exchanges cae.",
-  },
-  {
-    cat: "TECH",
-    time: "hace 2 h",
-    title: "Nvidia presenta su nueva familia Blackwell B300 para inferencia",
-    summary: "Las acciones suben un 4,2% en pre-market tras superar las expectativas del mercado.",
-  },
-  {
-    cat: "MACRO",
-    time: "hace 3 h",
-    title: "El BCE mantiene tipos y abre la puerta a un recorte en septiembre",
-    summary: "Lagarde subraya la moderación de la inflación subyacente en la eurozona durante el último trimestre.",
-  },
-  {
-    cat: "EMPRESAS",
-    time: "hace 5 h",
-    title: "Inditex eleva ventas un 7,1% y supera las previsiones del consenso",
-    summary: "El grupo gallego mantiene márgenes y anuncia un dividendo extraordinario para julio.",
-  },
+  { cat: "MERCADOS", time: "hace 24 min", title: "El IBEX 35 supera los 12.400 puntos y marca máximos del año", summary: "La banca lidera las subidas mientras Inditex aporta un nuevo récord en sesión europea." },
+  { cat: "CRIPTO", time: "hace 1 h", title: "Bitcoin rompe los $74.000 con flujos récord en ETFs spot", summary: "BlackRock IBIT acumula más de $2.400M en una semana mientras la oferta en exchanges cae." },
+  { cat: "TECH", time: "hace 2 h", title: "Nvidia presenta su nueva familia Blackwell B300 para inferencia", summary: "Las acciones suben un 4,2% en pre-market tras superar las expectativas del mercado." },
+  { cat: "MACRO", time: "hace 3 h", title: "El BCE mantiene tipos y abre la puerta a un recorte en septiembre", summary: "Lagarde subraya la moderación de la inflación subyacente en la eurozona durante el último trimestre." },
+  { cat: "EMPRESAS", time: "hace 5 h", title: "Inditex eleva ventas un 7,1% y supera las previsiones del consenso", summary: "El grupo gallego mantiene márgenes y anuncia un dividendo extraordinario para julio." },
 ];
 
 export const sectors = ["Tech", "Energía", "Salud", "Banca", "Consumo", "Cripto", "Inmobiliario"];
 
-export const friends = [
-  { handle: "@martagrowth", perf: 18.4 },
-  { handle: "@javiervalue", perf: 14.7 },
-  { handle: "@luciatech", perf: 12.3 },
-  { handle: "@carlosbtc", perf: -3.2 },
-  { handle: "@elenaesg", perf: 6.8 },
-];
+export function findUserByCode(code: string): GlobalUser | undefined {
+  return globalUsers.find((u) => u.code === code);
+}
