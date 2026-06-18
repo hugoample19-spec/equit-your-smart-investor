@@ -790,12 +790,9 @@ function BuyScreen({
             ⚠ Precio desactualizado
           </p>
         )}
-      </section>
 
       <PriceChart ticker={ticker} />
-      <section className="hidden">
-        {/* keep spacing */}
-      </section>
+
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
         <div className="flex gap-2 mb-3">
