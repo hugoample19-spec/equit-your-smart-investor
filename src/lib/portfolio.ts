@@ -46,7 +46,7 @@ export function usePortfolioSummary(): PortfolioSummary {
     for (const p of Object.values(state.positions)) {
       const qty = positionQty(p);
       const inv = positionInvested(p);
-      const pd = prices?.[p.ticker];
+      const pd = prices[p.ticker];
       const price = pd?.price ?? (qty > 0 ? inv / qty : 0);
       const prevClose = pd?.prevClose ?? price;
       marketValue += qty * price;
