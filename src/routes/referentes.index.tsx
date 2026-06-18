@@ -1,9 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Lock, Star } from "lucide-react";
-import { useQueries } from "@tanstack/react-query";
-import { investors, investorCiks } from "@/lib/data";
+import { investors } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
-import { getThirteenF } from "@/lib/investors.functions";
 import { PremiumBanner } from "./index";
 
 export const Route = createFileRoute("/referentes/")({
@@ -17,21 +15,7 @@ export const Route = createFileRoute("/referentes/")({
 });
 
 function ReferentesPage() {
-  const { isPremium, favoriteReferenteId, setFavoriteReferente, seenFilingDates } = useApp();
-
-  const entries = Object.entries(investorCiks);
-  const queries = useQueries({
-    queries: entries.map(([id, cik]) => ({
-      queryKey: ["13f", id],
-      queryFn: () => getThirteenF({ data: { cik } }),
-      staleTime: 6 * 60 * 60 * 1000,
-    })),
-  });
-  const filingByInvestor: Record<string, string | null> = {};
-  entries.forEach(([id], idx) => {
-    const r = queries[idx]?.data;
-    filingByInvestor[id] = r && !r.fallback ? r.filingDate : null;
-  });
+  const { isPremium, favoriteReferenteId, setFavoriteReferente } = useApp();
 
   return (
     <div className="space-y-5 pb-8">
@@ -44,9 +28,6 @@ function ReferentesPage() {
         {investors.map((i) => {
           const locked = i.locked && !isPremium;
           const isFav = favoriteReferenteId === i.id;
-          const filing = filingByInvestor[i.id];
-          const seen = seenFilingDates[i.id];
-          const updated = !locked && !!filing && seen !== filing;
           return (
             <div key={i.id} className="relative rounded-2xl overflow-hidden shadow-soft bg-card">
               <button
@@ -57,14 +38,6 @@ function ReferentesPage() {
               >
                 <Star size={16} fill={isFav ? "var(--gold)" : "none"} color="var(--gold)" strokeWidth={2} />
               </button>
-              {updated && (
-                <span
-                  className="absolute top-2 left-2 z-10 text-[9px] tracking-widest font-bold px-2 py-1 rounded-full"
-                  style={{ background: "var(--gold)", color: "var(--navy)" }}
-                >
-                  ACTUALIZADO
-                </span>
-              )}
               <Link to="/referentes/$id" params={{ id: i.id }}>
                 <div className="aspect-[3/4] relative">
                   <img src={i.photo} alt={i.name} className="w-full h-full object-cover" />
