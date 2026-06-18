@@ -782,12 +782,19 @@ function BuyScreen({
             {fmtPct(price.changePct)} hoy
           </p>
         )}
+        {price?.reference && (
+          <p className="text-xs mt-1 text-muted-foreground">Precio de referencia</p>
+        )}
         {price?.stale && (
           <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
             ⚠ Precio desactualizado
           </p>
         )}
-        {price?.spark && price.spark.length > 1 && <Sparkline data={price.spark} />}
+      </section>
+
+      <PriceChart ticker={ticker} />
+      <section className="hidden">
+        {/* keep spacing */}
       </section>
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
