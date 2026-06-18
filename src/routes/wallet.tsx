@@ -213,82 +213,75 @@ function SetupScreen({ onPick }: { onPick: (n: number) => void }) {
 function HomeScreen({
   state,
   prices,
-  loadingPrices,
-  onRefresh,
   onBuy,
   onReset,
   onOpenAsset,
+  onAddFunds,
+  onWithdrawFunds,
 }: {
   state: ReturnType<typeof useWallet>["state"];
   prices: Record<string, PriceData>;
-  loadingPrices: boolean;
-  onRefresh: () => void;
   onBuy: () => void;
   onReset: () => void;
   onOpenAsset: (t: string) => void;
+  onAddFunds: (amount: number) => void;
+  onWithdrawFunds: (amount: number) => void;
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
+  const [fundsOpen, setFundsOpen] = useState(false);
 
   const positions = Object.values(state.positions);
   const positionsValued = positions.map((p) => {
     const qty = positionQty(p);
     const invested = positionInvested(p);
     const avg = positionAvg(p);
-    const price = prices[p.ticker]?.price ?? avg;
+    const pd = prices[p.ticker];
+    const price = pd?.price ?? avg;
+    const prevClose = pd?.prevClose ?? price;
     const value = qty * price;
     const gain = value - invested;
     const gainPct = invested > 0 ? (gain / invested) * 100 : 0;
-    const dailyPct = prices[p.ticker]?.changePct ?? 0;
-    return { ...p, qty, invested, avg, price, value, gain, gainPct, dailyPct, stale: prices[p.ticker]?.stale };
+    // Daily delta for this position: qty * (price - prevClose)
+    const dailyDelta = pd?.price != null && pd?.prevClose != null ? qty * (price - prevClose) : 0;
+    return { ...p, qty, invested, avg, price, value, gain, gainPct, dailyDelta, stale: pd?.stale };
   });
 
   const portfolioValue = positionsValued.reduce((a, p) => a + p.value, 0);
   const totalInvested = positionsValued.reduce((a, p) => a + p.invested, 0);
   const totalValue = portfolioValue + state.cash;
-  const dailyGain = positionsValued.reduce(
-    (a, p) => a + (p.price && p.dailyPct ? (p.value * p.dailyPct) / (100 + p.dailyPct) : 0),
-    0
-  );
-  const totalReturn = state.starting ? totalValue - state.starting : 0;
-  const totalReturnPct = state.starting ? (totalReturn / state.starting) * 100 : 0;
+  // Weighted daily gain in € across all owned positions.
+  const dailyGain = positionsValued.reduce((a, p) => a + p.dailyDelta, 0);
+  // Total return = current portfolio value vs invested cost basis (weighted by position size).
+  const totalReturn = portfolioValue - totalInvested;
+  const totalReturnPct = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
 
   return (
     <div className="space-y-5 pb-6">
       <section className="bg-card rounded-2xl p-5 shadow-soft">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground">Valor total de cartera</p>
-            <p
-              className="text-3xl font-semibold tracking-tight tabular-nums mt-1"
-              style={{ color: "var(--navy)" }}
-            >
-              {fmtEUR(totalValue)}
-              <span style={{ color: "var(--gold)" }}>.</span>
-            </p>
-            <div className="flex items-center gap-3 mt-2 text-sm">
-              <span
-                className="tabular-nums font-medium"
-                style={{ color: dailyGain >= 0 ? "var(--success)" : "var(--danger)" }}
-              >
-                {dailyGain >= 0 ? "+" : ""}
-                {fmtEUR(dailyGain)} hoy
-              </span>
-              <span
-                className="tabular-nums font-medium"
-                style={{ color: totalReturn >= 0 ? "var(--success)" : "var(--danger)" }}
-              >
-                {fmtPct(totalReturnPct)} total
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={onRefresh}
-            className="rounded-full p-2 border"
-            style={{ borderColor: "var(--border)" }}
-            aria-label="Actualizar"
+        <div>
+          <p className="text-xs text-muted-foreground">Valor total de cartera</p>
+          <p
+            className="text-3xl font-semibold tracking-tight tabular-nums mt-1"
+            style={{ color: "var(--navy)" }}
           >
-            <RefreshCw size={16} className={loadingPrices ? "animate-spin" : ""} />
-          </button>
+            {fmtEUR(totalValue)}
+            <span style={{ color: "var(--gold)" }}>.</span>
+          </p>
+          <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
+            <span
+              className="tabular-nums font-medium"
+              style={{ color: dailyGain >= 0 ? "var(--success)" : "var(--danger)" }}
+            >
+              {dailyGain >= 0 ? "+" : ""}
+              {fmtEUR(dailyGain)} hoy
+            </span>
+            <span
+              className="tabular-nums font-medium"
+              style={{ color: totalReturn >= 0 ? "var(--success)" : "var(--danger)" }}
+            >
+              {fmtPct(totalReturnPct)} total
+            </span>
+          </div>
         </div>
         <div className="mt-4 pt-4 border-t flex justify-between text-xs" style={{ borderColor: "var(--border)" }}>
           <span className="text-muted-foreground">Efectivo disponible</span>
@@ -359,16 +352,25 @@ function HomeScreen({
               );
             })}
           </section>
-
-          <button
-            onClick={onBuy}
-            className="w-full rounded-xl py-3.5 text-sm font-semibold"
-            style={{ background: "var(--gold)", color: "var(--navy)" }}
-          >
-            Comprar activos
-          </button>
         </>
       )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onBuy}
+          className="rounded-xl py-3.5 text-sm font-semibold"
+          style={{ background: "var(--gold)", color: "var(--navy)" }}
+        >
+          Comprar activos
+        </button>
+        <button
+          onClick={() => setFundsOpen(true)}
+          className="rounded-xl py-3.5 text-sm font-semibold border"
+          style={{ borderColor: "var(--navy)", color: "var(--navy)" }}
+        >
+          Gestionar fondos
+        </button>
+      </div>
 
       <button
         onClick={() => setConfirmReset(true)}
@@ -413,7 +415,95 @@ function HomeScreen({
           </div>
         </Modal>
       )}
+
+      {fundsOpen && (
+        <FundsModal
+          cash={state.cash}
+          onClose={() => setFundsOpen(false)}
+          onAdd={(n) => {
+            onAddFunds(n);
+            setFundsOpen(false);
+          }}
+          onWithdraw={(n) => {
+            onWithdrawFunds(n);
+            setFundsOpen(false);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function FundsModal({
+  cash,
+  onClose,
+  onAdd,
+  onWithdraw,
+}: {
+  cash: number;
+  onClose: () => void;
+  onAdd: (n: number) => void;
+  onWithdraw: (n: number) => void;
+}) {
+  const [mode, setMode] = useState<"add" | "withdraw">("add");
+  const [input, setInput] = useState("");
+  const n = Number(input.replace(",", ".")) || 0;
+  const isWithdraw = mode === "withdraw";
+  const canDo = n > 0 && (!isWithdraw || n <= cash);
+
+  return (
+    <Modal onClose={onClose}>
+      <p className="font-semibold text-base" style={{ color: "var(--navy)" }}>
+        Gestionar fondos
+      </p>
+      <div className="flex gap-2 mt-3">
+        {(["add", "withdraw"] as const).map((m) => (
+          <button
+            key={m}
+            onClick={() => {
+              setMode(m);
+              setInput("");
+            }}
+            className="flex-1 py-2 rounded-lg text-xs font-semibold border"
+            style={{
+              background: mode === m ? "var(--navy)" : "transparent",
+              color: mode === m ? "var(--cream)" : "var(--navy)",
+              borderColor: mode === m ? "var(--navy)" : "var(--border)",
+            }}
+          >
+            {m === "add" ? "Añadir fondos" : "Retirar fondos"}
+          </button>
+        ))}
+      </div>
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value.replace(/[^0-9.,]/g, ""))}
+        inputMode="decimal"
+        placeholder="0,00 €"
+        className="w-full mt-3 rounded-xl border px-4 py-3 text-base outline-none focus:border-[var(--navy)]"
+        style={{ borderColor: "var(--border)" }}
+      />
+      <div className="flex justify-between text-xs mt-2">
+        <span className="text-muted-foreground">Efectivo disponible</span>
+        <span className="tabular-nums" style={{ color: "var(--navy)" }}>{fmtEUR(cash)}</span>
+      </div>
+      {isWithdraw && n > cash && (
+        <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
+          Excede tu efectivo disponible
+        </p>
+      )}
+      <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
+        ⚠ Añadir o retirar fondos no afecta a tus rendimientos históricos.
+      </p>
+      <button
+        disabled={!canDo}
+        onClick={() => (isWithdraw ? onWithdraw(n) : onAdd(n))}
+        className="w-full mt-4 rounded-xl py-3 text-sm font-semibold disabled:opacity-40"
+        style={{ background: "var(--gold)", color: "var(--navy)" }}
+      >
+        {isWithdraw ? "Retirar" : "Añadir"}
+      </button>
+    </Modal>
   );
 }
 
