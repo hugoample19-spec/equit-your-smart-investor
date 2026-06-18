@@ -72,7 +72,7 @@ function InvestorDetail() {
       <section className="bg-card rounded-2xl p-5 shadow-soft">
         <h2 className="font-semibold mb-4" style={{ color: "var(--navy)" }}>Cartera</h2>
         <ul className="space-y-3">
-          {investor.holdings.map((h) => (
+          {investor.holdings.map((h: typeof investor.holdings[number]) => (
             <li key={h.ticker} className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-bold" style={{ background: "var(--muted)", color: "var(--navy)" }}>
                 {h.ticker}
