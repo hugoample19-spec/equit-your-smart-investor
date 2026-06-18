@@ -903,8 +903,12 @@ function DetailScreen({
             {fmtPct(price.changePct)} hoy
           </p>
         )}
-        {price?.spark && price.spark.length > 1 && <Sparkline data={price.spark} />}
+        {price?.reference && (
+          <p className="text-xs mt-1 text-muted-foreground">Precio de referencia</p>
+        )}
       </section>
+
+      <PriceChart ticker={position.ticker} />
 
       <section className="bg-card rounded-2xl p-5 shadow-soft space-y-2">
         <p className="text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--navy)" }}>
