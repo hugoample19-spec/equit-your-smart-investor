@@ -15,6 +15,8 @@ import { Route as NoticiasRouteImport } from './routes/noticias'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReferentesIndexRouteImport } from './routes/referentes.index'
 import { Route as ReferentesIdRouteImport } from './routes/referentes.$id'
+import { Route as UCodeRouteImport } from './routes/u.$code'
+import { Route as ChatCodeRouteImport } from './routes/chat.$code'
 
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
@@ -46,6 +48,16 @@ const ReferentesIdRoute = ReferentesIdRouteImport.update({
   path: '/referentes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UCodeRoute = UCodeRouteImport.update({
+  id: '/u/$code',
+  path: '/u/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatCodeRoute = ChatCodeRouteImport.update({
+  id: '/chat/$code',
+  path: '/chat/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +66,8 @@ export interface FileRoutesByFullPath {
   '/wallet': typeof WalletRoute
   '/referentes/$id': typeof ReferentesIdRoute
   '/referentes/': typeof ReferentesIndexRoute
+  '/u/$code': typeof UCodeRoute
+  '/chat/$code': typeof ChatCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +76,8 @@ export interface FileRoutesByTo {
   '/wallet': typeof WalletRoute
   '/referentes/$id': typeof ReferentesIdRoute
   '/referentes': typeof ReferentesIndexRoute
+  '/u/$code': typeof UCodeRoute
+  '/chat/$code': typeof ChatCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +87,8 @@ export interface FileRoutesById {
   '/wallet': typeof WalletRoute
   '/referentes/$id': typeof ReferentesIdRoute
   '/referentes/': typeof ReferentesIndexRoute
+  '/u/$code': typeof UCodeRoute
+  '/chat/$code': typeof ChatCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +99,8 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/referentes/$id'
     | '/referentes/'
+    | '/u/$code'
+    | '/chat/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +109,8 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/referentes/$id'
     | '/referentes'
+    | '/u/$code'
+    | '/chat/$code'
   id:
     | '__root__'
     | '/'
@@ -97,6 +119,8 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/referentes/$id'
     | '/referentes/'
+    | '/u/$code'
+    | '/chat/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +130,8 @@ export interface RootRouteChildren {
   WalletRoute: typeof WalletRoute
   ReferentesIdRoute: typeof ReferentesIdRoute
   ReferentesIndexRoute: typeof ReferentesIndexRoute
+  UCodeRoute: typeof UCodeRoute
+  ChatCodeRoute: typeof ChatCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +178,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReferentesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/u/$code': {
+      id: '/u/$code'
+      path: '/u/$code'
+      fullPath: '/u/$code'
+      preLoaderRoute: typeof UCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/$code': {
+      id: '/chat/$code'
+      path: '/chat/$code'
+      fullPath: '/chat/$code'
+      preLoaderRoute: typeof ChatCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +202,8 @@ const rootRouteChildren: RootRouteChildren = {
   WalletRoute: WalletRoute,
   ReferentesIdRoute: ReferentesIdRoute,
   ReferentesIndexRoute: ReferentesIndexRoute,
+  UCodeRoute: UCodeRoute,
+  ChatCodeRoute: ChatCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
