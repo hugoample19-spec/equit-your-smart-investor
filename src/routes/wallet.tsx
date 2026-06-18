@@ -790,8 +790,10 @@ function BuyScreen({
             ⚠ Precio desactualizado
           </p>
         )}
+      </section>
 
       <PriceChart ticker={ticker} />
+
 
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
