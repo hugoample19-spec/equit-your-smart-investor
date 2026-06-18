@@ -653,45 +653,78 @@ function BuyListScreen({
       </div>
 
       <section className="bg-card rounded-2xl p-2 shadow-soft">
-        {list.map((a) => {
-          const p = prices[a.ticker];
-          return (
-            <button
-              key={a.ticker}
-              onClick={() => onPick(a.ticker)}
-              className="w-full flex items-center justify-between px-3 py-3 rounded-xl active:bg-black/5"
-            >
-              <div className="text-left">
-                <p className="text-sm font-semibold" style={{ color: "var(--navy)" }}>
-                  {a.display}
+        {(() => {
+          // Group stocks by sector; flat list otherwise.
+          const groups: { sector: string | null; items: typeof list }[] = [];
+          if (tab === "stocks") {
+            const bySector = new Map<string, typeof list>();
+            for (const a of list) {
+              const s = a.sector ?? "Otros";
+              if (!bySector.has(s)) bySector.set(s, []);
+              bySector.get(s)!.push(a);
+            }
+            for (const [sector, items] of bySector) groups.push({ sector, items });
+          } else {
+            groups.push({ sector: null, items: list });
+          }
+          return groups.map((g) => (
+            <div key={g.sector ?? "all"}>
+              {g.sector && (
+                <p
+                  className="px-3 pt-3 pb-1 text-[10px] font-semibold tracking-widest uppercase"
+                  style={{ color: "var(--gold)" }}
+                >
+                  {g.sector}
                 </p>
-                <p className="text-xs text-muted-foreground">{a.name}</p>
-              </div>
-              <div className="text-right">
-                {loading && !p ? (
-                  <div className="h-4 w-16 rounded bg-black/5 animate-pulse ml-auto" />
-                ) : p?.price != null ? (
-                  <>
-                    <p className="text-sm font-semibold tabular-nums" style={{ color: "var(--navy)" }}>
-                      {fmtEUR(p.price)}
-                    </p>
-                    <p
-                      className="text-xs tabular-nums font-medium"
-                      style={{
-                        color:
-                          (p.changePct ?? 0) >= 0 ? "var(--success)" : "var(--danger)",
-                      }}
-                    >
-                      {p.changePct != null ? fmtPct(p.changePct) : "—"}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No disp.</p>
-                )}
-              </div>
-            </button>
-          );
-        })}
+              )}
+              {g.items.map((a) => {
+                const p = prices[a.ticker];
+                return (
+                  <button
+                    key={a.ticker}
+                    onClick={() => onPick(a.ticker)}
+                    className="w-full flex items-center justify-between px-3 py-3 rounded-xl active:bg-black/5"
+                  >
+                    <div className="text-left">
+                      <p className="text-sm font-semibold" style={{ color: "var(--navy)" }}>
+                        {a.display}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{a.name}</p>
+                    </div>
+                    <div className="text-right">
+                      {loading && !p ? (
+                        <div className="h-4 w-16 rounded bg-black/5 animate-pulse ml-auto" />
+                      ) : p?.price != null ? (
+                        <>
+                          <p
+                            className="text-sm font-semibold tabular-nums"
+                            style={{ color: "var(--navy)" }}
+                          >
+                            {fmtEUR(p.price)}
+                          </p>
+                          {p.reference ? (
+                            <p className="text-[10px] text-muted-foreground">Ref.</p>
+                          ) : (
+                            <p
+                              className="text-xs tabular-nums font-medium"
+                              style={{
+                                color: (p.changePct ?? 0) >= 0 ? "var(--success)" : "var(--danger)",
+                              }}
+                            >
+                              {p.changePct != null ? fmtPct(p.changePct) : "—"}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">No disp.</p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ));
+        })()}
         {list.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-8">Sin resultados</p>
         )}
