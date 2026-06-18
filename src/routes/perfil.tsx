@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Camera, LogOut, Search, Star, X, Zap } from "lucide-react";
 import { useApp } from "@/lib/app-context";
 import { investors, globalUsers, findUserByCode } from "@/lib/data";
+import { usePortfolioSummary } from "@/lib/portfolio";
+
 
 export const Route = createFileRoute("/perfil")({
   head: () => ({
@@ -73,7 +75,15 @@ function PerfilPage() {
             )}
           </span>
         </div>
-        <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          onChange={onFile}
+          className="absolute opacity-0 pointer-events-none w-px h-px overflow-hidden"
+          aria-hidden="true"
+          tabIndex={-1}
+        />
         <h1 className="mt-3 text-xl font-semibold" style={{ color: "var(--navy)" }}>{fullName}</h1>
         <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>@{username}</p>
         <p className="text-base font-semibold mt-1 tabular-nums" style={{ color: "var(--gold)" }}>#{friendCode}</p>
@@ -177,54 +187,16 @@ function PerfilPage() {
         </ul>
       </section>
 
-      {/* Performance card */}
-      <section className="rounded-3xl p-5 shadow-card" style={{ background: "var(--navy)", color: "var(--cream)" }}>
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-[10px] tracking-widest" style={{ color: "rgba(250,248,245,0.5)" }}>RENDIMIENTO YTD</p>
-            <p className="text-4xl font-semibold mt-1" style={{ color: "var(--gold)" }}>+18,4%</p>
-            <p className="text-[11px] mt-1" style={{ color: "rgba(250,248,245,0.6)" }}>S&P 500 · +11,2%</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] tracking-widest" style={{ color: "rgba(250,248,245,0.5)" }}>RANKING</p>
-            <p className="text-lg font-semibold mt-1">#142<span style={{ color: "rgba(250,248,245,0.5)" }}> / 8.420</span></p>
-          </div>
-        </div>
-        <MiniChart />
-      </section>
+      {/* Performance card — real data from wallet */}
+      <PerformanceCard />
 
-      {/* Streak card */}
-      <section className="bg-card rounded-2xl p-5 shadow-soft">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[10px] tracking-widest" style={{ color: "var(--muted-foreground)" }}>RACHA DE LECTURA</p>
-            <p className="text-4xl font-semibold mt-1 tabular-nums" style={{ color: "var(--gold)" }}>{streak.current}</p>
-            <p className="text-xs mt-1" style={{ color: "var(--navy)" }}>días consecutivos leyendo</p>
-            <p className="text-[11px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>
-              Récord personal · {streak.longest} días
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-1.5">
-            {[7, 30, 100].map((m) => {
-              const earned = streak.longest >= m;
-              return (
-                <span
-                  key={m}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold tabular-nums"
-                  style={{
-                    background: earned ? "var(--gold)" : "var(--muted)",
-                    color: earned ? "var(--navy)" : "var(--muted-foreground)",
-                    opacity: earned ? 1 : 0.6,
-                  }}
-                >
-                  <Zap size={9} fill={earned ? "var(--navy)" : "currentColor"} color={earned ? "var(--navy)" : "currentColor"} />
-                  {m}
-                </span>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/* Streak card — bigger, with weekly view */}
+      <StreakCard
+        current={streak.current}
+        longest={streak.longest}
+        lastReadDate={streak.lastReadDate}
+      />
+
 
       {/* Plan + logout */}
       <div className="flex items-center justify-between bg-card rounded-2xl p-4 shadow-soft">
@@ -250,13 +222,139 @@ function PerfilPage() {
   );
 }
 
-function MiniChart() {
-  const pts = [50, 52, 48, 55, 58, 54, 62, 60, 65, 68, 64, 72, 70, 78];
-  const min = Math.min(...pts), max = Math.max(...pts);
-  const norm = pts.map((v, i) => `${(i / (pts.length - 1)) * 300},${50 - ((v - min) / (max - min)) * 40}`);
+function PerformanceCard() {
+  const summary = usePortfolioSummary();
+  const series = summary.series;
+  const hasSeries = series.length >= 2;
+
+  const points = useMemo(() => {
+    if (!hasSeries) return "";
+    const vals = series.map((s) => s.v);
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const span = max - min || 1;
+    return series
+      .map((s, i) => `${(i / (series.length - 1)) * 300},${50 - ((s.v - min) / span) * 40}`)
+      .join(" ");
+  }, [series, hasSeries]);
+
+  const pct = summary.totalReturnPct;
+  const pctStr = (pct >= 0 ? "+" : "") + pct.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + "%";
+  const color = pct >= 0 ? "var(--gold)" : "#FF7A8A";
+
   return (
-    <svg viewBox="0 0 300 55" className="w-full h-16 mt-4">
-      <polyline points={norm.join(" ")} fill="none" stroke="var(--gold)" strokeWidth="2" />
-    </svg>
+    <section className="rounded-3xl p-5 shadow-card" style={{ background: "var(--navy)", color: "var(--cream)" }}>
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="text-[10px] tracking-widest" style={{ color: "rgba(250,248,245,0.5)" }}>RENDIMIENTO TOTAL</p>
+          <p className="text-4xl font-semibold mt-1 tabular-nums" style={{ color }}>{summary.hasWallet ? pctStr : "—"}</p>
+          <p className="text-[11px] mt-1" style={{ color: "rgba(250,248,245,0.6)" }}>
+            {summary.hasWallet
+              ? `Valor ${summary.totalValue.toLocaleString("es-ES", { maximumFractionDigits: 0 })} € · invertido ${summary.starting.toLocaleString("es-ES", { maximumFractionDigits: 0 })} €`
+              : "Crea tu cartera para ver tu rendimiento real"}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] tracking-widest" style={{ color: "rgba(250,248,245,0.5)" }}>OPERACIONES</p>
+          <p className="text-lg font-semibold mt-1 tabular-nums">{summary.hasWallet ? series.length - 1 : 0}</p>
+        </div>
+      </div>
+      {hasSeries ? (
+        <svg viewBox="0 0 300 55" className="w-full h-16 mt-4">
+          <polyline points={points} fill="none" stroke={color} strokeWidth="2" />
+        </svg>
+      ) : (
+        <div className="h-16 mt-4 flex items-center justify-center text-[11px]" style={{ color: "rgba(250,248,245,0.4)" }}>
+          {summary.hasWallet ? "Aún sin operaciones registradas" : ""}
+        </div>
+      )}
+    </section>
   );
 }
+
+function StreakCard({ current, longest, lastReadDate }: { current: number; longest: number; lastReadDate: string | null }) {
+  // Build last 7 days view (Mon..Sun of current week).
+  const today = new Date();
+  const todayISO = today.toISOString().slice(0, 10);
+  const weekday = (today.getDay() + 6) % 7; // 0=Mon
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - weekday);
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const iso = d.toISOString().slice(0, 10);
+    const isFuture = iso > todayISO;
+    const isToday = iso === todayISO;
+    // A day is "read" if it's within the consecutive streak window ending on lastReadDate
+    let read = false;
+    if (lastReadDate && current > 0) {
+      const last = new Date(lastReadDate + "T00:00:00");
+      const diffDays = Math.round((last.getTime() - d.getTime()) / 86_400_000);
+      read = diffDays >= 0 && diffDays < current;
+    }
+    const missed = !read && !isFuture && !isToday;
+    return { iso, label: ["L", "M", "X", "J", "V", "S", "D"][i], read, missed, isToday, isFuture };
+  });
+
+  return (
+    <section className="bg-card rounded-3xl p-6 shadow-card">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <p className="text-[10px] tracking-widest" style={{ color: "var(--muted-foreground)" }}>RACHA DE LECTURA</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <p className="text-6xl font-semibold tabular-nums leading-none" style={{ color: "var(--gold)" }}>{current}</p>
+            <p className="text-sm" style={{ color: "var(--navy)" }}>días</p>
+          </div>
+          <p className="text-xs mt-2" style={{ color: "var(--navy)" }}>días consecutivos leyendo</p>
+          <p className="text-[11px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>
+            Récord personal · {longest} días
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1.5">
+          {[7, 30, 100].map((m) => {
+            const earned = longest >= m;
+            return (
+              <span
+                key={m}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold tabular-nums"
+                style={{
+                  background: earned ? "var(--gold)" : "transparent",
+                  color: earned ? "var(--navy)" : "var(--muted-foreground)",
+                  border: earned ? "none" : "1px solid var(--border)",
+                  opacity: earned ? 1 : 0.55,
+                }}
+              >
+                <Zap size={9} fill={earned ? "var(--navy)" : "none"} color={earned ? "var(--navy)" : "currentColor"} />
+                {m}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-5 pt-5 border-t" style={{ borderColor: "var(--border)" }}>
+        <p className="text-[10px] tracking-widest mb-3" style={{ color: "var(--muted-foreground)" }}>ESTA SEMANA</p>
+        <div className="flex items-center justify-between">
+          {days.map((d) => (
+            <div key={d.iso} className="flex flex-col items-center gap-1.5">
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center"
+                style={{
+                  background: d.read ? "var(--gold)" : d.isToday ? "transparent" : d.missed ? "rgba(255,122,138,0.12)" : "var(--muted)",
+                  border: d.isToday ? "2px solid var(--gold)" : "none",
+                }}
+              >
+                {d.missed && (
+                  <X size={12} color="#FF7A8A" strokeWidth={2.5} />
+                )}
+              </div>
+              <span className="text-[10px] font-medium" style={{ color: d.isToday ? "var(--navy)" : "var(--muted-foreground)" }}>{d.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
