@@ -108,5 +108,5 @@ export function usePortfolioSummary(): PortfolioSummary {
       totalReturnPct,
       series,
     };
-  }, [state, prices, ready]);
+  }, [state, pricesResp, ready]);
 }
