@@ -75,7 +75,15 @@ function PerfilPage() {
             )}
           </span>
         </div>
-        <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          onChange={onFile}
+          className="absolute opacity-0 pointer-events-none w-px h-px overflow-hidden"
+          aria-hidden="true"
+          tabIndex={-1}
+        />
         <h1 className="mt-3 text-xl font-semibold" style={{ color: "var(--navy)" }}>{fullName}</h1>
         <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>@{username}</p>
         <p className="text-base font-semibold mt-1 tabular-nums" style={{ color: "var(--gold)" }}>#{friendCode}</p>
