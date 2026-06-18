@@ -26,13 +26,15 @@ export function usePortfolioSummary(): PortfolioSummary {
   const tickers = useMemo(() => Object.keys(state.positions), [state.positions]);
 
   const getPricesFn = useServerFn(getPrices);
-  const { data: prices } = useQuery({
+  const { data: pricesResp } = useQuery({
     queryKey: ["prices", tickers.sort().join(",")],
     queryFn: () => getPricesFn({ data: { tickers } }),
     enabled: ready && tickers.length > 0,
     staleTime: 60_000,
     refetchInterval: 60_000,
   });
+  const prices = pricesResp?.prices ?? {};
+
 
   return useMemo(() => {
     const hasWallet = state.starting != null;
