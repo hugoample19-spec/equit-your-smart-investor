@@ -4,8 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft,
-  Plus,
-  RefreshCw,
   Search,
   TrendingUp,
   AlertTriangle,
@@ -48,13 +46,12 @@ type Screen =
   | { kind: "sell"; ticker: string };
 
 function WalletPage() {
-  const { state, ready, setupStarting, reset, buy, sell } = useWallet();
+  const { state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds } = useWallet();
   const [screen, setScreen] = useState<Screen>({ kind: "home" });
 
   const ownedTickers = useMemo(() => Object.keys(state.positions), [state.positions]);
   const tickersToFetch = useMemo(() => {
     const base = new Set<string>(ownedTickers);
-    // For non-home screens we'll also need the catalog; cheaper to always fetch all when buying
     if (screen.kind === "buyList") CATALOG.forEach((c) => base.add(c.ticker));
     if (screen.kind === "buy" || screen.kind === "detail" || screen.kind === "sell")
       base.add(screen.ticker);
@@ -67,6 +64,7 @@ function WalletPage() {
     queryFn: () => getPricesFn({ data: { tickers: tickersToFetch } }),
     enabled: tickersToFetch.length > 0,
     staleTime: 60_000,
+    refetchInterval: 60_000,
     refetchOnWindowFocus: false,
   });
 
@@ -139,11 +137,11 @@ function WalletPage() {
     <HomeScreen
       state={state}
       prices={prices}
-      loadingPrices={pricesQuery.isLoading}
-      onRefresh={() => pricesQuery.refetch()}
       onBuy={() => setScreen({ kind: "buyList" })}
       onReset={reset}
       onOpenAsset={(t) => setScreen({ kind: "detail", ticker: t })}
+      onAddFunds={addFunds}
+      onWithdrawFunds={withdrawFunds}
     />
   );
 }
@@ -213,82 +211,75 @@ function SetupScreen({ onPick }: { onPick: (n: number) => void }) {
 function HomeScreen({
   state,
   prices,
-  loadingPrices,
-  onRefresh,
   onBuy,
   onReset,
   onOpenAsset,
+  onAddFunds,
+  onWithdrawFunds,
 }: {
   state: ReturnType<typeof useWallet>["state"];
   prices: Record<string, PriceData>;
-  loadingPrices: boolean;
-  onRefresh: () => void;
   onBuy: () => void;
   onReset: () => void;
   onOpenAsset: (t: string) => void;
+  onAddFunds: (amount: number) => void;
+  onWithdrawFunds: (amount: number) => void;
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
+  const [fundsOpen, setFundsOpen] = useState(false);
 
   const positions = Object.values(state.positions);
   const positionsValued = positions.map((p) => {
     const qty = positionQty(p);
     const invested = positionInvested(p);
     const avg = positionAvg(p);
-    const price = prices[p.ticker]?.price ?? avg;
+    const pd = prices[p.ticker];
+    const price = pd?.price ?? avg;
+    const prevClose = pd?.prevClose ?? price;
     const value = qty * price;
     const gain = value - invested;
     const gainPct = invested > 0 ? (gain / invested) * 100 : 0;
-    const dailyPct = prices[p.ticker]?.changePct ?? 0;
-    return { ...p, qty, invested, avg, price, value, gain, gainPct, dailyPct, stale: prices[p.ticker]?.stale };
+    // Daily delta for this position: qty * (price - prevClose)
+    const dailyDelta = pd?.price != null && pd?.prevClose != null ? qty * (price - prevClose) : 0;
+    return { ...p, qty, invested, avg, price, value, gain, gainPct, dailyDelta, stale: pd?.stale };
   });
 
   const portfolioValue = positionsValued.reduce((a, p) => a + p.value, 0);
   const totalInvested = positionsValued.reduce((a, p) => a + p.invested, 0);
   const totalValue = portfolioValue + state.cash;
-  const dailyGain = positionsValued.reduce(
-    (a, p) => a + (p.price && p.dailyPct ? (p.value * p.dailyPct) / (100 + p.dailyPct) : 0),
-    0
-  );
-  const totalReturn = state.starting ? totalValue - state.starting : 0;
-  const totalReturnPct = state.starting ? (totalReturn / state.starting) * 100 : 0;
+  // Weighted daily gain in € across all owned positions.
+  const dailyGain = positionsValued.reduce((a, p) => a + p.dailyDelta, 0);
+  // Total return = current portfolio value vs invested cost basis (weighted by position size).
+  const totalReturn = portfolioValue - totalInvested;
+  const totalReturnPct = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
 
   return (
     <div className="space-y-5 pb-6">
       <section className="bg-card rounded-2xl p-5 shadow-soft">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground">Valor total de cartera</p>
-            <p
-              className="text-3xl font-semibold tracking-tight tabular-nums mt-1"
-              style={{ color: "var(--navy)" }}
-            >
-              {fmtEUR(totalValue)}
-              <span style={{ color: "var(--gold)" }}>.</span>
-            </p>
-            <div className="flex items-center gap-3 mt-2 text-sm">
-              <span
-                className="tabular-nums font-medium"
-                style={{ color: dailyGain >= 0 ? "var(--success)" : "var(--danger)" }}
-              >
-                {dailyGain >= 0 ? "+" : ""}
-                {fmtEUR(dailyGain)} hoy
-              </span>
-              <span
-                className="tabular-nums font-medium"
-                style={{ color: totalReturn >= 0 ? "var(--success)" : "var(--danger)" }}
-              >
-                {fmtPct(totalReturnPct)} total
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={onRefresh}
-            className="rounded-full p-2 border"
-            style={{ borderColor: "var(--border)" }}
-            aria-label="Actualizar"
+        <div>
+          <p className="text-xs text-muted-foreground">Valor total de cartera</p>
+          <p
+            className="text-3xl font-semibold tracking-tight tabular-nums mt-1"
+            style={{ color: "var(--navy)" }}
           >
-            <RefreshCw size={16} className={loadingPrices ? "animate-spin" : ""} />
-          </button>
+            {fmtEUR(totalValue)}
+            <span style={{ color: "var(--gold)" }}>.</span>
+          </p>
+          <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
+            <span
+              className="tabular-nums font-medium"
+              style={{ color: dailyGain >= 0 ? "var(--success)" : "var(--danger)" }}
+            >
+              {dailyGain >= 0 ? "+" : ""}
+              {fmtEUR(dailyGain)} hoy
+            </span>
+            <span
+              className="tabular-nums font-medium"
+              style={{ color: totalReturn >= 0 ? "var(--success)" : "var(--danger)" }}
+            >
+              {fmtPct(totalReturnPct)} total
+            </span>
+          </div>
         </div>
         <div className="mt-4 pt-4 border-t flex justify-between text-xs" style={{ borderColor: "var(--border)" }}>
           <span className="text-muted-foreground">Efectivo disponible</span>
@@ -359,16 +350,25 @@ function HomeScreen({
               );
             })}
           </section>
-
-          <button
-            onClick={onBuy}
-            className="w-full rounded-xl py-3.5 text-sm font-semibold"
-            style={{ background: "var(--gold)", color: "var(--navy)" }}
-          >
-            Comprar activos
-          </button>
         </>
       )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onBuy}
+          className="rounded-xl py-3.5 text-sm font-semibold"
+          style={{ background: "var(--gold)", color: "var(--navy)" }}
+        >
+          Comprar activos
+        </button>
+        <button
+          onClick={() => setFundsOpen(true)}
+          className="rounded-xl py-3.5 text-sm font-semibold border"
+          style={{ borderColor: "var(--navy)", color: "var(--navy)" }}
+        >
+          Gestionar fondos
+        </button>
+      </div>
 
       <button
         onClick={() => setConfirmReset(true)}
@@ -413,7 +413,95 @@ function HomeScreen({
           </div>
         </Modal>
       )}
+
+      {fundsOpen && (
+        <FundsModal
+          cash={state.cash}
+          onClose={() => setFundsOpen(false)}
+          onAdd={(n) => {
+            onAddFunds(n);
+            setFundsOpen(false);
+          }}
+          onWithdraw={(n) => {
+            onWithdrawFunds(n);
+            setFundsOpen(false);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function FundsModal({
+  cash,
+  onClose,
+  onAdd,
+  onWithdraw,
+}: {
+  cash: number;
+  onClose: () => void;
+  onAdd: (n: number) => void;
+  onWithdraw: (n: number) => void;
+}) {
+  const [mode, setMode] = useState<"add" | "withdraw">("add");
+  const [input, setInput] = useState("");
+  const n = Number(input.replace(",", ".")) || 0;
+  const isWithdraw = mode === "withdraw";
+  const canDo = n > 0 && (!isWithdraw || n <= cash);
+
+  return (
+    <Modal onClose={onClose}>
+      <p className="font-semibold text-base" style={{ color: "var(--navy)" }}>
+        Gestionar fondos
+      </p>
+      <div className="flex gap-2 mt-3">
+        {(["add", "withdraw"] as const).map((m) => (
+          <button
+            key={m}
+            onClick={() => {
+              setMode(m);
+              setInput("");
+            }}
+            className="flex-1 py-2 rounded-lg text-xs font-semibold border"
+            style={{
+              background: mode === m ? "var(--navy)" : "transparent",
+              color: mode === m ? "var(--cream)" : "var(--navy)",
+              borderColor: mode === m ? "var(--navy)" : "var(--border)",
+            }}
+          >
+            {m === "add" ? "Añadir fondos" : "Retirar fondos"}
+          </button>
+        ))}
+      </div>
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value.replace(/[^0-9.,]/g, ""))}
+        inputMode="decimal"
+        placeholder="0,00 €"
+        className="w-full mt-3 rounded-xl border px-4 py-3 text-base outline-none focus:border-[var(--navy)]"
+        style={{ borderColor: "var(--border)" }}
+      />
+      <div className="flex justify-between text-xs mt-2">
+        <span className="text-muted-foreground">Efectivo disponible</span>
+        <span className="tabular-nums" style={{ color: "var(--navy)" }}>{fmtEUR(cash)}</span>
+      </div>
+      {isWithdraw && n > cash && (
+        <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
+          Excede tu efectivo disponible
+        </p>
+      )}
+      <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
+        ⚠ Añadir o retirar fondos no afecta a tus rendimientos históricos.
+      </p>
+      <button
+        disabled={!canDo}
+        onClick={() => (isWithdraw ? onWithdraw(n) : onAdd(n))}
+        className="w-full mt-4 rounded-xl py-3 text-sm font-semibold disabled:opacity-40"
+        style={{ background: "var(--gold)", color: "var(--navy)" }}
+      >
+        {isWithdraw ? "Retirar" : "Añadir"}
+      </button>
+    </Modal>
   );
 }
 
@@ -834,11 +922,15 @@ function SellScreen({
 }) {
   const asset = findAsset(position.ticker);
   const owned = positionQty(position);
-  const px = price?.price ?? positionAvg(position);
+  const avg = positionAvg(position);
+  const px = price?.price ?? avg;
+  const [mode, setMode] = useState<"qty" | "eur">("qty");
   const [input, setInput] = useState("");
   const n = Number(input.replace(",", ".")) || 0;
-  const qty = Math.min(n, owned);
+  const requestedQty = mode === "qty" ? n : px > 0 ? n / px : 0;
+  const qty = Math.min(requestedQty, owned);
   const proceeds = qty * px;
+  const realizedPnl = qty * (px - avg);
   const canSell = qty > 0;
 
   return (
@@ -855,15 +947,36 @@ function SellScreen({
       <section className="bg-card rounded-2xl p-5 shadow-soft">
         <Row label="Precio actual" value={fmtEUR(px)} bold />
         <Row label="Participaciones" value={owned.toLocaleString("es-ES", { maximumFractionDigits: 6 })} />
+        <Row label="Precio medio compra" value={fmtEUR(avg)} />
       </section>
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
+        <div className="flex gap-2 mb-3">
+          {(["qty", "eur"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => {
+                setMode(m);
+                setInput("");
+              }}
+              className="flex-1 py-2 rounded-lg text-xs font-medium border"
+              style={{
+                background: mode === m ? "var(--navy)" : "transparent",
+                color: mode === m ? "var(--cream)" : "var(--navy)",
+                borderColor: mode === m ? "var(--navy)" : "var(--border)",
+              }}
+            >
+              {m === "qty" ? "Participaciones" : "Euros"}
+            </button>
+          ))}
+        </div>
+
         <div className="flex justify-between items-center mb-2">
           <p className="text-sm font-medium" style={{ color: "var(--navy)" }}>
             Cantidad a vender
           </p>
           <button
-            onClick={() => setInput(String(owned))}
+            onClick={() => setInput(mode === "qty" ? String(owned) : String((owned * px).toFixed(2)))}
             className="text-xs font-semibold"
             style={{ color: "var(--gold)" }}
           >
@@ -874,7 +987,7 @@ function SellScreen({
           value={input}
           onChange={(e) => setInput(e.target.value.replace(/[^0-9.,]/g, ""))}
           inputMode="decimal"
-          placeholder="0"
+          placeholder={mode === "qty" ? "0" : "0,00 €"}
           className="w-full rounded-xl border px-4 py-3 text-base outline-none focus:border-[var(--navy)]"
           style={{ borderColor: "var(--border)" }}
         />
@@ -884,6 +997,25 @@ function SellScreen({
             {fmtEUR(proceeds)}
           </span>
         </div>
+        <div className="flex justify-between text-xs mt-1">
+          <span className="text-muted-foreground">Participaciones</span>
+          <span className="tabular-nums">{qty.toLocaleString("es-ES", { maximumFractionDigits: 6 })}</span>
+        </div>
+        <div className="flex justify-between text-xs mt-1">
+          <span className="text-muted-foreground">Resultado realizado</span>
+          <span
+            className="tabular-nums font-medium"
+            style={{ color: realizedPnl >= 0 ? "var(--success)" : "var(--danger)" }}
+          >
+            {realizedPnl >= 0 ? "+" : ""}
+            {fmtEUR(realizedPnl)}
+          </span>
+        </div>
+        {mode === "eur" && requestedQty > owned && (
+          <p className="text-xs mt-2" style={{ color: "var(--danger)" }}>
+            Importe superior al valor de tu posición
+          </p>
+        )}
       </section>
 
       <button

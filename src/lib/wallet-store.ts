@@ -172,7 +172,28 @@ export function useWallet() {
     [update]
   );
 
-  return { state, ready, setupStarting, reset, buy, sell };
+  // Adjust cash without affecting returns: shift `starting` baseline by the same amount.
+  const addFunds = useCallback(
+    (amount: number) =>
+      update((s) => {
+        if (amount <= 0 || s.starting == null) return s;
+        return { ...s, cash: s.cash + amount, starting: s.starting + amount };
+      }),
+    [update]
+  );
+
+  const withdrawFunds = useCallback(
+    (amount: number) =>
+      update((s) => {
+        if (amount <= 0 || s.starting == null) return s;
+        const take = Math.min(amount, s.cash);
+        if (take <= 0) return s;
+        return { ...s, cash: s.cash - take, starting: Math.max(0, s.starting - take) };
+      }),
+    [update]
+  );
+
+  return { state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds };
 }
 
 export const positionQty = (p: Position) => p.lots.reduce((a, l) => a + l.qty, 0);
