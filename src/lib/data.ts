@@ -1,5 +1,12 @@
 import type { Investor } from "./app-context";
 
+export const investorCiks: Record<string, string> = {
+  buffett: "0001067983",
+  dalio: "0001350694",
+  ackman: "0001336528",
+  wood: "0001579982",
+};
+
 export const investors: Investor[] = [
   {
     id: "buffett",
