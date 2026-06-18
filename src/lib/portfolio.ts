@@ -84,7 +84,7 @@ export function usePortfolioSummary(): PortfolioSummary {
         }
         let mv = 0;
         for (const [tk, q] of Object.entries(runningQty)) {
-          const pd = prices?.[tk];
+          const pd = prices[tk];
           const px = pd?.price ?? ev.price;
           mv += q * px;
         }
