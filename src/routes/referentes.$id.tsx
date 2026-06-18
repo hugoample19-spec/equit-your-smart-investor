@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
-import { ArrowLeft, Lock } from "lucide-react";
+import { ArrowLeft, Lock, Star } from "lucide-react";
 import { investors } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
 
@@ -25,9 +25,10 @@ export const Route = createFileRoute("/referentes/$id")({
 function InvestorDetail() {
   const data = Route.useLoaderData() as { investor: typeof investors[number] };
   const investor = data.investor;
-  const { isPremium, setPendingCopy } = useApp();
+  const { isPremium, setPendingCopy, favoriteReferenteId, setFavoriteReferente } = useApp();
   const navigate = useNavigate();
   const locked = investor.locked && !isPremium;
+  const isFav = favoriteReferenteId === investor.id;
 
   if (locked) {
     return (
@@ -55,9 +56,19 @@ function InvestorDetail() {
 
   return (
     <div className="space-y-5 pb-6">
-      <Link to="/referentes" className="inline-flex items-center gap-1 text-sm" style={{ color: "var(--navy)" }}>
-        <ArrowLeft size={16} /> Referentes
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link to="/referentes" className="inline-flex items-center gap-1 text-sm" style={{ color: "var(--navy)" }}>
+          <ArrowLeft size={16} /> Referentes
+        </Link>
+        <button
+          onClick={() => setFavoriteReferente(isFav ? null : investor.id)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium"
+          style={{ borderColor: "var(--gold)", color: "var(--navy)" }}
+        >
+          <Star size={14} fill={isFav ? "var(--gold)" : "none"} color="var(--gold)" />
+          {isFav ? "Favorito" : "Marcar favorito"}
+        </button>
+      </div>
 
       <div className="rounded-3xl overflow-hidden relative aspect-[4/5] shadow-card">
         <img src={investor.photo} alt={investor.name} className="w-full h-full object-cover" />
