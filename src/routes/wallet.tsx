@@ -19,7 +19,18 @@ import {
   type AssetCategory,
   type CatalogAsset,
 } from "@/lib/wallet-store";
-import { getPrices, type PriceData } from "@/lib/prices.functions";
+import { getPrices, getHistory, type PriceData, type ChartRange } from "@/lib/prices.functions";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ComposedChart,
+  Bar,
+} from "recharts";
 
 export const Route = createFileRoute("/wallet")({
   head: () => ({
