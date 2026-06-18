@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Camera, LogOut, Search, Star, X, Zap } from "lucide-react";
 import { useApp } from "@/lib/app-context";
 import { investors, globalUsers, findUserByCode } from "@/lib/data";
+import { usePortfolioSummary } from "@/lib/portfolio";
+
 
 export const Route = createFileRoute("/perfil")({
   head: () => ({
