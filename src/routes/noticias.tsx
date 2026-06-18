@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueries } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { Zap } from "lucide-react";
 import { getMarketNews } from "@/lib/news.functions";
+import { useApp } from "@/lib/app-context";
 
 export const Route = createFileRoute("/noticias")({
   head: () => ({
