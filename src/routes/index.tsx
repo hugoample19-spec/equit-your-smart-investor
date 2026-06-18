@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Trophy, ArrowUpRight, Lock, Users } from "lucide-react";
 import { useApp } from "@/lib/app-context";
 import { investors, globalUsers, trendingStocks } from "@/lib/data";
+import { usePortfolioSummary } from "@/lib/portfolio";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
