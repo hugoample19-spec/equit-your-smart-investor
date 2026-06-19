@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueries } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { Zap } from "lucide-react";
-import { getMarketNews } from "@/lib/news.functions";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Check, ExternalLink, Zap } from "lucide-react";
+import { getMarketNews, type NewsItem } from "@/lib/news.functions";
 import { useApp } from "@/lib/app-context";
 
 export const Route = createFileRoute("/noticias")({
@@ -41,8 +41,11 @@ async function translateToSpanish(text: string): Promise<string> {
   }
 }
 
+type DisplayNews = NewsItem & { displayTitle: string; displaySummary: string };
+
 function NoticiasPage() {
   const { streak, markNewsRead } = useApp();
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ["market-news"],
     queryFn: () => getMarketNews(),
@@ -86,6 +89,64 @@ function NoticiasPage() {
     return () => clearTimeout(t);
   }, [readToday, streak.current, streak.lastReadDate]);
 
+  const opened: DisplayNews | null = openIdx != null && items[openIdx]
+    ? {
+        ...items[openIdx],
+        displayTitle: translations[openIdx]?.data?.title ?? items[openIdx].title,
+        displaySummary: translations[openIdx]?.data?.summary ?? items[openIdx].summary,
+      }
+    : null;
+
+  const openArticle = (idx: number) => {
+    setOpenIdx(idx);
+    markNewsRead();
+  };
+
+  if (opened) {
+    return (
+      <div className="space-y-4">
+        <button
+          type="button"
+          onClick={() => setOpenIdx(null)}
+          className="inline-flex items-center gap-1 text-sm"
+          style={{ color: "var(--navy)" }}
+        >
+          <ArrowLeft size={16} /> Volver
+        </button>
+        <article className="bg-card rounded-2xl p-5 shadow-soft">
+          <div className="flex items-start justify-between gap-3">
+            <span className="text-[10px] tracking-widest font-bold" style={{ color: "var(--gold)" }}>{opened.cat}</span>
+            <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>{opened.time}</span>
+          </div>
+          <h1 className="text-xl font-semibold mt-3 leading-tight" style={{ color: "var(--navy)" }}>
+            {opened.displayTitle}
+          </h1>
+          {opened.displaySummary && (
+            <p className="text-sm mt-3 leading-relaxed" style={{ color: "var(--navy)" }}>
+              {opened.displaySummary}
+            </p>
+          )}
+          {opened.source && (
+            <p className="text-[10px] tracking-wider mt-4 font-medium" style={{ color: "var(--muted-foreground)" }}>
+              FUENTE · {opened.source.toUpperCase()}
+            </p>
+          )}
+          {opened.url && (
+            <a
+              href={opened.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 w-full py-3 rounded-full text-sm font-semibold flex items-center justify-center gap-2"
+              style={{ background: "var(--navy)", color: "var(--cream)" }}
+            >
+              Leer artículo completo <ExternalLink size={14} />
+            </a>
+          )}
+        </article>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-end justify-between">
@@ -93,16 +154,7 @@ function NoticiasPage() {
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Noticias</h1>
           <p className="text-[11px] tracking-widest font-semibold mt-2" style={{ color: "var(--muted-foreground)" }}>HOY · {today}</p>
         </div>
-        {streak.current > 0 && (
-          <div
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-            style={{ background: "var(--muted)", color: "var(--navy)" }}
-            title={`Racha: ${streak.current} días`}
-          >
-            <Zap size={12} fill="var(--gold)" color="var(--gold)" strokeWidth={2} />
-            <span className="text-xs font-semibold tabular-nums">{streak.current}</span>
-          </div>
-        )}
+        <StreakBadge current={streak.current} readToday={readToday} />
       </div>
 
       {isLoading ? (
@@ -117,11 +169,15 @@ function NoticiasPage() {
             const summary = t?.summary ?? n.summary;
             return (
               <li key={idx} className="bg-card rounded-2xl p-4 shadow-soft">
-                <div className="flex items-start justify-between gap-3">
-                  <span className="text-[10px] tracking-widest font-bold" style={{ color: "var(--gold)" }}>{n.cat}</span>
-                  <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>{n.time}</span>
-                </div>
-                <a href={n.url} target="_blank" rel="noopener noreferrer" onClick={() => markNewsRead()} className="block">
+                <button
+                  type="button"
+                  onClick={() => openArticle(idx)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-[10px] tracking-widest font-bold" style={{ color: "var(--gold)" }}>{n.cat}</span>
+                    <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>{n.time}</span>
+                  </div>
                   <h2 className="text-base font-semibold mt-2 leading-snug" style={{ color: "var(--navy)" }}>{title}</h2>
                   {summary && (
                     <p className="text-sm mt-1.5 leading-relaxed line-clamp-3" style={{ color: "var(--muted-foreground)" }}>{summary}</p>
@@ -131,12 +187,46 @@ function NoticiasPage() {
                       {n.source.toUpperCase()}
                     </p>
                   )}
-                </a>
+                </button>
               </li>
             );
           })}
         </ul>
       )}
+    </div>
+  );
+}
+
+function StreakBadge({ current, readToday }: { current: number; readToday: boolean }) {
+  const bg = readToday ? "var(--gold)" : "var(--muted)";
+  const fg = readToday ? "var(--navy)" : "var(--navy)";
+  const boltColor = readToday ? "var(--navy)" : "var(--muted-foreground)";
+  const boltFill = readToday ? "var(--navy)" : "none";
+  return (
+    <div
+      className="flex items-center gap-2 pl-3 pr-3.5 py-2 rounded-full"
+      style={{ background: bg, color: fg, border: readToday ? "none" : "1px solid var(--border)" }}
+      title={readToday ? "Hoy leído" : "Hoy pendiente"}
+    >
+      <div className="relative">
+        <Zap size={18} fill={boltFill} color={boltColor} strokeWidth={2} />
+        {readToday && (
+          <span
+            className="absolute -bottom-0.5 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center"
+            style={{ background: "var(--navy)" }}
+          >
+            <Check size={9} color="var(--gold)" strokeWidth={3} />
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col leading-tight">
+        <span className="text-[9px] tracking-wider font-semibold uppercase" style={{ opacity: 0.7 }}>
+          Racha
+        </span>
+        <span className="text-sm font-bold tabular-nums">
+          {current} · {readToday ? "Hoy leído" : "Hoy pendiente"}
+        </span>
+      </div>
     </div>
   );
 }
