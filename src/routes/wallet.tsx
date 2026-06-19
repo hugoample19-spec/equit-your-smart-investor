@@ -86,12 +86,16 @@ function WalletPage() {
     if (seed != null && Number(seed) > 0) setupStarting(Number(seed));
   }, [ready, state.starting, profile, setupStarting]);
 
-  // Open asset detail when navigated with ?asset=TICKER
+  // Open asset view when navigated with ?asset=TICKER.
+  // If the user already owns it, show the detail screen; otherwise open the
+  // buy screen which includes the price chart + Comprar CTA.
   useEffect(() => {
     if (search.asset && findAsset(search.asset)) {
-      setScreen({ kind: "detail", ticker: search.asset });
+      const owned = !!state.positions[search.asset];
+      setScreen(owned ? { kind: "detail", ticker: search.asset } : { kind: "buy", ticker: search.asset });
       navigate({ search: {}, replace: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.asset, navigate]);
 
   const ownedTickers = useMemo(() => Object.keys(state.positions), [state.positions]);

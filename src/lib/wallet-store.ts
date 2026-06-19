@@ -100,13 +100,27 @@ function load(uid: string | null): WalletState {
   if (typeof window === "undefined") return empty;
   try {
     let v = localStorage.getItem(keyFor(uid));
-    // One-time migration of legacy unscoped wallet into the signed-in user's slot.
+    // One-time migration: pull from any prior unscoped/guest wallet into the
+    // signed-in user's slot so we never silently lose existing data.
     if (!v && uid) {
-      const legacy = localStorage.getItem(LEGACY_KEY);
-      if (legacy) {
-        localStorage.setItem(keyFor(uid), legacy);
-        localStorage.removeItem(LEGACY_KEY);
-        v = legacy;
+      const candidates = [LEGACY_KEY, keyFor(null), "equit_wallet_v1:null"];
+      for (const k of candidates) {
+        const prior = localStorage.getItem(k);
+        if (!prior) continue;
+        try {
+          const parsed = JSON.parse(prior) as WalletState;
+          const hasData =
+            parsed &&
+            (parsed.starting != null ||
+              (parsed.history && parsed.history.length > 0) ||
+              (parsed.positions && Object.keys(parsed.positions).length > 0));
+          if (hasData) {
+            localStorage.setItem(keyFor(uid), prior);
+            localStorage.removeItem(k);
+            v = prior;
+            break;
+          }
+        } catch { /* ignore */ }
       }
     }
     return v ? { ...empty, ...(JSON.parse(v) as WalletState) } : empty;

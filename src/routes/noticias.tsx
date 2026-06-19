@@ -87,6 +87,12 @@ function NoticiasPage() {
   const todayISO = new Date().toISOString().slice(0, 10);
   const readToday = streak.lastReadDate === todayISO;
 
+  // Mark the streak as soon as the user lands on the Noticias tab — no need
+  // to open an individual article.
+  useEffect(() => {
+    if (!readToday) markNewsRead();
+  }, [readToday, markNewsRead]);
+
   useEffect(() => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
     if (readToday) return;
