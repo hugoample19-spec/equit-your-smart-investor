@@ -1232,7 +1232,7 @@ function SellScreen({
 
       <button
         disabled={!canSell}
-        onClick={() => onConfirm(qty, px)}
+        onClick={() => hasPrice && onConfirm(qty, px!)}
         className="w-full rounded-xl py-3.5 text-sm font-semibold disabled:opacity-40"
         style={{ background: "var(--navy)", color: "var(--cream)" }}
       >
