@@ -994,13 +994,10 @@ function DetailScreen({
   const qty = positionQty(position);
   const invested = positionInvested(position);
   const avg = positionAvg(position);
-  // NEVER fall back to avg as a stand-in for current price.
-  // px is non-null only when we have a real live or cached price.
-  const px = typeof price?.price === "number" && price.price > 0 ? price.price : null;
-  const hasPrice = px !== null;
-  const value = hasPrice ? qty * px! : null;
-  const gain = hasPrice ? value! - invested : null;
-  const gainPct = hasPrice && invested > 0 ? (gain! / invested) * 100 : null;
+  const px = price?.price ?? avg;
+  const value = qty * px;
+  const gain = value - invested;
+  const gainPct = invested > 0 ? (gain / invested) * 100 : 0;
 
   return (
     <div className="space-y-4 pb-6">
@@ -1015,33 +1012,15 @@ function DetailScreen({
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
         <p className="text-xs text-muted-foreground">{asset?.name}</p>
-        {hasPrice ? (
-          <>
-            <p className="text-2xl font-semibold tabular-nums mt-1" style={{ color: "var(--navy)" }}>
-              {fmtEUR(px!)}
-            </p>
-            {price?.reference && (
-              <p className="text-xs mt-1 text-muted-foreground">Precio de referencia</p>
-            )}
-            {price?.stale && (
-              <p className="text-[11px] mt-1 text-muted-foreground">
-                Última actualización: {fmtAgo(price.fetchedAt)}
-              </p>
-            )}
-          </>
-        ) : (
-          <>
-            <p className="text-2xl font-semibold tabular-nums mt-1" style={{ color: "var(--danger)" }}>
-              Precio no disponible
-            </p>
-            {price?.error && (
-              <p className="text-[11px] mt-1 text-muted-foreground">{price.error}</p>
-            )}
-          </>
+        <p className="text-2xl font-semibold tabular-nums mt-1" style={{ color: "var(--navy)" }}>
+          {fmtEUR(px)}
+        </p>
+        {price?.reference && (
+          <p className="text-xs mt-1 text-muted-foreground">Precio de referencia</p>
         )}
       </section>
 
-      <PriceChart ticker={position.ticker} livePrice={px} />
+      <PriceChart ticker={position.ticker} />
 
       <section className="bg-card rounded-2xl p-5 shadow-soft space-y-2">
         <p className="text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--navy)" }}>
@@ -1050,38 +1029,22 @@ function DetailScreen({
         <Row label="Participaciones" value={qty.toLocaleString("es-ES", { maximumFractionDigits: 6 })} />
         <Row label="Precio medio compra" value={fmtEUR(avg)} />
         <Row label="Total invertido" value={fmtEUR(invested)} />
-        <Row label="Valor actual" value={hasPrice ? fmtEUR(value!) : "N/D"} bold />
+        <Row label="Valor actual" value={fmtEUR(value)} bold />
         <Row
           label="Ganancia / Pérdida"
-          value={
-            hasPrice
-              ? `${gain! >= 0 ? "+" : ""}${fmtEUR(gain!)} (${fmtPct(gainPct!)})`
-              : "N/D"
-          }
-          color={
-            hasPrice
-              ? gain! >= 0
-                ? "var(--success)"
-                : "var(--danger)"
-              : "var(--muted-foreground)"
-          }
+          value={`${gain >= 0 ? "+" : ""}${fmtEUR(gain)} (${fmtPct(gainPct)})`}
+          color={gain >= 0 ? "var(--success)" : "var(--danger)"}
           bold
         />
       </section>
 
       <button
         onClick={onSell}
-        disabled={!hasPrice}
-        className="w-full rounded-xl py-3.5 text-sm font-semibold border disabled:opacity-50"
+        className="w-full rounded-xl py-3.5 text-sm font-semibold border"
         style={{ borderColor: "var(--navy)", color: "var(--navy)" }}
       >
         Vender
       </button>
-      {!hasPrice && (
-        <p className="text-[11px] text-center text-muted-foreground">
-          No se puede vender sin un precio actual.
-        </p>
-      )}
     </div>
   );
 }
@@ -1126,16 +1089,15 @@ function SellScreen({
   const asset = findAsset(position.ticker);
   const owned = positionQty(position);
   const avg = positionAvg(position);
-  const px = typeof price?.price === "number" && price.price > 0 ? price.price : null;
-  const hasPrice = px !== null;
+  const px = price?.price ?? avg;
   const [mode, setMode] = useState<"qty" | "eur">("qty");
   const [input, setInput] = useState("");
   const n = Number(input.replace(",", ".")) || 0;
-  const requestedQty = mode === "qty" ? n : hasPrice && px! > 0 ? n / px! : 0;
+  const requestedQty = mode === "qty" ? n : px > 0 ? n / px : 0;
   const qty = Math.min(requestedQty, owned);
-  const proceeds = hasPrice ? qty * px! : 0;
-  const realizedPnl = hasPrice ? qty * (px! - avg) : 0;
-  const canSell = hasPrice && qty > 0;
+  const proceeds = qty * px;
+  const realizedPnl = qty * (px - avg);
+  const canSell = qty > 0;
 
   return (
     <div className="space-y-4 pb-6">
@@ -1149,17 +1111,9 @@ function SellScreen({
       </div>
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
-        <Row
-          label="Precio actual"
-          value={hasPrice ? fmtEUR(px!) : "Precio no disponible"}
-          color={hasPrice ? undefined : "var(--danger)"}
-          bold
-        />
+        <Row label="Precio actual" value={fmtEUR(px)} bold />
         <Row label="Participaciones" value={owned.toLocaleString("es-ES", { maximumFractionDigits: 6 })} />
         <Row label="Precio medio compra" value={fmtEUR(avg)} />
-        {price?.stale && hasPrice && (
-          <p className="text-[11px] text-muted-foreground">Última actualización: {fmtAgo(price.fetchedAt)}</p>
-        )}
       </section>
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
@@ -1188,7 +1142,7 @@ function SellScreen({
             Cantidad a vender
           </p>
           <button
-            onClick={() => setInput(mode === "qty" ? String(owned) : hasPrice ? String((owned * px!).toFixed(2)) : "")}
+            onClick={() => setInput(mode === "qty" ? String(owned) : String((owned * px).toFixed(2)))}
             className="text-xs font-semibold"
             style={{ color: "var(--gold)" }}
           >
@@ -1232,7 +1186,7 @@ function SellScreen({
 
       <button
         disabled={!canSell}
-        onClick={() => hasPrice && onConfirm(qty, px!)}
+        onClick={() => onConfirm(qty, px)}
         className="w-full rounded-xl py-3.5 text-sm font-semibold disabled:opacity-40"
         style={{ background: "var(--navy)", color: "var(--cream)" }}
       >
@@ -1246,7 +1200,7 @@ function SellScreen({
 
 const RANGES: ChartRange[] = ["1D", "1W", "1M", "3M", "1Y"];
 
-function PriceChart({ ticker, livePrice }: { ticker: string; livePrice?: number | null }) {
+function PriceChart({ ticker }: { ticker: string }) {
   const [range, setRange] = useState<ChartRange>("1M");
   const getHistoryFn = useServerFn(getHistory);
   const q = useQuery({
@@ -1256,22 +1210,7 @@ function PriceChart({ ticker, livePrice }: { ticker: string; livePrice?: number 
     refetchOnWindowFocus: false,
   });
 
-  // Unify chart's latest point with the live quote so the chart and the header
-  // never disagree about "current price". If we have a live price, append/replace
-  // the last point so both sources line up.
-  const rawPoints = q.data?.points ?? [];
-  const data = (() => {
-    if (!livePrice || rawPoints.length === 0) return rawPoints;
-    const lastT = rawPoints[rawPoints.length - 1].t;
-    const nowT = Date.now();
-    const merged = [...rawPoints];
-    if (nowT - lastT < 60_000) {
-      merged[merged.length - 1] = { ...merged[merged.length - 1], price: livePrice };
-    } else {
-      merged.push({ t: nowT, price: livePrice, volume: 0 });
-    }
-    return merged;
-  })();
+  const data = q.data?.points ?? [];
   const isReference = q.data?.reference;
   const hasData = data.length > 1;
   const first = hasData ? data[0].price : 0;
