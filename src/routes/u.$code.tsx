@@ -8,8 +8,8 @@ export const Route = createFileRoute("/u/$code")({
     const u = findUserByCode(params.code);
     return {
       meta: [
-        { title: `${u?.handle ?? "Usuario"} · Equit` },
-        { name: "description", content: u ? `Perfil de ${u.handle} en Equit.` : "Perfil de usuario" },
+        { title: `${u?.name ?? "Usuario"} · Equit` },
+        { name: "description", content: u ? `Perfil de ${u.name} en Equit.` : "Perfil de usuario" },
       ],
     };
   },
