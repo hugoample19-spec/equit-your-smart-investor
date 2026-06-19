@@ -193,7 +193,7 @@ function PerfilPage() {
           <div>
             <p className="text-sm font-medium" style={{ color: "var(--navy)" }}>Cartera {isPortfolioPublic ? "pública" : "privada"}</p>
             <p className="text-[11px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>
-              {isPortfolioPublic ? "Otros usuarios ven tu distribución y rendimiento" : "Solo se ve tu @handle y rendimiento"}
+              {isPortfolioPublic ? "Otros usuarios ven tu distribución y rendimiento" : "Solo se ve tu nombre y rendimiento"}
             </p>
           </div>
           <button
