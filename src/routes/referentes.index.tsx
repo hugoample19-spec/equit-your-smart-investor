@@ -88,6 +88,9 @@ function ReferentesPage() {
       </div>
 
       <PremiumBanner />
+      {showPremium && (
+        <PremiumModal onClose={() => setShowPremium(false)} />
+      )}
     </div>
   );
 }
