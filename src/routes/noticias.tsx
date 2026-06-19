@@ -142,7 +142,13 @@ function NoticiasPage() {
     setInsightError(null);
     try {
       const res = await getNewsInsight({ data: { headline: opened.displayTitle, summary: opened.displaySummary } });
-      setInsight(res.insight);
+      if (res.ok) {
+        setInsight(res.insight);
+      } else if (res.reason === "premium_required") {
+        setShowPremium(true);
+      } else {
+        setInsightError("No se pudo generar el análisis. Inténtalo de nuevo en un momento.");
+      }
     } catch (e) {
       setInsightError("No se pudo generar el análisis. Inténtalo de nuevo en un momento.");
       console.error(e);
