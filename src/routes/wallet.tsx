@@ -10,7 +10,6 @@ import {
   Check,
   X,
   Lock,
-  RefreshCw,
 } from "lucide-react";
 import {
   CATALOG,
@@ -56,6 +55,15 @@ const fmtEUR0 = (n: number) =>
   "€" + n.toLocaleString("es-ES", { maximumFractionDigits: 0 });
 const fmtPct = (n: number) =>
   (n >= 0 ? "+" : "") + n.toLocaleString("es-ES", { maximumFractionDigits: 2 }) + "%";
+function fmtAgo(ts?: number): string {
+  if (!ts) return "";
+  const mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
+  if (mins < 1) return "Actualizado ahora";
+  if (mins === 1) return "Actualizado hace 1 min";
+  if (mins < 60) return `Actualizado hace ${mins} min`;
+  const hrs = Math.round(mins / 60);
+  return hrs === 1 ? "Actualizado hace 1 h" : `Actualizado hace ${hrs} h`;
+}
 
 type Screen =
   | { kind: "home" }
@@ -361,21 +369,11 @@ function HomeScreen({
               <span className="text-xs text-muted-foreground">Rendimiento total</span>
             </div>
           </div>
-          <button
-            onClick={() => summary.refresh()}
-            disabled={summary.isRefreshing}
-            className="rounded-full border px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 shrink-0"
-            style={{ borderColor: "var(--border)", color: "var(--navy)", opacity: summary.isRefreshing ? 0.6 : 1 }}
-            aria-label="Actualizar precios"
-          >
-            <RefreshCw size={13} className={summary.isRefreshing ? "animate-spin" : ""} />
-            Actualizar precios
-          </button>
         </div>
         {summary.hasUnavailable && (
           <div className="mt-3 flex items-start gap-2 text-xs rounded-lg p-2.5" style={{ background: "rgba(255,122,138,0.10)", color: "var(--danger)" }}>
             <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-            <span>Algunos precios no se han podido actualizar. El rendimiento total excluye esos activos hasta que vuelva el dato en vivo.</span>
+            <span>Algunos precios no están disponibles. El rendimiento total excluye esos activos hasta que vuelva el dato.</span>
           </div>
         )}
         <div className="mt-4 pt-4 border-t flex justify-between text-xs" style={{ borderColor: "var(--border)" }}>
@@ -450,6 +448,9 @@ function HomeScreen({
                         >
                           {fmtPct(p.gainPct ?? 0)}
                         </p>
+                        {p.stale && p.fetchedAt && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{fmtAgo(p.fetchedAt)}</p>
+                        )}
                       </>
                     )}
                   </div>

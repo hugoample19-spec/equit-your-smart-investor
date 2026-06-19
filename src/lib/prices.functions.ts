@@ -6,10 +6,11 @@ export type PriceData = {
   prevClose: number | null;
   changePct: number | null;
   spark: number[];
-  stale: boolean;            // true = no live price available
+  stale: boolean;            // true = served from cache, live fetch failed this round
   reference?: boolean;       // true = static reference price, not live
-  source?: "finnhub" | "yahoo" | "reference" | "none";
+  source?: "finnhub" | "yahoo" | "reference" | "cache" | "none";
   error?: string;            // human-readable reason when price is null
+  fetchedAt?: number;        // ms timestamp of when this price was actually fetched
 };
 
 // Reference prices for commodities (real APIs require paid plans).
@@ -153,17 +154,75 @@ export const getPrices = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const key = process.env.FINNHUB_API_KEY;
     const unique = Array.from(new Set(data.tickers)).slice(0, 80);
-    // Sequential with small delay to stay under Finnhub free-tier rate limits
-    // (60 req/min). 120ms between calls = ~8 req/sec ceiling.
-    const map: Record<string, PriceData> = {};
-    for (const t of unique) {
-      map[t] = await fetchOne(t, key);
-      await sleep(120);
+
+    // Load cached prices first so we can always show last-known-good values
+    // when a live fetch fails (rate limit, transient error, etc.).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    type CacheRow = {
+      ticker: string;
+      price: number | string;
+      prev_close: number | string | null;
+      change_pct: number | string | null;
+      source: string | null;
+      fetched_at: string;
+    };
+    const cache: Record<string, CacheRow> = {};
+    if (unique.length > 0) {
+      const { data: rows } = await supabaseAdmin
+        .from("price_cache")
+        .select("ticker, price, prev_close, change_pct, source, fetched_at")
+        .in("ticker", unique);
+      for (const r of (rows ?? []) as CacheRow[]) cache[r.ticker] = r;
     }
+
+    // Sequential staggered fetch (250ms) to stay under Finnhub free tier (60/min).
+    const map: Record<string, PriceData> = {};
+    const toUpsert: Array<{
+      ticker: string; price: number; prev_close: number | null;
+      change_pct: number | null; source: string; fetched_at: string;
+    }> = [];
+
+    for (const t of unique) {
+      const fresh = await fetchOne(t, key);
+      if (fresh.price != null) {
+        map[t] = fresh;
+        toUpsert.push({
+          ticker: t,
+          price: fresh.price,
+          prev_close: fresh.prevClose,
+          change_pct: fresh.changePct,
+          source: fresh.source ?? "none",
+          fetched_at: new Date().toISOString(),
+        });
+      } else {
+        // Live fetch failed → fall back to cached price if we have one.
+        const c = cache[t];
+        if (c) {
+          const price = Number(c.price);
+          const prev = c.prev_close != null ? Number(c.prev_close) : null;
+          const chg = c.change_pct != null ? Number(c.change_pct) : null;
+          map[t] = {
+            ticker: t, price, prevClose: prev, changePct: chg,
+            spark: prev != null ? [prev, price] : [price],
+            stale: true, source: "cache",
+            fetchedAt: new Date(c.fetched_at).getTime(),
+          };
+        } else {
+          map[t] = fresh; // truly unavailable: no live, no cache
+        }
+      }
+      await sleep(250);
+    }
+
+    // Best-effort cache write; don't block the response on failure.
+    if (toUpsert.length > 0) {
+      const { error } = await supabaseAdmin.from("price_cache").upsert(toUpsert, { onConflict: "ticker" });
+      if (error) console.warn("[prices] cache upsert failed:", error.message);
+    }
+
     const failed = Object.values(map).filter((p) => p.price == null).map((p) => `${p.ticker}(${p.error ?? "?"})`);
     if (failed.length) {
-      // eslint-disable-next-line no-console
-      console.warn("[prices] failed tickers:", failed.join(", "));
+      console.warn("[prices] no live + no cache:", failed.join(", "));
     }
     return { prices: map, fetchedAt: Date.now() };
   });

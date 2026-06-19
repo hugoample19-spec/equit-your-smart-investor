@@ -18,14 +18,15 @@ export type AssetBreakdown = {
   ticker: string;
   qty: number;
   avg: number;
-  price: number | null;       // null = live price unavailable
+  price: number | null;       // null = no price at all (live failed AND no cache)
   invested: number;
-  value: number;              // qty * price (or qty*avg as placeholder when unavailable)
-  gain: number | null;        // null when price unavailable — never fake 0
-  gainPct: number | null;     // null when price unavailable
-  unavailable: boolean;
+  value: number;
+  gain: number | null;
+  gainPct: number | null;
+  unavailable: boolean;       // true only when we have NO price (first-ever failure)
   priceError?: string;
-  stale?: boolean;
+  stale?: boolean;            // true = served from cache (last-known-good)
+  fetchedAt?: number;
 };
 
 export type PortfolioSummary = {
@@ -44,7 +45,7 @@ export type PortfolioSummary = {
 
 function compute(
   positions: Record<string, Position>,
-  prices: Record<string, { price?: number | null; stale?: boolean; error?: string } | undefined>,
+  prices: Record<string, { price?: number | null; stale?: boolean; error?: string; fetchedAt?: number } | undefined>,
 ): { assets: AssetBreakdown[]; marketValue: number; totalReturn: number } {
   let marketValue = 0;
   let totalReturn = 0;
@@ -56,6 +57,7 @@ function compute(
     const pd = prices[p.ticker];
     const livePrice = pd && typeof pd.price === "number" && pd.price > 0 ? pd.price : null;
     if (livePrice != null) {
+      // Any price (fresh or cached) is treated as the current value.
       const value = qty * livePrice;
       const gain = (livePrice - avg) * qty;
       const gainPct = avg > 0 ? ((livePrice - avg) / avg) * 100 : 0;
@@ -63,11 +65,10 @@ function compute(
       totalReturn += gain;
       assets.push({
         ticker: p.ticker, qty, avg, price: livePrice, invested, value, gain, gainPct,
-        unavailable: false, stale: pd?.stale,
+        unavailable: false, stale: pd?.stale, fetchedAt: pd?.fetchedAt,
       });
     } else {
-      // No live price → use invested cost as placeholder so totals don't crash,
-      // but flag as unavailable and do NOT inject a fake 0% return.
+      // Truly no price (live failed AND no cache). Flag as unavailable.
       marketValue += invested;
       assets.push({
         ticker: p.ticker, qty, avg, price: null, invested, value: invested,
