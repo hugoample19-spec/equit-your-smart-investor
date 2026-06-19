@@ -58,7 +58,15 @@ type Screen =
   | { kind: "buyList" }
   | { kind: "buy"; ticker: string }
   | { kind: "detail"; ticker: string }
-  | { kind: "sell"; ticker: string };
+  | { kind: "sell"; ticker: string }
+  | {
+      kind: "confirmation";
+      mode: "buy" | "sell";
+      ticker: string;
+      qty: number;
+      price: number;
+      amount: number;
+    };
 
 function WalletPage() {
   const { state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds } = useWallet();
@@ -78,7 +86,12 @@ function WalletPage() {
   const tickersToFetch = useMemo(() => {
     const base = new Set<string>(ownedTickers);
     if (screen.kind === "buyList") CATALOG.forEach((c) => base.add(c.ticker));
-    if (screen.kind === "buy" || screen.kind === "detail" || screen.kind === "sell")
+    if (
+      screen.kind === "buy" ||
+      screen.kind === "detail" ||
+      screen.kind === "sell" ||
+      screen.kind === "confirmation"
+    )
       base.add(screen.ticker);
     return Array.from(base);
   }, [ownedTickers, screen]);
@@ -99,77 +112,120 @@ function WalletPage() {
 
   const prices = pricesQuery.data?.prices ?? {};
 
-  if (screen.kind === "buyList")
+  const renderScreen = (): React.ReactNode => {
+    if (screen.kind === "buyList")
+      return (
+        <BuyListScreen
+          prices={prices}
+          loading={pricesQuery.isLoading}
+          onBack={() => setScreen({ kind: "home" })}
+          onPick={(t) => setScreen({ kind: "buy", ticker: t })}
+        />
+      );
+
+    if (screen.kind === "buy")
+      return (
+        <BuyScreen
+          ticker={screen.ticker}
+          price={prices[screen.ticker]}
+          cash={state.cash}
+          onBack={() => setScreen({ kind: "buyList" })}
+          onConfirm={(qty, price) => {
+            buy(screen.ticker, qty, price);
+            setScreen({
+              kind: "confirmation",
+              mode: "buy",
+              ticker: screen.ticker,
+              qty,
+              price,
+              amount: qty * price,
+            });
+          }}
+        />
+      );
+
+    if (screen.kind === "detail") {
+      const pos = state.positions[screen.ticker];
+      if (!pos) {
+        setScreen({ kind: "home" });
+        return null;
+      }
+      return (
+        <DetailScreen
+          position={pos}
+          price={prices[screen.ticker]}
+          onBack={() => setScreen({ kind: "home" })}
+          onSell={() => setScreen({ kind: "sell", ticker: screen.ticker })}
+        />
+      );
+    }
+
+    if (screen.kind === "sell") {
+      const pos = state.positions[screen.ticker];
+      if (!pos) {
+        setScreen({ kind: "home" });
+        return null;
+      }
+      return (
+        <SellScreen
+          position={pos}
+          price={prices[screen.ticker]}
+          onBack={() => setScreen({ kind: "detail", ticker: screen.ticker })}
+          onConfirm={(qty, price) => {
+            sell(screen.ticker, qty, price);
+            setScreen({
+              kind: "confirmation",
+              mode: "sell",
+              ticker: screen.ticker,
+              qty,
+              price,
+              amount: qty * price,
+            });
+          }}
+        />
+      );
+    }
+
+    if (screen.kind === "confirmation")
+      return (
+        <ConfirmationScreen
+          mode={screen.mode}
+          ticker={screen.ticker}
+          qty={screen.qty}
+          price={screen.price}
+          amount={screen.amount}
+          onDone={() => setScreen({ kind: "home" })}
+        />
+      );
+
     return (
-      <BuyListScreen
+      <HomeScreen
+        state={state}
         prices={prices}
-        loading={pricesQuery.isLoading}
-        onBack={() => setScreen({ kind: "home" })}
-        onPick={(t) => setScreen({ kind: "buy", ticker: t })}
+        onBuy={() => setScreen({ kind: "buyList" })}
+        onReset={reset}
+        onOpenAsset={(t) => setScreen({ kind: "detail", ticker: t })}
+        onAddFunds={addFunds}
+        onWithdrawFunds={withdrawFunds}
       />
     );
+  };
 
-  if (screen.kind === "buy")
-    return (
-      <BuyScreen
-        ticker={screen.ticker}
-        price={prices[screen.ticker]}
-        cash={state.cash}
-        onBack={() => setScreen({ kind: "buyList" })}
-        onConfirm={(qty, price) => {
-          buy(screen.ticker, qty, price);
-          setScreen({ kind: "home" });
-        }}
-      />
-    );
-
-  if (screen.kind === "detail") {
-    const pos = state.positions[screen.ticker];
-    if (!pos) {
-      setScreen({ kind: "home" });
-      return null;
-    }
-    return (
-      <DetailScreen
-        position={pos}
-        price={prices[screen.ticker]}
-        onBack={() => setScreen({ kind: "home" })}
-        onSell={() => setScreen({ kind: "sell", ticker: screen.ticker })}
-      />
-    );
-  }
-
-  if (screen.kind === "sell") {
-    const pos = state.positions[screen.ticker];
-    if (!pos) {
-      setScreen({ kind: "home" });
-      return null;
-    }
-    return (
-      <SellScreen
-        position={pos}
-        price={prices[screen.ticker]}
-        onBack={() => setScreen({ kind: "detail", ticker: screen.ticker })}
-        onConfirm={(qty, price) => {
-          sell(screen.ticker, qty, price);
-          setScreen({ kind: "home" });
-        }}
-      />
-    );
-  }
+  const screenKey =
+    screen.kind +
+    ("ticker" in screen ? ":" + screen.ticker : "") +
+    (screen.kind === "confirmation" ? ":" + screen.mode : "");
 
   return (
-    <HomeScreen
-      state={state}
-      prices={prices}
-      onBuy={() => setScreen({ kind: "buyList" })}
-      onReset={reset}
-      onOpenAsset={(t) => setScreen({ kind: "detail", ticker: t })}
-      onAddFunds={addFunds}
-      onWithdrawFunds={withdrawFunds}
-    />
+    <div
+      key={screenKey}
+      className="animate-in fade-in slide-in-from-right-2 duration-300"
+    >
+      {renderScreen()}
+    </div>
   );
 }
+
 
 /* ============================== Setup ============================== */
 
