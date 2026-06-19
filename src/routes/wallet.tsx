@@ -667,22 +667,25 @@ function Donut({
 function BuyListScreen({
   prices,
   loading,
+  isPremium,
   onBack,
   onPick,
 }: {
   prices: Record<string, PriceData>;
   loading: boolean;
+  isPremium: boolean;
   onBack: () => void;
   onPick: (ticker: string) => void;
 }) {
   const [tab, setTab] = useState<AssetCategory>("stocks");
   const [q, setQ] = useState("");
-  const tabs: { key: AssetCategory; label: string }[] = [
+  const tabs: { key: AssetCategory; label: string; premium?: boolean }[] = [
     { key: "stocks", label: "Acciones" },
     { key: "etfs", label: "ETFs" },
     { key: "commodities", label: "Materias primas" },
-    { key: "crypto", label: "Criptos" },
+    { key: "crypto", label: "Criptos", premium: true },
   ];
+  const cryptoLocked = tab === "crypto" && !isPremium;
   const list = CATALOG.filter(
     (a) =>
       a.category === tab &&
@@ -724,7 +727,7 @@ function BuyListScreen({
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border"
+            className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border inline-flex items-center gap-1"
             style={{
               background: tab === t.key ? "var(--navy)" : "transparent",
               color: tab === t.key ? "var(--cream)" : "var(--navy)",
@@ -732,10 +735,36 @@ function BuyListScreen({
             }}
           >
             {t.label}
+            {t.premium && !isPremium && (
+              <Lock size={11} style={{ color: tab === t.key ? "var(--gold)" : "var(--gold)" }} />
+            )}
           </button>
         ))}
       </div>
 
+      {cryptoLocked ? (
+        <section className="bg-card rounded-2xl p-8 shadow-soft text-center">
+          <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center" style={{ background: "var(--navy)" }}>
+            <Lock size={22} style={{ color: "var(--gold)" }} />
+          </div>
+          <p className="mt-4 text-[10px] font-semibold tracking-widest" style={{ color: "var(--gold)" }}>
+            EQUIT PREMIUM
+          </p>
+          <h2 className="text-lg font-semibold mt-1" style={{ color: "var(--navy)" }}>
+            Criptos disponibles solo en Premium
+          </h2>
+          <p className="text-sm mt-2" style={{ color: "var(--muted-foreground)" }}>
+            Bitcoin, Ethereum, Solana y más por €3,99/mes.
+          </p>
+          <Link
+            to="/perfil"
+            className="inline-block mt-5 px-5 py-2.5 rounded-full text-sm font-semibold"
+            style={{ background: "var(--gold)", color: "var(--navy)" }}
+          >
+            Probar Premium
+          </Link>
+        </section>
+      ) : (
       <section key={tab} className="bg-card rounded-2xl p-2 shadow-soft animate-in fade-in duration-200">
         {(() => {
           // Group stocks by sector; flat list otherwise.
