@@ -49,10 +49,17 @@ function PerfilPage() {
     setAvatarMenu(false);
   };
 
-  const commitName = () => {
+  const commitName = async () => {
     const v = nameDraft.trim();
-    if (!v) { setNameDraft(fullName); setEditingName(false); return; }
-    if (v !== fullName) setFullName(v);
+    if (!v) { setNameDraft(fullName); setEditingName(false); setNameError(null); return; }
+    if (v === fullName) { setEditingName(false); setNameError(null); return; }
+    const res = await setFullName(v);
+    if (!res.ok) {
+      setNameError(res.error ?? "Error");
+      toast.error(res.error ?? "Error");
+      return;
+    }
+    setNameError(null);
     setEditingName(false);
   };
 
