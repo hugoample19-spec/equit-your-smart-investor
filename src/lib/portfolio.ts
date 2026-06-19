@@ -113,7 +113,9 @@ export function usePortfolioSummary(): PortfolioSummary {
         currentPrice: a.price,
         gainEUR: a.gain,
         gainPct: a.gainPct,
-        formula: `((${a.price} - ${a.avg}) / ${a.avg}) * 100 = ${a.gainPct.toFixed(2)}%`,
+        formula: a.gainPct != null ? `((${a.price} - ${a.avg}) / ${a.avg}) * 100 = ${a.gainPct.toFixed(2)}%` : "PRICE_UNAVAILABLE",
+        unavailable: a.unavailable,
+        priceError: a.priceError ?? null,
       });
       // eslint-disable-next-line no-console
       console.log("[portfolio:total]", {
