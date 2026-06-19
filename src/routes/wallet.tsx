@@ -842,6 +842,7 @@ function BuyListScreen({
           <p className="text-sm text-muted-foreground text-center py-8">Sin resultados</p>
         )}
       </section>
+      )}
     </div>
   );
 }
