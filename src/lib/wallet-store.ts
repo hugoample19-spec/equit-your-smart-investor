@@ -1,5 +1,5 @@
-// Trading wallet state with localStorage persistence.
-import { useEffect, useState, useCallback } from "react";
+// Trading wallet state with localStorage persistence (per-user).
+import { useEffect, useState, useCallback, useRef } from "react";
 
 export type AssetCategory = "stocks" | "etfs" | "commodities" | "crypto";
 
@@ -56,24 +56,20 @@ export const CATALOG: CatalogAsset[] = [
   { ticker: "SIE.DE", display: "SIE", name: "Siemens", category: "stocks", sector: "Europa" },
   { ticker: "VOW3.DE", display: "VOW3", name: "Volkswagen", category: "stocks", sector: "Europa" },
   { ticker: "SHEL", display: "SHEL", name: "Shell", category: "stocks", sector: "Europa" },
-  // ETFs
+  // ETFs (liquid fund-based, Finnhub real-time)
   { ticker: "SPY", display: "SPY", name: "S&P 500", category: "etfs" },
   { ticker: "QQQ", display: "QQQ", name: "Nasdaq 100", category: "etfs" },
   { ticker: "VTI", display: "VTI", name: "Total US Market", category: "etfs" },
-  { ticker: "VWRA.L", display: "VWRA", name: "Vanguard All World", category: "etfs" },
-  { ticker: "ARKK", display: "ARKK", name: "ARK Innovation", category: "etfs" },
-  { ticker: "GLD", display: "GLD", name: "Gold ETF", category: "etfs" },
-  { ticker: "TLT", display: "TLT", name: "US Treasury Bonds", category: "etfs" },
-  { ticker: "IEMG", display: "IEMG", name: "Emerging Markets", category: "etfs" },
-  { ticker: "EZU", display: "EZU", name: "Eurozone", category: "etfs" },
-  { ticker: "SOXX", display: "SOXX", name: "Semiconductores", category: "etfs" },
-  // Commodities (reference prices)
-  { ticker: "GC=F", display: "XAU", name: "Oro (XAU/USD)", category: "commodities" },
-  { ticker: "SI=F", display: "XAG", name: "Plata (XAG/USD)", category: "commodities" },
-  { ticker: "CL=F", display: "WTI", name: "Petróleo WTI", category: "commodities" },
-  { ticker: "NG=F", display: "NG", name: "Gas Natural", category: "commodities" },
-  { ticker: "HG=F", display: "HG", name: "Cobre", category: "commodities" },
-  { ticker: "ZW=F", display: "ZW", name: "Trigo", category: "commodities" },
+  { ticker: "VOO", display: "VOO", name: "Vanguard S&P 500", category: "etfs" },
+  { ticker: "IWM", display: "IWM", name: "Russell 2000", category: "etfs" },
+  { ticker: "DIA", display: "DIA", name: "Dow Jones 30", category: "etfs" },
+  // Commodities (liquid ETFs, Finnhub real-time)
+  { ticker: "GLD", display: "GLD", name: "Oro (SPDR Gold)", category: "commodities" },
+  { ticker: "SLV", display: "SLV", name: "Plata (iShares Silver)", category: "commodities" },
+  { ticker: "USO", display: "USO", name: "Petróleo (US Oil Fund)", category: "commodities" },
+  { ticker: "UNG", display: "UNG", name: "Gas Natural (US Natural Gas)", category: "commodities" },
+  { ticker: "CPER", display: "CPER", name: "Cobre (US Copper Index)", category: "commodities" },
+  { ticker: "DBA", display: "DBA", name: "Agricultura (Invesco Agriculture)", category: "commodities" },
   // Criptos
   { ticker: "BTC-USD", display: "BTC", name: "Bitcoin", category: "crypto" },
   { ticker: "ETH-USD", display: "ETH", name: "Ethereum", category: "crypto" },
@@ -96,38 +92,51 @@ export type WalletState = {
   history: { type: "buy" | "sell"; ticker: string; qty: number; price: number; at: number }[];
 };
 
-const KEY = "equit_wallet_v1";
+const LEGACY_KEY = "equit_wallet_v1";
+const keyFor = (uid: string | null) => `equit_wallet_v1:${uid ?? "guest"}`;
 const empty: WalletState = { starting: null, cash: 0, positions: {}, history: [] };
 
-function load(): WalletState {
+function load(uid: string | null): WalletState {
   if (typeof window === "undefined") return empty;
   try {
-    const v = localStorage.getItem(KEY);
+    let v = localStorage.getItem(keyFor(uid));
+    // One-time migration of legacy unscoped wallet into the signed-in user's slot.
+    if (!v && uid) {
+      const legacy = localStorage.getItem(LEGACY_KEY);
+      if (legacy) {
+        localStorage.setItem(keyFor(uid), legacy);
+        localStorage.removeItem(LEGACY_KEY);
+        v = legacy;
+      }
+    }
     return v ? { ...empty, ...(JSON.parse(v) as WalletState) } : empty;
   } catch {
     return empty;
   }
 }
-function persist(s: WalletState) {
+function persist(uid: string | null, s: WalletState) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(KEY, JSON.stringify(s));
+    localStorage.setItem(keyFor(uid), JSON.stringify(s));
   } catch {}
 }
 
-export function useWallet() {
+export function useWallet(userId: string | null = null) {
   const [state, setState] = useState<WalletState>(empty);
   const [ready, setReady] = useState(false);
+  const uidRef = useRef<string | null>(userId);
 
+  // Reload when the active user changes (login / logout / switch).
   useEffect(() => {
-    setState(load());
+    uidRef.current = userId;
+    setState(load(userId));
     setReady(true);
-  }, []);
+  }, [userId]);
 
   const update = useCallback((mut: (s: WalletState) => WalletState) => {
     setState((prev) => {
       const next = mut(prev);
-      persist(next);
+      persist(uidRef.current, next);
       return next;
     });
   }, []);
@@ -175,7 +184,6 @@ export function useWallet() {
         const owned = pos.lots.reduce((a, l) => a + l.qty, 0);
         const sellQty = Math.min(qty, owned);
         if (sellQty <= 0) return s;
-        // reduce from earliest lots (FIFO)
         let remaining = sellQty;
         const lots: Lot[] = [];
         for (const lot of pos.lots) {
@@ -203,7 +211,6 @@ export function useWallet() {
     [update]
   );
 
-  // Adjust cash without affecting returns: shift `starting` baseline by the same amount.
   const addFunds = useCallback(
     (amount: number) =>
       update((s) => {
