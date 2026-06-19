@@ -263,10 +263,10 @@ function PerfilPage() {
             <li key={f.code} className="flex items-center gap-3">
               <Link to="/u/$code" params={{ code: f.code }} className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-semibold" style={{ background: "var(--muted)", color: "var(--navy)" }}>
-                  {f.handle.slice(1, 3).toUpperCase()}
+                  {f.name.split(" ").map(w => w[0]).slice(0,2).join("").toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{f.handle}</p>
+                  <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{f.name}</p>
                   <p className="text-[10px] tabular-nums" style={{ color: "var(--muted-foreground)" }}>#{f.code}</p>
                 </div>
                 <span className="text-sm font-semibold tabular-nums" style={{ color: f.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
