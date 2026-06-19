@@ -44,7 +44,7 @@ function PublicProfile() {
           </span>
         </div>
         <h1 className="mt-3 text-xl font-semibold" style={{ color: "var(--navy)" }}>{user.name}</h1>
-        <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>{user.handle}</p>
+        <p className="text-[10px] tracking-wider mt-1" style={{ color: "var(--muted-foreground)" }}>{user.strategy}</p>
         <p className="text-sm font-semibold tabular-nums mt-1" style={{ color: "var(--gold)" }}>#{user.code}</p>
         <p className="text-lg font-semibold tabular-nums mt-2" style={{ color: user.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
           {user.perf >= 0 ? "+" : ""}{user.perf.toFixed(1)}%
