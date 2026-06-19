@@ -241,7 +241,7 @@ function PerfilPage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{found.name}</p>
-              <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{found.handle} · #{found.code}</p>
+              <p className="text-[11px] tabular-nums" style={{ color: "var(--muted-foreground)" }}>#{found.code}</p>
             </div>
             {friendCodes.includes(found.code) ? (
               <span className="text-[11px] font-medium" style={{ color: "var(--success)" }}>Añadido</span>
