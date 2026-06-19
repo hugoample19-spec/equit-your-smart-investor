@@ -324,55 +324,6 @@ function PerfilPage() {
   );
 }
 
-function PerformanceCard() {
-  const summary = usePortfolioSummary();
-  const series = summary.series;
-  const hasSeries = series.length >= 2;
-
-  const points = useMemo(() => {
-    if (!hasSeries) return "";
-    const vals = series.map((s) => s.v);
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
-    const span = max - min || 1;
-    return series
-      .map((s, i) => `${(i / (series.length - 1)) * 300},${50 - ((s.v - min) / span) * 40}`)
-      .join(" ");
-  }, [series, hasSeries]);
-
-  const pct = summary.totalReturnPct;
-  const pctStr = (pct >= 0 ? "+" : "") + pct.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + "%";
-  const color = pct >= 0 ? "var(--gold)" : "#FF7A8A";
-
-  return (
-    <section className="rounded-3xl p-5 shadow-card" style={{ background: "var(--navy)", color: "var(--cream)" }}>
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-[10px] tracking-widest" style={{ color: "rgba(250,248,245,0.5)" }}>RENDIMIENTO TOTAL</p>
-          <p className="text-4xl font-semibold mt-1 tabular-nums" style={{ color }}>{summary.hasWallet ? pctStr : "—"}</p>
-          <p className="text-[11px] mt-1" style={{ color: "rgba(250,248,245,0.6)" }}>
-            {summary.hasWallet
-              ? `Valor ${summary.totalValue.toLocaleString("es-ES", { maximumFractionDigits: 0 })} € · invertido ${summary.starting.toLocaleString("es-ES", { maximumFractionDigits: 0 })} €`
-              : "Crea tu cartera para ver tu rendimiento real"}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-[10px] tracking-widest" style={{ color: "rgba(250,248,245,0.5)" }}>OPERACIONES</p>
-          <p className="text-lg font-semibold mt-1 tabular-nums">{summary.hasWallet ? series.length - 1 : 0}</p>
-        </div>
-      </div>
-      {hasSeries ? (
-        <svg viewBox="0 0 300 55" className="w-full h-16 mt-4">
-          <polyline points={points} fill="none" stroke={color} strokeWidth="2" />
-        </svg>
-      ) : (
-        <div className="h-16 mt-4 flex items-center justify-center text-[11px]" style={{ color: "rgba(250,248,245,0.4)" }}>
-          {summary.hasWallet ? "Aún sin operaciones registradas" : ""}
-        </div>
-      )}
-    </section>
-  );
-}
 
 function StreakCard({ current, longest, lastReadDate }: { current: number; longest: number; lastReadDate: string | null }) {
   // Build last 7 days view (Mon..Sun of current week).
