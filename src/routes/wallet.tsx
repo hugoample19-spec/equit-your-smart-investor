@@ -327,54 +327,16 @@ function HomeScreen({
   const [confirmReset, setConfirmReset] = useState(false);
   const [fundsOpen, setFundsOpen] = useState(false);
 
+  // Single shared calculation — same numbers as Home (/) by construction.
+  const summary = usePortfolioSummary();
   const positions = Object.values(state.positions);
-  const positionsValued = positions.map((p) => {
-    const qty = positionQty(p);
-    const invested = positionInvested(p);
-    const avg = positionAvg(p); // weighted avg purchase price from real transaction lots
-    const pd = prices[p.ticker];
-    const price = pd?.price ?? avg; // live Finnhub price for this ticker
-    const prevClose = pd?.prevClose ?? price;
-    const value = qty * price;
-    // Per-asset gain/loss € = (current_price - avg_purchase_price) * qty
-    const gain = (price - avg) * qty;
-    // Per-asset return % = (current - avg) / avg * 100
-    const gainPct = avg > 0 ? ((price - avg) / avg) * 100 : 0;
-    const dailyDelta = pd?.price != null && pd?.prevClose != null ? qty * (price - prevClose) : 0;
-    return { ...p, qty, invested, avg, price, value, gain, gainPct, dailyDelta, stale: pd?.stale };
-  });
-
-  const portfolioValue = positionsValued.reduce((a, p) => a + p.value, 0);
-  const totalValue = portfolioValue + state.cash;
-  const dailyGain = positionsValued.reduce((a, p) => a + p.dailyDelta, 0);
-  // Total amount ever invested = starting deposits (cash + addFunds). Cash gains/loses nothing.
-  const totalInvested = state.starting ?? 0;
-  const totalReturn = totalValue - totalInvested;
-  const totalReturnPct = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
-
-  // Debug: verify per-asset math for the first position.
-  if (typeof window !== "undefined" && positionsValued.length > 0) {
-    const a = positionsValued[0];
-    // eslint-disable-next-line no-console
-    console.log("[portfolio:asset]", {
-      ticker: a.ticker,
-      qty: a.qty,
-      avgPurchasePrice: a.avg,
-      currentPrice: a.price,
-      gainEUR: a.gain,
-      gainPct: a.gainPct,
-      formula: `((${a.price} - ${a.avg}) / ${a.avg}) * 100 = ${a.gainPct.toFixed(2)}%`,
-    });
-    // eslint-disable-next-line no-console
-    console.log("[portfolio:total]", {
-      cash: state.cash,
-      holdingsMarketValue: portfolioValue,
-      totalValue,
-      totalInvested,
-      totalReturn,
-      totalReturnPct,
-    });
-  }
+  const positionsValued = summary.assets.map((a) => ({
+    ...a,
+    ticker: a.ticker,
+  }));
+  const totalValue = summary.totalValue;
+  const totalReturn = summary.totalReturn;
+  const totalReturnPct = summary.totalReturnPct;
 
   return (
     <div className="space-y-5 pb-6">
@@ -391,17 +353,12 @@ function HomeScreen({
           <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
             <span
               className="tabular-nums font-medium"
-              style={{ color: dailyGain >= 0 ? "var(--success)" : "var(--danger)" }}
-            >
-              {dailyGain >= 0 ? "+" : ""}
-              {fmtEUR(dailyGain)} hoy
-            </span>
-            <span
-              className="tabular-nums font-medium"
               style={{ color: totalReturn >= 0 ? "var(--success)" : "var(--danger)" }}
             >
-              {fmtPct(totalReturnPct)} total
+              {totalReturn >= 0 ? "+" : ""}
+              {fmtEUR(totalReturn)} · {fmtPct(totalReturnPct)}
             </span>
+            <span className="text-xs text-muted-foreground">Rendimiento total</span>
           </div>
         </div>
         <div className="mt-4 pt-4 border-t flex justify-between text-xs" style={{ borderColor: "var(--border)" }}>
