@@ -1126,15 +1126,16 @@ function SellScreen({
   const asset = findAsset(position.ticker);
   const owned = positionQty(position);
   const avg = positionAvg(position);
-  const px = price?.price ?? avg;
+  const px = typeof price?.price === "number" && price.price > 0 ? price.price : null;
+  const hasPrice = px !== null;
   const [mode, setMode] = useState<"qty" | "eur">("qty");
   const [input, setInput] = useState("");
   const n = Number(input.replace(",", ".")) || 0;
-  const requestedQty = mode === "qty" ? n : px > 0 ? n / px : 0;
+  const requestedQty = mode === "qty" ? n : hasPrice && px! > 0 ? n / px! : 0;
   const qty = Math.min(requestedQty, owned);
-  const proceeds = qty * px;
-  const realizedPnl = qty * (px - avg);
-  const canSell = qty > 0;
+  const proceeds = hasPrice ? qty * px! : 0;
+  const realizedPnl = hasPrice ? qty * (px! - avg) : 0;
+  const canSell = hasPrice && qty > 0;
 
   return (
     <div className="space-y-4 pb-6">
