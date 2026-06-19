@@ -1,9 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { Lock, Star } from "lucide-react";
 import { investors } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
 import { PremiumBanner } from "./index";
 import { InvestorLogo } from "@/components/InvestorLogo";
+import { PremiumModal } from "@/components/PremiumModal";
 
 
 export const Route = createFileRoute("/referentes/")({
@@ -18,6 +20,8 @@ export const Route = createFileRoute("/referentes/")({
 
 function ReferentesPage() {
   const { isPremium, favoriteReferenteId, setFavoriteReferente } = useApp();
+  const [showPremium, setShowPremium] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-5 pb-8">
