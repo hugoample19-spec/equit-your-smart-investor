@@ -1188,7 +1188,7 @@ function SellScreen({
             Cantidad a vender
           </p>
           <button
-            onClick={() => setInput(mode === "qty" ? String(owned) : String((owned * px).toFixed(2)))}
+            onClick={() => setInput(mode === "qty" ? String(owned) : hasPrice ? String((owned * px!).toFixed(2)) : "")}
             className="text-xs font-semibold"
             style={{ color: "var(--gold)" }}
           >
