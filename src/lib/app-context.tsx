@@ -53,7 +53,7 @@ type AppState = {
   // Existing local state
   username: string;
   fullName: string;
-  setFullName: (s: string) => void;
+  setFullName: (s: string) => Promise<{ ok: boolean; error?: string }>;
   setUsername: (s: string) => void;
   avatar: string | null;
   setAvatar: (s: string | null) => void;
