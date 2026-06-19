@@ -9,7 +9,7 @@ export const Route = createFileRoute("/chat/$code")({
     const u = findUserByCode(params.code);
     return {
       meta: [
-        { title: `Chat con ${u?.handle ?? "usuario"} · Equit` },
+        { title: `Chat con ${u?.name ?? "usuario"} · Equit` },
         { name: "description", content: "Conversación privada en Equit." },
       ],
     };
