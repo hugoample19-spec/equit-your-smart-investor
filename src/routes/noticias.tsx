@@ -141,7 +141,13 @@ function NoticiasPage() {
     setInsightLoading(true);
     setInsightError(null);
     try {
-      const res = await getNewsInsight({ data: { headline: opened.displayTitle, summary: opened.displaySummary } });
+      let res = await getNewsInsight({ data: { headline: opened.displayTitle, summary: opened.displaySummary } });
+      // If the server says premium_required but local thinks user is premium,
+      // the DB write may have raced — refresh the profile and retry once.
+      if (!res.ok && res.reason === "premium_required") {
+        await refreshProfile();
+        res = await getNewsInsight({ data: { headline: opened.displayTitle, summary: opened.displaySummary } });
+      }
       if (res.ok) {
         setInsight(res.insight);
       } else if (res.reason === "premium_required") {
