@@ -150,32 +150,6 @@ function NoticiasPage() {
               FUENTE · {opened.source.toUpperCase()}
             </p>
           )}
-          {(() => {
-            const raw = opened.url;
-            console.log("[noticias] raw article url:", raw);
-            const trimmed = (raw ?? "").trim();
-            const href = trimmed
-              ? (trimmed.startsWith("http") ? trimmed : `https://${trimmed}`)
-              : "";
-            if (!href) {
-              return (
-                <p className="mt-5 text-xs text-center" style={{ color: "var(--muted-foreground)" }}>
-                  Artículo no disponible externamente
-                </p>
-              );
-            }
-            return (
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 w-full py-3 rounded-full text-sm font-semibold flex items-center justify-center gap-2"
-                style={{ background: "var(--navy)", color: "var(--cream)" }}
-              >
-                Leer artículo completo <ExternalLink size={14} />
-              </a>
-            );
-          })()}
         </article>
       </div>
     );
