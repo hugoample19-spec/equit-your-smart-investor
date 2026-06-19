@@ -7,7 +7,7 @@ export const investors: Investor[] = [
     name: "Warren Buffett",
     fund: "Berkshire Hathaway",
     netWorth: "€347B",
-    photo: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&q=80&auto=format&fit=crop",
+    photo: "https://i.pravatar.cc/400?img=12",
     locked: false,
     bio: "El Oráculo de Omaha. Value investing desde 1956.",
     holdings: [
@@ -24,7 +24,7 @@ export const investors: Investor[] = [
     name: "Ray Dalio",
     fund: "Bridgewater Associates",
     netWorth: "€124B",
-    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80&auto=format&fit=crop",
+    photo: "https://i.pravatar.cc/400?img=13",
     locked: false,
     bio: "Principios. All Weather Portfolio. Macro global.",
     holdings: [
@@ -41,7 +41,7 @@ export const investors: Investor[] = [
     name: "Bill Ackman",
     fund: "Pershing Square",
     netWorth: "€19B",
-    photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&q=80&auto=format&fit=crop",
+    photo: "https://i.pravatar.cc/400?img=15",
     locked: false,
     bio: "Activista. Posiciones concentradas y convicción.",
     holdings: [
@@ -58,7 +58,7 @@ export const investors: Investor[] = [
     name: "Cathie Wood",
     fund: "ARK Invest",
     netWorth: "€14B",
-    photo: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&q=80&auto=format&fit=crop",
+    photo: "https://i.pravatar.cc/400?img=16",
     locked: false,
     bio: "Innovación disruptiva. Tech exponencial.",
     holdings: [
@@ -75,7 +75,7 @@ export const investors: Investor[] = [
     name: "Michael Burry",
     fund: "Scion Asset Mgmt",
     netWorth: "€300M",
-    photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&q=80&auto=format&fit=crop",
+    photo: "https://i.pravatar.cc/400?img=17",
     locked: false,
     bio: "El de The Big Short. Contrarian extremo.",
     holdings: [
@@ -91,7 +91,7 @@ export const investors: Investor[] = [
     name: "Carl Icahn",
     fund: "Icahn Enterprises",
     netWorth: "€6B",
-    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&q=80&auto=format&fit=crop",
+    photo: "https://i.pravatar.cc/400?img=18",
     locked: true,
     bio: "Activista veterano. Más de 50 años moviendo consejos.",
     holdings: [
@@ -107,7 +107,7 @@ export const investors: Investor[] = [
     name: "George Soros",
     fund: "Soros Fund Mgmt",
     netWorth: "€8B",
-    photo: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=600&q=80&auto=format&fit=crop",
+    photo: "https://i.pravatar.cc/400?img=19",
     locked: true,
     bio: "Reflexividad. El hombre que rompió el Banco de Inglaterra.",
     holdings: [
@@ -123,7 +123,7 @@ export const investors: Investor[] = [
     name: "Stanley Druckenmiller",
     fund: "Duquesne Family",
     netWorth: "€11B",
-    photo: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=600&q=80&auto=format&fit=crop",
+    photo: "https://i.pravatar.cc/400?img=20",
     locked: true,
     bio: "Macro + concentración. Récord de 30 años sin pérdidas.",
     holdings: [
