@@ -1,9 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
-import { Camera, LogOut, Search, Star, X, Zap } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Bell, Camera, LogOut, Search, Star, X, Zap } from "lucide-react";
 import { useApp } from "@/lib/app-context";
 import { investors, globalUsers, findUserByCode } from "@/lib/data";
 import { usePortfolioSummary } from "@/lib/portfolio";
+import { useServerFn } from "@tanstack/react-start";
+import { getNotificationPrefs, updateNotificationPrefs } from "@/lib/notifications.functions";
+import { toast } from "sonner";
+
 
 
 export const Route = createFileRoute("/perfil")({
@@ -21,7 +25,9 @@ function PerfilPage() {
     username, fullName, avatar, setAvatar, isPremium, setIsPremium,
     friendCode, favoriteReferenteId, isPortfolioPublic, setIsPortfolioPublic,
     friendCodes, addFriend, removeFriend, streak,
+    isAuthenticated, signOut,
   } = useApp();
+  const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
 
@@ -215,7 +221,17 @@ function PerfilPage() {
         </button>
       </div>
 
-      <button className="w-full py-3 rounded-full text-sm font-medium flex items-center justify-center gap-2" style={{ color: "var(--muted-foreground)" }}>
+      <NotificationSettings />
+
+      <button
+        onClick={async () => {
+          await signOut();
+          navigate({ to: "/auth" });
+        }}
+        disabled={!isAuthenticated}
+        className="w-full py-3 rounded-full text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-40"
+        style={{ color: "var(--muted-foreground)" }}
+      >
         <LogOut size={14} /> Cerrar sesión
       </button>
     </div>
