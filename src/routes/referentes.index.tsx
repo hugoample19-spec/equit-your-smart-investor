@@ -21,7 +21,7 @@ export const Route = createFileRoute("/referentes/")({
 function ReferentesPage() {
   const { isPremium, favoriteReferenteId, setFavoriteReferente } = useApp();
   const [showPremium, setShowPremium] = useState(false);
-  const navigate = useNavigate();
+  
 
   return (
     <div className="space-y-5 pb-8">
