@@ -177,8 +177,10 @@ function PerfilPage() {
             {fullName}
           </button>
         )}
-        <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>@{username}</p>
-        <p className="text-base font-semibold mt-1 tabular-nums" style={{ color: "var(--gold)" }}>#{friendCode}</p>
+        {nameError && (
+          <p className="text-[11px] mt-1" style={{ color: "var(--danger)" }}>{nameError}</p>
+        )}
+        <p className="text-base font-semibold mt-2 tabular-nums" style={{ color: "var(--gold)" }}>#{friendCode}</p>
         <p className="text-[10px] tracking-wider" style={{ color: "var(--muted-foreground)" }}>TU CÓDIGO DE AMIGO</p>
       </div>
 
