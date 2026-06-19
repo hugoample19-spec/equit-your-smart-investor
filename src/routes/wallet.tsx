@@ -994,10 +994,13 @@ function DetailScreen({
   const qty = positionQty(position);
   const invested = positionInvested(position);
   const avg = positionAvg(position);
-  const px = price?.price ?? avg;
-  const value = qty * px;
-  const gain = value - invested;
-  const gainPct = invested > 0 ? (gain / invested) * 100 : 0;
+  // NEVER fall back to avg as a stand-in for current price.
+  // px is non-null only when we have a real live or cached price.
+  const px = typeof price?.price === "number" && price.price > 0 ? price.price : null;
+  const hasPrice = px !== null;
+  const value = hasPrice ? qty * px! : null;
+  const gain = hasPrice ? value! - invested : null;
+  const gainPct = hasPrice && invested > 0 ? (gain! / invested) * 100 : null;
 
   return (
     <div className="space-y-4 pb-6">
@@ -1012,15 +1015,33 @@ function DetailScreen({
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
         <p className="text-xs text-muted-foreground">{asset?.name}</p>
-        <p className="text-2xl font-semibold tabular-nums mt-1" style={{ color: "var(--navy)" }}>
-          {fmtEUR(px)}
-        </p>
-        {price?.reference && (
-          <p className="text-xs mt-1 text-muted-foreground">Precio de referencia</p>
+        {hasPrice ? (
+          <>
+            <p className="text-2xl font-semibold tabular-nums mt-1" style={{ color: "var(--navy)" }}>
+              {fmtEUR(px!)}
+            </p>
+            {price?.reference && (
+              <p className="text-xs mt-1 text-muted-foreground">Precio de referencia</p>
+            )}
+            {price?.stale && (
+              <p className="text-[11px] mt-1 text-muted-foreground">
+                Última actualización: {fmtAgo(price.fetchedAt)}
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <p className="text-2xl font-semibold tabular-nums mt-1" style={{ color: "var(--danger)" }}>
+              Precio no disponible
+            </p>
+            {price?.error && (
+              <p className="text-[11px] mt-1 text-muted-foreground">{price.error}</p>
+            )}
+          </>
         )}
       </section>
 
-      <PriceChart ticker={position.ticker} />
+      <PriceChart ticker={position.ticker} livePrice={px} />
 
       <section className="bg-card rounded-2xl p-5 shadow-soft space-y-2">
         <p className="text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--navy)" }}>
@@ -1029,22 +1050,38 @@ function DetailScreen({
         <Row label="Participaciones" value={qty.toLocaleString("es-ES", { maximumFractionDigits: 6 })} />
         <Row label="Precio medio compra" value={fmtEUR(avg)} />
         <Row label="Total invertido" value={fmtEUR(invested)} />
-        <Row label="Valor actual" value={fmtEUR(value)} bold />
+        <Row label="Valor actual" value={hasPrice ? fmtEUR(value!) : "N/D"} bold />
         <Row
           label="Ganancia / Pérdida"
-          value={`${gain >= 0 ? "+" : ""}${fmtEUR(gain)} (${fmtPct(gainPct)})`}
-          color={gain >= 0 ? "var(--success)" : "var(--danger)"}
+          value={
+            hasPrice
+              ? `${gain! >= 0 ? "+" : ""}${fmtEUR(gain!)} (${fmtPct(gainPct!)})`
+              : "N/D"
+          }
+          color={
+            hasPrice
+              ? gain! >= 0
+                ? "var(--success)"
+                : "var(--danger)"
+              : "var(--muted-foreground)"
+          }
           bold
         />
       </section>
 
       <button
         onClick={onSell}
-        className="w-full rounded-xl py-3.5 text-sm font-semibold border"
+        disabled={!hasPrice}
+        className="w-full rounded-xl py-3.5 text-sm font-semibold border disabled:opacity-50"
         style={{ borderColor: "var(--navy)", color: "var(--navy)" }}
       >
         Vender
       </button>
+      {!hasPrice && (
+        <p className="text-[11px] text-center text-muted-foreground">
+          No se puede vender sin un precio actual.
+        </p>
+      )}
     </div>
   );
 }
