@@ -14,13 +14,240 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      friendships: {
+        Row: {
+          created_at: string
+          friend_id: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          friend_id: string
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          friend_id?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      holdings: {
+        Row: {
+          avg_cost: number
+          id: string
+          name: string | null
+          shares: number
+          ticker: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_cost?: number
+          id?: string
+          name?: string | null
+          shares?: number
+          ticker: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_cost?: number
+          id?: string
+          name?: string | null
+          shares?: number
+          ticker?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      leaderboard_snapshots: {
+        Row: {
+          rank: number
+          return_pct: number
+          snapshot_date: string
+          user_id: string
+        }
+        Insert: {
+          rank: number
+          return_pct: number
+          snapshot_date?: string
+          user_id: string
+        }
+        Update: {
+          rank?: number
+          return_pct?: number
+          snapshot_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      news_reads: {
+        Row: {
+          created_at: string
+          read_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          read_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          read_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_prefs: {
+        Row: {
+          daily_summary: boolean
+          friend_alerts: boolean
+          news_reminder: boolean
+          push_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          daily_summary?: boolean
+          friend_alerts?: boolean
+          news_reminder?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          daily_summary?: boolean
+          friend_alerts?: boolean
+          news_reminder?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          id: string
+          priority: number
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          category: string
+          created_at?: string
+          id?: string
+          priority: number
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          priority?: number
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          favorite_referente_id: string | null
+          friend_code: string
+          id: string
+          is_portfolio_public: boolean
+          onboarded: boolean
+          starting_balance: number | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          favorite_referente_id?: string | null
+          friend_code: string
+          id: string
+          is_portfolio_public?: boolean
+          onboarded?: boolean
+          starting_balance?: number | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          favorite_referente_id?: string | null
+          friend_code?: string
+          id?: string
+          is_portfolio_public?: boolean
+          onboarded?: boolean
+          starting_balance?: number | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          executed_at: string
+          id: string
+          name: string | null
+          price: number | null
+          shares: number | null
+          ticker: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          executed_at?: string
+          id?: string
+          name?: string | null
+          price?: number | null
+          shares?: number | null
+          ticker: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          executed_at?: string
+          id?: string
+          name?: string | null
+          price?: number | null
+          shares?: number | null
+          ticker?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_friend_code: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
