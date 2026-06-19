@@ -61,7 +61,17 @@ type Screen =
 
 function WalletPage() {
   const { state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds } = useWallet();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const [screen, setScreen] = useState<Screen>({ kind: "home" });
+
+  // Open asset detail when navigated with ?asset=TICKER
+  useEffect(() => {
+    if (search.asset && findAsset(search.asset)) {
+      setScreen({ kind: "detail", ticker: search.asset });
+      navigate({ search: {}, replace: true });
+    }
+  }, [search.asset, navigate]);
 
   const ownedTickers = useMemo(() => Object.keys(state.positions), [state.positions]);
   const tickersToFetch = useMemo(() => {
