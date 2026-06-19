@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Zap, Lightbulb, Lock } from "lucide-react";
+import { ArrowLeft, Check, Zap, Lightbulb, Sparkles, Lock } from "lucide-react";
 import { getMarketNews, type NewsItem } from "@/lib/news.functions";
 import { getNewsInsight } from "@/lib/news-insight.functions";
 import { useApp } from "@/lib/app-context";
