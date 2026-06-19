@@ -166,8 +166,10 @@ export function usePortfolioSummary(): PortfolioSummary {
       totalValue,
       totalReturn,
       totalReturnPct,
+      hasUnavailable: assets.some((a) => a.unavailable),
       assets,
       series,
     };
   }, [state, pricesResp, ready]);
+}
 }
