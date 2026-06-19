@@ -89,6 +89,30 @@ export type Database = {
         }
         Relationships: []
       }
+      news_insights: {
+        Row: {
+          created_at: string
+          headline: string
+          headline_hash: string
+          id: string
+          insight: string
+        }
+        Insert: {
+          created_at?: string
+          headline: string
+          headline_hash: string
+          id?: string
+          insight: string
+        }
+        Update: {
+          created_at?: string
+          headline?: string
+          headline_hash?: string
+          id?: string
+          insight?: string
+        }
+        Relationships: []
+      }
       news_reads: {
         Row: {
           created_at: string
