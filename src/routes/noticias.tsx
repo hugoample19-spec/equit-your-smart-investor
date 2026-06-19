@@ -64,8 +64,12 @@ async function translateToSpanish(text: string): Promise<string> {
 type DisplayNews = NewsItem & { displayTitle: string; displaySummary: string };
 
 function NoticiasPage() {
-  const { streak, markNewsRead } = useApp();
+  const { streak, markNewsRead, isPremium, setIsPremium } = useApp();
   const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const [insight, setInsight] = useState<string | null>(null);
+  const [insightLoading, setInsightLoading] = useState(false);
+  const [insightError, setInsightError] = useState<string | null>(null);
+  const [showPremium, setShowPremium] = useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ["market-news"],
     queryFn: () => getMarketNews(),
