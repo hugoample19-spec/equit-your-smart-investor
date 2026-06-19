@@ -6,19 +6,15 @@ export type PriceData = {
   prevClose: number | null;
   changePct: number | null;
   spark: number[];
-  stale: boolean;
-  reference?: boolean; // true = static reference price, not live
+  stale: boolean;            // true = no live price available
+  reference?: boolean;       // true = static reference price, not live
+  source?: "finnhub" | "yahoo" | "reference" | "none";
+  error?: string;            // human-readable reason when price is null
 };
 
 // Reference prices for commodities (real APIs require paid plans).
-// Approximate market levels — marked as "Precio de referencia" in UI.
 const REFERENCE_PRICES: Record<string, number> = {
-  "GC=F": 2650,   // Gold (USD/oz)
-  "SI=F": 31.5,   // Silver (USD/oz)
-  "CL=F": 72,     // WTI Crude Oil (USD/bbl)
-  "NG=F": 3.2,    // Natural Gas (USD/MMBtu)
-  "HG=F": 4.3,    // Copper (USD/lb)
-  "ZW=F": 580,    // Wheat (USD/bu)
+  "GC=F": 2650, "SI=F": 31.5, "CL=F": 72, "NG=F": 3.2, "HG=F": 4.3, "ZW=F": 580,
 };
 
 function toFinnhubSymbol(ticker: string): string {
@@ -29,47 +25,58 @@ function toFinnhubSymbol(ticker: string): string {
   return ticker;
 }
 
-async function fromFinnhub(ticker: string, key: string): Promise<PriceData | null> {
+const DEBUG_TICKERS = new Set(["AAPL", "MSFT", "AMZN", "BTC-USD"]);
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function fromFinnhub(
+  ticker: string,
+  key: string,
+): Promise<{ data: PriceData | null; raw: unknown; status: number; error?: string }> {
+  const symbol = toFinnhubSymbol(ticker);
+  const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${key}`;
   try {
-    const symbol = toFinnhubSymbol(ticker);
-    const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${key}`;
     const res = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!res.ok) return null;
-    const j = (await res.json()) as { c?: number; dp?: number; pc?: number };
+    const text = await res.text();
+    let raw: unknown = text;
+    try { raw = JSON.parse(text); } catch { /* keep as text */ }
+    if (!res.ok) {
+      return { data: null, raw, status: res.status, error: `Finnhub HTTP ${res.status}` };
+    }
+    const j = raw as { c?: number; dp?: number; pc?: number; error?: string };
+    if (j && typeof j === "object" && typeof j.error === "string" && j.error) {
+      return { data: null, raw, status: res.status, error: `Finnhub: ${j.error}` };
+    }
     const price = typeof j.c === "number" && j.c > 0 ? j.c : null;
-    if (price == null) return null;
+    if (price == null) {
+      return { data: null, raw, status: res.status, error: "Finnhub: sin precio (c=0)" };
+    }
     const prev = typeof j.pc === "number" && j.pc > 0 ? j.pc : null;
     const changePct =
-      typeof j.dp === "number"
-        ? j.dp
-        : prev != null && prev !== 0
-        ? ((price - prev) / prev) * 100
-        : null;
+      typeof j.dp === "number" ? j.dp
+      : prev != null && prev !== 0 ? ((price - prev) / prev) * 100
+      : null;
     return {
-      ticker,
-      price,
-      prevClose: prev,
-      changePct,
-      spark: prev != null ? [prev, price] : [price],
-      stale: false,
+      data: {
+        ticker, price, prevClose: prev, changePct,
+        spark: prev != null ? [prev, price] : [price],
+        stale: false, source: "finnhub",
+      },
+      raw, status: res.status,
     };
-  } catch {
-    return null;
+  } catch (e) {
+    return { data: null, raw: null, status: 0, error: `Finnhub fetch failed: ${(e as Error).message}` };
   }
 }
 
-async function fromYahoo(ticker: string): Promise<PriceData | null> {
+async function fromYahoo(ticker: string): Promise<{ data: PriceData | null; error?: string }> {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
       ticker
     )}?interval=1d&range=5d`;
     const res = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "Mozilla/5.0",
-      },
+      headers: { Accept: "application/json", "User-Agent": "Mozilla/5.0" },
     });
-    if (!res.ok) return null;
+    if (!res.ok) return { data: null, error: `Yahoo HTTP ${res.status}` };
     const j = (await res.json()) as {
       chart?: {
         result?: Array<{
@@ -80,52 +87,64 @@ async function fromYahoo(ticker: string): Promise<PriceData | null> {
     };
     const r = j.chart?.result?.[0];
     const price = r?.meta?.regularMarketPrice ?? null;
-    if (!price || price <= 0) return null;
+    if (!price || price <= 0) return { data: null, error: "Yahoo: sin precio" };
     const prev = r?.meta?.chartPreviousClose ?? r?.meta?.previousClose ?? null;
     const closes = (r?.indicators?.quote?.[0]?.close ?? []).filter(
       (v): v is number => typeof v === "number" && v > 0
     );
     const changePct = prev && prev !== 0 ? ((price - prev) / prev) * 100 : null;
     return {
-      ticker,
-      price,
-      prevClose: prev,
-      changePct,
-      spark: closes.length > 1 ? closes : prev ? [prev, price] : [price],
-      stale: false,
+      data: {
+        ticker, price, prevClose: prev, changePct,
+        spark: closes.length > 1 ? closes : prev ? [prev, price] : [price],
+        stale: false, source: "yahoo",
+      },
     };
-  } catch {
-    return null;
+  } catch (e) {
+    return { data: null, error: `Yahoo fetch failed: ${(e as Error).message}` };
   }
 }
 
 async function fetchOne(ticker: string, key: string | undefined): Promise<PriceData> {
-  // Commodities → reference price
   if (REFERENCE_PRICES[ticker] != null) {
     const p = REFERENCE_PRICES[ticker];
     return {
-      ticker,
-      price: p,
-      prevClose: p,
-      changePct: 0,
-      spark: [p, p],
-      stale: false,
-      reference: true,
+      ticker, price: p, prevClose: p, changePct: 0,
+      spark: [p, p], stale: false, reference: true, source: "reference",
     };
   }
+
+  const errors: string[] = [];
+
   if (key) {
     const f = await fromFinnhub(ticker, key);
-    if (f) return f;
+    if (DEBUG_TICKERS.has(ticker)) {
+      // eslint-disable-next-line no-console
+      console.log(`[finnhub:${ticker}]`, {
+        status: f.status,
+        symbol: toFinnhubSymbol(ticker),
+        error: f.error ?? null,
+        raw: f.raw,
+      });
+    }
+    if (f.data) return f.data;
+    if (f.error) errors.push(f.error);
+  } else {
+    errors.push("FINNHUB_API_KEY missing");
   }
+
   const y = await fromYahoo(ticker);
-  if (y) return y;
+  if (DEBUG_TICKERS.has(ticker)) {
+    // eslint-disable-next-line no-console
+    console.log(`[yahoo:${ticker}]`, { error: y.error ?? null, price: y.data?.price ?? null });
+  }
+  if (y.data) return y.data;
+  if (y.error) errors.push(y.error);
+
   return {
-    ticker,
-    price: null,
-    prevClose: null,
-    changePct: null,
-    spark: [],
-    stale: true,
+    ticker, price: null, prevClose: null, changePct: null,
+    spark: [], stale: true, source: "none",
+    error: errors.join(" · ") || "Precio no disponible",
   };
 }
 
@@ -134,9 +153,18 @@ export const getPrices = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const key = process.env.FINNHUB_API_KEY;
     const unique = Array.from(new Set(data.tickers)).slice(0, 80);
-    const results = await Promise.all(unique.map((t) => fetchOne(t, key)));
+    // Sequential with small delay to stay under Finnhub free-tier rate limits
+    // (60 req/min). 120ms between calls = ~8 req/sec ceiling.
     const map: Record<string, PriceData> = {};
-    for (const r of results) map[r.ticker] = r;
+    for (const t of unique) {
+      map[t] = await fetchOne(t, key);
+      await sleep(120);
+    }
+    const failed = Object.values(map).filter((p) => p.price == null).map((p) => `${p.ticker}(${p.error ?? "?"})`);
+    if (failed.length) {
+      // eslint-disable-next-line no-console
+      console.warn("[prices] failed tickers:", failed.join(", "));
+    }
     return { prices: map, fetchedAt: Date.now() };
   });
 
