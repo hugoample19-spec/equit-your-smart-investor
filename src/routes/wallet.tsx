@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   Check,
   X,
+  Lock,
 } from "lucide-react";
 import {
   CATALOG,
@@ -20,6 +21,7 @@ import {
   type AssetCategory,
   type CatalogAsset,
 } from "@/lib/wallet-store";
+import { useApp } from "@/lib/app-context";
 import { getPrices, getHistory, type PriceData, type ChartRange } from "@/lib/prices.functions";
 import {
   AreaChart,
