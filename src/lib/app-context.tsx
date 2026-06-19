@@ -254,8 +254,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider value={{
-      user, profile, isAuthenticated: !!user, authLoading, signOut,
-      username, setUsername, fullName, setFullName,
+      user, profile, isAuthenticated: !!user, authLoading, signOut, refreshProfile,
+      username, setUsername, fullName, setFullName: setFullNamePersist,
       avatar, setAvatar, isPremium, setIsPremium,
       budget, setBudget, portfolio, setPortfolio,
       pendingCopy, setPendingCopy,
@@ -266,6 +266,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       streak, markNewsRead,
       seenFilingDates, markFilingSeen,
     }}>
+
       {children}
     </Ctx.Provider>
   );
