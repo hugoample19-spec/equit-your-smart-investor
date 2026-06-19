@@ -330,9 +330,6 @@ function PremiumModal({ onClose, onSubscribe }: { onClose: () => void; onSubscri
     </div>
   );
 }
-    </div>
-  );
-}
 
 function StreakBadge({ current, readToday }: { current: number; readToday: boolean }) {
   const bg = readToday ? "var(--gold)" : "var(--muted)";
