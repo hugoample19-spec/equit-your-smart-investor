@@ -9,7 +9,7 @@ export const Route = createFileRoute("/chat/$code")({
     const u = findUserByCode(params.code);
     return {
       meta: [
-        { title: `Chat con ${u?.handle ?? "usuario"} · Equit` },
+        { title: `Chat con ${u?.name ?? "usuario"} · Equit` },
         { name: "description", content: "Conversación privada en Equit." },
       ],
     };
@@ -52,7 +52,7 @@ function ChatPage() {
           {user.name.split(" ").map(w => w[0]).slice(0,2).join("")}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold truncate" style={{ color: "var(--navy)" }}>{user.handle}</p>
+          <p className="text-sm font-semibold truncate" style={{ color: "var(--navy)" }}>{user.name}</p>
           <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>#{user.code}</p>
         </div>
       </div>

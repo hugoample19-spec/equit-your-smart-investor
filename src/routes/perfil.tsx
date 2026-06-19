@@ -1,9 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bell, Camera, LogOut, Search, Star, X, Zap } from "lucide-react";
 import { useApp } from "@/lib/app-context";
 import { investors, globalUsers, findUserByCode } from "@/lib/data";
-import { usePortfolioSummary } from "@/lib/portfolio";
 import { useServerFn } from "@tanstack/react-start";
 import { getNotificationPrefs, updateNotificationPrefs } from "@/lib/notifications.functions";
 import { toast } from "sonner";
@@ -22,7 +21,7 @@ export const Route = createFileRoute("/perfil")({
 
 function PerfilPage() {
   const {
-    username, fullName, setFullName, avatar, setAvatar, isPremium, setIsPremium,
+    fullName, setFullName, avatar, setAvatar, isPremium, setIsPremium,
     friendCode, favoriteReferenteId, isPortfolioPublic, setIsPortfolioPublic,
     friendCodes, addFriend, removeFriend, streak,
     isAuthenticated, signOut,
@@ -32,6 +31,7 @@ function PerfilPage() {
   const [search, setSearch] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(fullName);
+  const [nameError, setNameError] = useState<string | null>(null);
   const [avatarMenu, setAvatarMenu] = useState(false);
 
   useEffect(() => { setNameDraft(fullName); }, [fullName]);
@@ -48,10 +48,17 @@ function PerfilPage() {
     setAvatarMenu(false);
   };
 
-  const commitName = () => {
+  const commitName = async () => {
     const v = nameDraft.trim();
-    if (!v) { setNameDraft(fullName); setEditingName(false); return; }
-    if (v !== fullName) setFullName(v);
+    if (!v) { setNameDraft(fullName); setEditingName(false); setNameError(null); return; }
+    if (v === fullName) { setEditingName(false); setNameError(null); return; }
+    const res = await setFullName(v);
+    if (!res.ok) {
+      setNameError(res.error ?? "Error");
+      toast.error(res.error ?? "Error");
+      return;
+    }
+    setNameError(null);
     setEditingName(false);
   };
 
@@ -169,8 +176,10 @@ function PerfilPage() {
             {fullName}
           </button>
         )}
-        <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>@{username}</p>
-        <p className="text-base font-semibold mt-1 tabular-nums" style={{ color: "var(--gold)" }}>#{friendCode}</p>
+        {nameError && (
+          <p className="text-[11px] mt-1" style={{ color: "var(--danger)" }}>{nameError}</p>
+        )}
+        <p className="text-base font-semibold mt-2 tabular-nums" style={{ color: "var(--gold)" }}>#{friendCode}</p>
         <p className="text-[10px] tracking-wider" style={{ color: "var(--muted-foreground)" }}>TU CÓDIGO DE AMIGO</p>
       </div>
 
@@ -183,7 +192,7 @@ function PerfilPage() {
           <div>
             <p className="text-sm font-medium" style={{ color: "var(--navy)" }}>Cartera {isPortfolioPublic ? "pública" : "privada"}</p>
             <p className="text-[11px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>
-              {isPortfolioPublic ? "Otros usuarios ven tu distribución y rendimiento" : "Solo se ve tu @handle y rendimiento"}
+              {isPortfolioPublic ? "Otros usuarios ven tu distribución y rendimiento" : "Solo se ve tu nombre y rendimiento"}
             </p>
           </div>
           <button
@@ -231,7 +240,7 @@ function PerfilPage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{found.name}</p>
-              <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{found.handle} · #{found.code}</p>
+              <p className="text-[11px] tabular-nums" style={{ color: "var(--muted-foreground)" }}>#{found.code}</p>
             </div>
             {friendCodes.includes(found.code) ? (
               <span className="text-[11px] font-medium" style={{ color: "var(--success)" }}>Añadido</span>
@@ -253,10 +262,10 @@ function PerfilPage() {
             <li key={f.code} className="flex items-center gap-3">
               <Link to="/u/$code" params={{ code: f.code }} className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-semibold" style={{ background: "var(--muted)", color: "var(--navy)" }}>
-                  {f.handle.slice(1, 3).toUpperCase()}
+                  {f.name.split(" ").map(w => w[0]).slice(0,2).join("").toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{f.handle}</p>
+                  <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{f.name}</p>
                   <p className="text-[10px] tabular-nums" style={{ color: "var(--muted-foreground)" }}>#{f.code}</p>
                 </div>
                 <span className="text-sm font-semibold tabular-nums" style={{ color: f.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
@@ -271,9 +280,6 @@ function PerfilPage() {
           {!myFriends.length && <p className="text-xs text-center py-3" style={{ color: "var(--muted-foreground)" }}>Aún no tienes amigos. Busca un código arriba.</p>}
         </ul>
       </section>
-
-      {/* Performance card — real data from wallet */}
-      <PerformanceCard />
 
       {/* Streak card — bigger, with weekly view */}
       <StreakCard
@@ -317,55 +323,6 @@ function PerfilPage() {
   );
 }
 
-function PerformanceCard() {
-  const summary = usePortfolioSummary();
-  const series = summary.series;
-  const hasSeries = series.length >= 2;
-
-  const points = useMemo(() => {
-    if (!hasSeries) return "";
-    const vals = series.map((s) => s.v);
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
-    const span = max - min || 1;
-    return series
-      .map((s, i) => `${(i / (series.length - 1)) * 300},${50 - ((s.v - min) / span) * 40}`)
-      .join(" ");
-  }, [series, hasSeries]);
-
-  const pct = summary.totalReturnPct;
-  const pctStr = (pct >= 0 ? "+" : "") + pct.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + "%";
-  const color = pct >= 0 ? "var(--gold)" : "#FF7A8A";
-
-  return (
-    <section className="rounded-3xl p-5 shadow-card" style={{ background: "var(--navy)", color: "var(--cream)" }}>
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-[10px] tracking-widest" style={{ color: "rgba(250,248,245,0.5)" }}>RENDIMIENTO TOTAL</p>
-          <p className="text-4xl font-semibold mt-1 tabular-nums" style={{ color }}>{summary.hasWallet ? pctStr : "—"}</p>
-          <p className="text-[11px] mt-1" style={{ color: "rgba(250,248,245,0.6)" }}>
-            {summary.hasWallet
-              ? `Valor ${summary.totalValue.toLocaleString("es-ES", { maximumFractionDigits: 0 })} € · invertido ${summary.starting.toLocaleString("es-ES", { maximumFractionDigits: 0 })} €`
-              : "Crea tu cartera para ver tu rendimiento real"}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-[10px] tracking-widest" style={{ color: "rgba(250,248,245,0.5)" }}>OPERACIONES</p>
-          <p className="text-lg font-semibold mt-1 tabular-nums">{summary.hasWallet ? series.length - 1 : 0}</p>
-        </div>
-      </div>
-      {hasSeries ? (
-        <svg viewBox="0 0 300 55" className="w-full h-16 mt-4">
-          <polyline points={points} fill="none" stroke={color} strokeWidth="2" />
-        </svg>
-      ) : (
-        <div className="h-16 mt-4 flex items-center justify-center text-[11px]" style={{ color: "rgba(250,248,245,0.4)" }}>
-          {summary.hasWallet ? "Aún sin operaciones registradas" : ""}
-        </div>
-      )}
-    </section>
-  );
-}
 
 function StreakCard({ current, longest, lastReadDate }: { current: number; longest: number; lastReadDate: string | null }) {
   // Build last 7 days view (Mon..Sun of current week).

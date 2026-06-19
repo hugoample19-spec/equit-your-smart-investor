@@ -70,24 +70,32 @@ function HomePage() {
           <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Las acciones que más agregan los usuarios esta semana</p>
         </div>
         <div className="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 snap-x">
-          {trendingStocks.map((s) => (
-            <div key={s.ticker} className="snap-start min-w-[140px] w-[140px] rounded-2xl bg-card shadow-soft p-3">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold text-white" style={{ background: s.color }}>
-                  {s.ticker.slice(0, 3)}
+          {trendingStocks.map((s) => {
+            const display = s.ticker.replace(/[-.].*/, "");
+            return (
+              <Link
+                key={s.ticker}
+                to="/wallet"
+                search={{ asset: s.ticker }}
+                className="snap-start min-w-[140px] w-[140px] rounded-2xl bg-card shadow-soft p-3 block"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold text-white" style={{ background: s.color }}>
+                    {display.slice(0, 3)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-tight" style={{ color: "var(--navy)" }}>{display}</p>
+                    <p className="text-[10px] truncate" style={{ color: "var(--muted-foreground)" }}>{s.name}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold leading-tight" style={{ color: "var(--navy)" }}>{s.ticker}</p>
-                  <p className="text-[10px] truncate" style={{ color: "var(--muted-foreground)" }}>{s.name}</p>
+                <div className="mt-3 flex items-center gap-1">
+                  <Users size={11} style={{ color: "var(--gold)" }} />
+                  <p className="text-xs font-semibold tabular-nums" style={{ color: "var(--gold)" }}>+{s.users}</p>
+                  <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>esta semana</span>
                 </div>
-              </div>
-              <div className="mt-3 flex items-center gap-1">
-                <Users size={11} style={{ color: "var(--gold)" }} />
-                <p className="text-xs font-semibold tabular-nums" style={{ color: "var(--gold)" }}>+{s.users}</p>
-                <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>esta semana</span>
-              </div>
-            </div>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </section>
 
@@ -165,7 +173,7 @@ function LeaderboardList({ rows }: { rows: typeof globalUsers }) {
               {String(idx + 1).padStart(2, "0")}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{u.handle}</p>
+              <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{u.name}</p>
               <p className="text-[10px] tracking-wider font-medium" style={{ color: "var(--muted-foreground)" }}>{u.strategy}</p>
             </div>
             <span className="text-sm font-semibold tabular-nums" style={{ color: u.perf >= 0 ? "var(--success)" : "var(--danger)" }}>

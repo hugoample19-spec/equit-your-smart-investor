@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -39,6 +39,9 @@ export const Route = createFileRoute("/wallet")({
       { name: "description", content: "Tu cartera simulada con precios reales." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    asset: typeof s.asset === "string" ? s.asset : undefined,
+  }),
   component: WalletPage,
 });
 
@@ -58,7 +61,17 @@ type Screen =
 
 function WalletPage() {
   const { state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds } = useWallet();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const [screen, setScreen] = useState<Screen>({ kind: "home" });
+
+  // Open asset detail when navigated with ?asset=TICKER
+  useEffect(() => {
+    if (search.asset && findAsset(search.asset)) {
+      setScreen({ kind: "detail", ticker: search.asset });
+      navigate({ search: {}, replace: true });
+    }
+  }, [search.asset, navigate]);
 
   const ownedTickers = useMemo(() => Object.keys(state.positions), [state.positions]);
   const tickersToFetch = useMemo(() => {
