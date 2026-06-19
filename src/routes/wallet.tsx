@@ -1299,6 +1299,66 @@ function PriceChart({ ticker }: { ticker: string }) {
   );
 }
 
+function ConfirmationScreen({
+  mode,
+  ticker,
+  qty,
+  price,
+  amount,
+  onDone,
+}: {
+  mode: "buy" | "sell";
+  ticker: string;
+  qty: number;
+  price: number;
+  amount: number;
+  onDone: () => void;
+}) {
+  const asset = findAsset(ticker);
+  const isBuy = mode === "buy";
+  const title = isBuy ? "Compra realizada" : "Venta realizada";
+  const qtyStr = qty.toLocaleString("es-ES", { maximumFractionDigits: 6 });
+  const summary = isBuy
+    ? `Has comprado ${qtyStr} participaciones de ${asset?.display ?? ticker} por ${fmtEUR(amount)}`
+    : `Has vendido ${qtyStr} participaciones de ${asset?.display ?? ticker} por ${fmtEUR(amount)}`;
+
+  return (
+    <div className="space-y-6 pb-6 pt-4 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-300">
+      <div
+        className="w-20 h-20 rounded-full flex items-center justify-center shadow-card animate-in zoom-in-50 duration-500"
+        style={{ background: "var(--gold)" }}
+      >
+        <Check size={42} strokeWidth={3} color="var(--navy)" />
+      </div>
+      <div className="space-y-2 px-4">
+        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>
+          {title}
+        </h1>
+        <p className="text-sm leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+          {summary}
+        </p>
+      </div>
+      <section className="bg-card rounded-2xl p-5 shadow-soft w-full space-y-2">
+        <Row label="Activo" value={asset?.display ?? ticker} />
+        <Row label="Participaciones" value={qtyStr} />
+        <Row label="Precio por participación" value={fmtEUR(price)} />
+        <Row
+          label={isBuy ? "Importe pagado" : "Importe recibido"}
+          value={fmtEUR(amount)}
+          bold
+        />
+      </section>
+      <button
+        onClick={onDone}
+        className="w-full rounded-xl py-3.5 text-sm font-semibold"
+        style={{ background: "var(--navy)", color: "var(--cream)" }}
+      >
+        Ver mi cartera
+      </button>
+    </div>
+  );
+}
+
 function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
     <div
