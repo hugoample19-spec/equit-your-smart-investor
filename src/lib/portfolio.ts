@@ -105,21 +105,29 @@ export function usePortfolioSummary() {
     const starting = state.starting ?? 0;
     const totalReturnPct = starting > 0 ? (totalReturn / starting) * 100 : 0;
 
-    // Debug log of one asset's math so the formula is auditable.
+    // Debug log exact per-asset math for the tickers currently under investigation.
     if (typeof window !== "undefined" && assets.length > 0) {
-      const a = assets[0];
-      // eslint-disable-next-line no-console
-      console.log("[portfolio:asset]", {
-        ticker: a.ticker,
-        qty: a.qty,
-        avgPurchasePrice: a.avg,
-        currentPrice: a.price,
-        gainEUR: a.gain,
-        gainPct: a.gainPct,
-        formula: a.gainPct != null ? `((${a.price} - ${a.avg}) / ${a.avg}) * 100 = ${a.gainPct.toFixed(2)}%` : "PRICE_UNAVAILABLE",
-        unavailable: a.unavailable,
-        priceError: a.priceError ?? null,
-      });
+      const debugAssets = assets.filter((a) => ["MSFT", "AMZN"].includes(a.ticker));
+      for (const a of debugAssets) {
+        const rawPrice = prices[a.ticker];
+        // eslint-disable-next-line no-console
+        console.log("[portfolio:asset]", {
+          ticker: a.ticker,
+          qty: a.qty,
+          avgPurchasePrice: a.avg,
+          currentPrice: a.price,
+          rawPricePayload: rawPrice ?? null,
+          invested: a.invested,
+          currentValue: a.value,
+          gainEUR: a.gain,
+          gainPct: a.gainPct,
+          formula: a.gainPct != null ? `((${a.price} - ${a.avg}) / ${a.avg}) * 100 = ${a.gainPct.toFixed(2)}%` : "PRICE_UNAVAILABLE",
+          unavailable: a.unavailable,
+          stale: a.stale ?? false,
+          fetchedAt: a.fetchedAt ?? null,
+          priceError: a.priceError ?? null,
+        });
+      }
       // eslint-disable-next-line no-console
       console.log("[portfolio:total]", {
         cash,
