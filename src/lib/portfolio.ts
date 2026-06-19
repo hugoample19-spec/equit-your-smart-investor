@@ -79,20 +79,22 @@ function compute(
   return { assets, marketValue, totalReturn };
 }
 
-export function usePortfolioSummary(): PortfolioSummary {
+export function usePortfolioSummary() {
   const { user } = useApp();
   const { state, ready } = useWallet(user?.id ?? null);
   const tickers = useMemo(() => Object.keys(state.positions), [state.positions]);
 
   const getPricesFn = useServerFn(getPrices);
-  const { data: pricesResp } = useQuery({
+  const query = useQuery({
     queryKey: ["prices", tickers.sort().join(",")],
     queryFn: () => getPricesFn({ data: { tickers } }),
     enabled: ready && tickers.length > 0,
     staleTime: 60_000,
     refetchInterval: 60_000,
   });
-  const prices = pricesResp?.prices ?? {};
+  const prices = query.data?.prices ?? {};
+  const pricesResp = query.data;
+
 
   return useMemo(() => {
     const hasWallet = state.starting != null;
