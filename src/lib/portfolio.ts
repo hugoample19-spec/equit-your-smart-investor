@@ -1,26 +1,66 @@
-// Shared portfolio summary derived from the wallet store + live prices.
-// Home and Wallet read from the same source so values always match.
+// Shared portfolio calculation. Single source of truth for Home + Wallet.
+// One metric only: TOTAL HISTORICAL RETURN since purchase, live vs current price.
+// No daily/intraday comparison anywhere.
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useWallet, positionQty, positionInvested } from "./wallet-store";
+import {
+  useWallet,
+  positionQty,
+  positionAvg,
+  positionInvested,
+  type Position,
+} from "./wallet-store";
 import { getPrices } from "./prices.functions";
 import { useApp } from "./app-context";
+
+export type AssetBreakdown = {
+  ticker: string;
+  qty: number;
+  avg: number;        // weighted avg purchase price (€)
+  price: number;      // current live price (€)
+  invested: number;   // qty * avg
+  value: number;      // qty * price (market value)
+  gain: number;       // (price - avg) * qty
+  gainPct: number;    // (price - avg) / avg * 100
+  stale?: boolean;
+};
 
 export type PortfolioSummary = {
   ready: boolean;
   hasWallet: boolean;
   cash: number;
-  starting: number;
-  invested: number;
-  marketValue: number;
-  totalValue: number;
-  dailyGain: number;
-  dailyPct: number;
-  totalReturn: number;
-  totalReturnPct: number;
-  series: { t: number; v: number }[]; // equity curve from transaction history
+  starting: number;             // total amount ever invested (deposits)
+  marketValue: number;          // sum of value across positions
+  totalValue: number;           // marketValue + cash
+  totalReturn: number;          // sum of per-asset gain (cash contributes 0)
+  totalReturnPct: number;       // totalReturn / starting * 100
+  assets: AssetBreakdown[];
+  series: { t: number; v: number }[];
 };
+
+function compute(
+  positions: Record<string, Position>,
+  prices: Record<string, { price?: number | null; stale?: boolean } | undefined>,
+): { assets: AssetBreakdown[]; marketValue: number; totalReturn: number } {
+  let marketValue = 0;
+  let totalReturn = 0;
+  const assets: AssetBreakdown[] = [];
+  for (const p of Object.values(positions)) {
+    const qty = positionQty(p);
+    const avg = positionAvg(p);
+    const invested = positionInvested(p);
+    const pd = prices[p.ticker];
+    const price = pd?.price ?? avg;
+    const value = qty * price;
+    const gain = (price - avg) * qty;
+    const gainPct = avg > 0 ? ((price - avg) / avg) * 100 : 0;
+    marketValue += value;
+    totalReturn += gain;
+    assets.push({ ticker: p.ticker, qty, avg, price, invested, value, gain, gainPct, stale: pd?.stale });
+  }
+  return { assets, marketValue, totalReturn };
+}
 
 export function usePortfolioSummary(): PortfolioSummary {
   const { user } = useApp();
@@ -37,44 +77,47 @@ export function usePortfolioSummary(): PortfolioSummary {
   });
   const prices = pricesResp?.prices ?? {};
 
-
   return useMemo(() => {
     const hasWallet = state.starting != null;
-    let marketValue = 0;
-    let invested = 0;
-    let dailyGain = 0;
-    let prevValue = 0;
-
-    for (const p of Object.values(state.positions)) {
-      const qty = positionQty(p);
-      const inv = positionInvested(p);
-      const pd = prices[p.ticker];
-      const price = pd?.price ?? (qty > 0 ? inv / qty : 0);
-      const prevClose = pd?.prevClose ?? price;
-      marketValue += qty * price;
-      prevValue += qty * prevClose;
-      invested += inv;
-      if (pd?.price != null && pd?.prevClose != null) {
-        dailyGain += qty * (price - prevClose);
-      }
-    }
-
+    const { assets, marketValue, totalReturn } = compute(state.positions, prices);
     const cash = state.cash;
     const totalValue = marketValue + cash;
     const starting = state.starting ?? 0;
-    const prevTotal = prevValue + cash;
-    const dailyPct = prevTotal > 0 ? (dailyGain / prevTotal) * 100 : 0;
-    const totalReturn = totalValue - starting;
     const totalReturnPct = starting > 0 ? (totalReturn / starting) * 100 : 0;
 
-    // Equity curve from real transaction history:
-    // simulate cash + positions over time, mark-to-market with current price
-    // (best approximation without historical price storage).
+    // Debug log of one asset's math so the formula is auditable.
+    if (typeof window !== "undefined" && assets.length > 0) {
+      const a = assets[0];
+      // eslint-disable-next-line no-console
+      console.log("[portfolio:asset]", {
+        ticker: a.ticker,
+        qty: a.qty,
+        avgPurchasePrice: a.avg,
+        currentPrice: a.price,
+        gainEUR: a.gain,
+        gainPct: a.gainPct,
+        formula: `((${a.price} - ${a.avg}) / ${a.avg}) * 100 = ${a.gainPct.toFixed(2)}%`,
+      });
+      // eslint-disable-next-line no-console
+      console.log("[portfolio:total]", {
+        cash,
+        marketValue,
+        totalValue,
+        starting,
+        totalReturn,
+        totalReturnPct,
+      });
+    }
+
+    // Equity curve from transaction history (mark-to-market at current price).
     const series: { t: number; v: number }[] = [];
     if (hasWallet) {
       let runningCash = starting;
       const runningQty: Record<string, number> = {};
-      series.push({ t: state.history[0]?.at ? state.history[0].at - 86_400_000 : Date.now() - 86_400_000, v: starting });
+      series.push({
+        t: state.history[0]?.at ? state.history[0].at - 86_400_000 : Date.now() - 86_400_000,
+        v: starting,
+      });
       const sorted = [...state.history].sort((a, b) => a.at - b.at);
       for (const ev of sorted) {
         if (ev.type === "buy") {
@@ -92,7 +135,6 @@ export function usePortfolioSummary(): PortfolioSummary {
         }
         series.push({ t: ev.at, v: runningCash + mv });
       }
-      // append "now" point with current market value
       series.push({ t: Date.now(), v: totalValue });
     }
 
@@ -101,13 +143,11 @@ export function usePortfolioSummary(): PortfolioSummary {
       hasWallet,
       cash,
       starting,
-      invested,
       marketValue,
       totalValue,
-      dailyGain,
-      dailyPct,
       totalReturn,
       totalReturnPct,
+      assets,
       series,
     };
   }, [state, pricesResp, ready]);

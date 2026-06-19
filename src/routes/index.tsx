@@ -31,8 +31,8 @@ function HomePage() {
 
   const eur = summary.totalValue.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const [intPart, decPart] = eur.split(",");
-  const gainColor = summary.dailyGain >= 0 ? "#5BD2A5" : "#FF7A8A";
-  const gainSign = summary.dailyGain >= 0 ? "+" : "";
+  const gainColor = summary.totalReturn >= 0 ? "#5BD2A5" : "#FF7A8A";
+  const gainSign = summary.totalReturn >= 0 ? "+" : "";
 
   return (
     <div className="space-y-6">
@@ -45,8 +45,8 @@ function HomePage() {
               €{intPart}<span style={{ color: "var(--gold)" }}>,</span>{decPart ?? "00"}
             </h1>
             <p className="mt-3 text-sm" style={{ color: gainColor }}>
-              {gainSign}€{Math.abs(summary.dailyGain).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · {gainSign}{summary.dailyPct.toFixed(2)}%
-              <span style={{ color: "rgba(250,248,245,0.5)" }} className="ml-1">hoy</span>
+              {gainSign}€{Math.abs(summary.totalReturn).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · {gainSign}{summary.totalReturnPct.toFixed(2)}%
+              <span style={{ color: "rgba(250,248,245,0.5)" }} className="ml-1">rendimiento total</span>
             </p>
           </>
         ) : (

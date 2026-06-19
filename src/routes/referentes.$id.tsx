@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
-import { ArrowLeft, Lock, Star } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Star } from "lucide-react";
 import { investors } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
 import { InvestorLogo } from "@/components/InvestorLogo";
+import { PremiumModal } from "@/components/PremiumModal";
 
 
 export const Route = createFileRoute("/referentes/$id")({
@@ -31,23 +33,27 @@ function InvestorDetail() {
   const navigate = useNavigate();
   const locked = investor.locked && !isPremium;
   const isFav = favoriteReferenteId === investor.id;
+  const [showPremium, setShowPremium] = useState(locked);
+
+  useEffect(() => {
+    if (locked) setShowPremium(true);
+  }, [locked]);
 
   if (locked) {
     return (
-      <div className="space-y-5">
+      <>
         <Link to="/referentes" className="inline-flex items-center gap-1 text-sm" style={{ color: "var(--navy)" }}>
           <ArrowLeft size={16} /> Referentes
         </Link>
-        <div className="rounded-3xl overflow-hidden relative aspect-[4/5] shadow-card">
-          <InvestorLogo src={investor.photo} name={investor.name} />
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 backdrop-blur-md" style={{ background: "rgba(26,26,46,0.65)" }}>
-            <Lock size={36} style={{ color: "var(--gold)" }} />
-            <p className="mt-3 text-[10px] tracking-widest font-semibold" style={{ color: "var(--gold)" }}>EQUIT PREMIUM</p>
-            <p className="mt-2 text-xl font-semibold" style={{ color: "var(--cream)" }}>{investor.name}</p>
-            <p className="text-xs mt-1" style={{ color: "rgba(250,248,245,0.7)" }}>Desbloquea su cartera completa por €3,99/mes</p>
-          </div>
-        </div>
-      </div>
+        {showPremium && (
+          <PremiumModal
+            onClose={() => {
+              setShowPremium(false);
+              navigate({ to: "/referentes" });
+            }}
+          />
+        )}
+      </>
     );
   }
 

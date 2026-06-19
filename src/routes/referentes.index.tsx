@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { Lock, Star } from "lucide-react";
 import { investors } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
 import { PremiumBanner } from "./index";
 import { InvestorLogo } from "@/components/InvestorLogo";
+import { PremiumModal } from "@/components/PremiumModal";
 
 
 export const Route = createFileRoute("/referentes/")({
@@ -18,6 +20,8 @@ export const Route = createFileRoute("/referentes/")({
 
 function ReferentesPage() {
   const { isPremium, favoriteReferenteId, setFavoriteReferente } = useApp();
+  const [showPremium, setShowPremium] = useState(false);
+  
 
   return (
     <div className="space-y-5 pb-8">
@@ -40,16 +44,17 @@ function ReferentesPage() {
               >
                 <Star size={16} fill={isFav ? "var(--gold)" : "none"} color="var(--gold)" strokeWidth={2} />
               </button>
-              <Link to="/referentes/$id" params={{ id: i.id }}>
-                <div className="aspect-[3/4] relative" style={{ background: "var(--navy)" }}>
-                  <div
-                    className="absolute inset-0"
-                    style={locked ? { filter: "blur(10px)" } : undefined}
-                  >
-                    <InvestorLogo src={i.photo} name={i.name} />
-                  </div>
-                  <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(26,26,46,0) 35%, rgba(26,26,46,0.85) 100%)" }} />
-                  {locked && (
+              {locked ? (
+                <button
+                  type="button"
+                  onClick={() => setShowPremium(true)}
+                  className="block w-full text-left"
+                >
+                  <div className="aspect-[3/4] relative" style={{ background: "var(--navy)" }}>
+                    <div className="absolute inset-0" style={{ filter: "blur(10px)" }}>
+                      <InvestorLogo src={i.photo} name={i.name} />
+                    </div>
+                    <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(26,26,46,0) 35%, rgba(26,26,46,0.85) 100%)" }} />
                     <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(26,26,46,0.35)" }}>
                       <div className="flex flex-col items-center text-center px-3">
                         <Lock size={20} style={{ color: "var(--gold)" }} />
@@ -57,16 +62,25 @@ function ReferentesPage() {
                         <p className="text-[10px]" style={{ color: "rgba(250,248,245,0.85)" }}>€3,99/mes</p>
                       </div>
                     </div>
-                  )}
-                  <div className="absolute bottom-0 left-0 right-0 p-3 text-left z-10">
-                    <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--gold)" }}>{i.fund}</p>
-                    <p className="text-sm font-semibold leading-tight" style={{ color: "var(--cream)" }}>{i.name}</p>
-                    {!locked && (
-                      <p className="text-xs font-semibold mt-0.5" style={{ color: "var(--cream)" }}>{i.netWorth}</p>
-                    )}
+                    <div className="absolute bottom-0 left-0 right-0 p-3 text-left z-10">
+                      <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--gold)" }}>{i.fund}</p>
+                      <p className="text-sm font-semibold leading-tight" style={{ color: "var(--cream)" }}>{i.name}</p>
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </button>
+              ) : (
+                <Link to="/referentes/$id" params={{ id: i.id }}>
+                  <div className="aspect-[3/4] relative" style={{ background: "var(--navy)" }}>
+                    <InvestorLogo src={i.photo} name={i.name} />
+                    <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(26,26,46,0) 35%, rgba(26,26,46,0.85) 100%)" }} />
+                    <div className="absolute bottom-0 left-0 right-0 p-3 text-left z-10">
+                      <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--gold)" }}>{i.fund}</p>
+                      <p className="text-sm font-semibold leading-tight" style={{ color: "var(--cream)" }}>{i.name}</p>
+                      <p className="text-xs font-semibold mt-0.5" style={{ color: "var(--cream)" }}>{i.netWorth}</p>
+                    </div>
+                  </div>
+                </Link>
+              )}
 
             </div>
           );
@@ -74,6 +88,9 @@ function ReferentesPage() {
       </div>
 
       <PremiumBanner />
+      {showPremium && (
+        <PremiumModal onClose={() => setShowPremium(false)} />
+      )}
     </div>
   );
 }
