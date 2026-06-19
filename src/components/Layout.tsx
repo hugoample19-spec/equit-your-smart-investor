@@ -37,7 +37,7 @@ export function Layout({ children }: { children: ReactNode }) {
     }
   }, [profile, pathname, navigate]);
 
-  // Unread notification count
+  // Unread notification count + realtime OS notifications
   useEffect(() => {
     if (!user) { setUnread(0); return; }
     let mounted = true;
@@ -52,11 +52,18 @@ export function Layout({ children }: { children: ReactNode }) {
     load();
     const channel = supabase.channel(`notif-${user.id}`).on(
       "postgres_changes",
-      { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
-      () => load(),
+      { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+      (payload) => {
+        load();
+        const n = payload.new as { title: string; body: string };
+        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+          try { new Notification(n.title, { body: n.body, icon: "/favicon.ico" }); } catch {}
+        }
+      },
     ).subscribe();
     return () => { mounted = false; supabase.removeChannel(channel); };
   }, [user]);
+
 
   const showChrome = pathname !== "/auth" && pathname !== "/onboarding";
 
