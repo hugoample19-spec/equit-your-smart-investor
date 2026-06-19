@@ -17,12 +17,14 @@ import { useApp } from "./app-context";
 export type AssetBreakdown = {
   ticker: string;
   qty: number;
-  avg: number;        // weighted avg purchase price (€)
-  price: number;      // current live price (€)
-  invested: number;   // qty * avg
-  value: number;      // qty * price (market value)
-  gain: number;       // (price - avg) * qty
-  gainPct: number;    // (price - avg) / avg * 100
+  avg: number;
+  price: number | null;       // null = live price unavailable
+  invested: number;
+  value: number;              // qty * price (or qty*avg as placeholder when unavailable)
+  gain: number | null;        // null when price unavailable — never fake 0
+  gainPct: number | null;     // null when price unavailable
+  unavailable: boolean;
+  priceError?: string;
   stale?: boolean;
 };
 
@@ -30,18 +32,19 @@ export type PortfolioSummary = {
   ready: boolean;
   hasWallet: boolean;
   cash: number;
-  starting: number;             // total amount ever invested (deposits)
-  marketValue: number;          // sum of value across positions
-  totalValue: number;           // marketValue + cash
-  totalReturn: number;          // sum of per-asset gain (cash contributes 0)
-  totalReturnPct: number;       // totalReturn / starting * 100
+  starting: number;
+  marketValue: number;
+  totalValue: number;
+  totalReturn: number;        // sum of gains for assets with live prices
+  totalReturnPct: number;
+  hasUnavailable: boolean;    // at least one holding lacks live price
   assets: AssetBreakdown[];
   series: { t: number; v: number }[];
 };
 
 function compute(
   positions: Record<string, Position>,
-  prices: Record<string, { price?: number | null; stale?: boolean } | undefined>,
+  prices: Record<string, { price?: number | null; stale?: boolean; error?: string } | undefined>,
 ): { assets: AssetBreakdown[]; marketValue: number; totalReturn: number } {
   let marketValue = 0;
   let totalReturn = 0;
@@ -51,13 +54,27 @@ function compute(
     const avg = positionAvg(p);
     const invested = positionInvested(p);
     const pd = prices[p.ticker];
-    const price = pd?.price ?? avg;
-    const value = qty * price;
-    const gain = (price - avg) * qty;
-    const gainPct = avg > 0 ? ((price - avg) / avg) * 100 : 0;
-    marketValue += value;
-    totalReturn += gain;
-    assets.push({ ticker: p.ticker, qty, avg, price, invested, value, gain, gainPct, stale: pd?.stale });
+    const livePrice = pd && typeof pd.price === "number" && pd.price > 0 ? pd.price : null;
+    if (livePrice != null) {
+      const value = qty * livePrice;
+      const gain = (livePrice - avg) * qty;
+      const gainPct = avg > 0 ? ((livePrice - avg) / avg) * 100 : 0;
+      marketValue += value;
+      totalReturn += gain;
+      assets.push({
+        ticker: p.ticker, qty, avg, price: livePrice, invested, value, gain, gainPct,
+        unavailable: false, stale: pd?.stale,
+      });
+    } else {
+      // No live price → use invested cost as placeholder so totals don't crash,
+      // but flag as unavailable and do NOT inject a fake 0% return.
+      marketValue += invested;
+      assets.push({
+        ticker: p.ticker, qty, avg, price: null, invested, value: invested,
+        gain: null, gainPct: null,
+        unavailable: true, priceError: pd?.error, stale: true,
+      });
+    }
   }
   return { assets, marketValue, totalReturn };
 }
