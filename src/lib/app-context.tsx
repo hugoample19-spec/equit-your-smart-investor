@@ -307,11 +307,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const setIsPremiumPersist = (b: boolean) => {
+    setIsPremium(b);
+    if (user) supabase.from("profiles").update({ is_premium: b }).eq("id", user.id);
+  };
+
   return (
     <Ctx.Provider value={{
       user, profile, isAuthenticated: !!user, authLoading, signOut, refreshProfile,
       username, setUsername, fullName, setFullName: setFullNamePersist,
-      avatar, setAvatar, isPremium, setIsPremium,
+      avatar, setAvatar, isPremium, setIsPremium: setIsPremiumPersist,
       budget, setBudget, portfolio, setPortfolio,
       pendingCopy, setPendingCopy,
       friendCode, favoriteReferenteId, setFavoriteReferente,
