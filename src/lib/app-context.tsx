@@ -38,6 +38,7 @@ export type Profile = {
   onboarded: boolean;
   is_portfolio_public: boolean;
   favorite_referente_id: string | null;
+  is_premium: boolean;
 };
 
 type AppState = {
@@ -160,6 +161,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (data.starting_balance) setBudget(Number(data.starting_balance));
     setPortfolioPublicState(data.is_portfolio_public);
     setFavoriteState(data.favorite_referente_id);
+    setIsPremium(!!(data as { is_premium?: boolean }).is_premium);
+
+    // Rebuild streak from authoritative server-side news_reads log.
+    try {
+      const { data: reads } = await supabase
+        .from("news_reads")
+        .select("read_date")
+        .eq("user_id", uid)
+        .order("read_date", { ascending: false })
+        .limit(400);
+      if (reads) {
+        const set = new Set(reads.map((r) => r.read_date as string));
+        const today = new Date();
+        const fmt = (d: Date) => d.toISOString().slice(0, 10);
+        let current = 0;
+        const cursor = new Date(today);
+        // Streak counts from today (or yesterday if today not yet read).
+        if (!set.has(fmt(cursor))) cursor.setDate(cursor.getDate() - 1);
+        while (set.has(fmt(cursor))) {
+          current += 1;
+          cursor.setDate(cursor.getDate() - 1);
+        }
+        const lastReadDate = reads[0]?.read_date as string | null ?? null;
+        const local = load<{ current: number; longest: number; lastReadDate: string | null }>(
+          "equit_streak",
+          { current: 0, longest: 0, lastReadDate: null },
+        );
+        const next = {
+          current,
+          longest: Math.max(current, local.longest),
+          lastReadDate,
+        };
+        setStreak(next);
+        save("equit_streak", next);
+      }
+    } catch { /* offline ok */ }
   };
   useEffect(() => {
     if (!user) { setProfile(null); return; }
@@ -270,11 +307,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const setIsPremiumPersist = (b: boolean) => {
+    setIsPremium(b);
+    if (user) supabase.from("profiles").update({ is_premium: b }).eq("id", user.id);
+  };
+
   return (
     <Ctx.Provider value={{
       user, profile, isAuthenticated: !!user, authLoading, signOut, refreshProfile,
       username, setUsername, fullName, setFullName: setFullNamePersist,
-      avatar, setAvatar, isPremium, setIsPremium,
+      avatar, setAvatar, isPremium, setIsPremium: setIsPremiumPersist,
       budget, setBudget, portfolio, setPortfolio,
       pendingCopy, setPendingCopy,
       friendCode, favoriteReferenteId, setFavoriteReferente,

@@ -176,6 +176,7 @@ export type Database = {
           friend_code: string
           id: string
           is_portfolio_public: boolean
+          is_premium: boolean
           onboarded: boolean
           starting_balance: number | null
           username: string | null
@@ -188,6 +189,7 @@ export type Database = {
           friend_code: string
           id: string
           is_portfolio_public?: boolean
+          is_premium?: boolean
           onboarded?: boolean
           starting_balance?: number | null
           username?: string | null
@@ -200,6 +202,7 @@ export type Database = {
           friend_code?: string
           id?: string
           is_portfolio_public?: boolean
+          is_premium?: boolean
           onboarded?: boolean
           starting_balance?: number | null
           username?: string | null

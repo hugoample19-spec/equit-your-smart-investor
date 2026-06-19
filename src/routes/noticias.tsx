@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, ExternalLink, Zap } from "lucide-react";
+import { ArrowLeft, Check, Zap } from "lucide-react";
 import { getMarketNews, type NewsItem } from "@/lib/news.functions";
 import { useApp } from "@/lib/app-context";
 
@@ -23,22 +23,41 @@ function isLikelyEnglish(text: string): boolean {
   return /\b(the|and|of|to|in|for|on|with|is|are|was|were|will|from|by|at|as|this|that|after|before)\b/.test(lower);
 }
 
+// Translate the full text by chunking on sentence boundaries (mymemory caps ~500 chars/call).
+async function translateChunk(chunk: string): Promise<string> {
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=en|es`;
+    const res = await fetch(url);
+    if (!res.ok) return chunk;
+    const json = await res.json();
+    const translated = json?.responseData?.translatedText as string | undefined;
+    if (!translated || /MYMEMORY WARNING/i.test(translated)) return chunk;
+    return translated;
+  } catch {
+    return chunk;
+  }
+}
+
 async function translateToSpanish(text: string): Promise<string> {
   if (!text) return text;
   if (!isLikelyEnglish(text)) return text;
-  try {
-    const chunk = text.slice(0, 480);
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=en|es`;
-    const res = await fetch(url);
-    if (!res.ok) return text;
-    const json = await res.json();
-    const translated = json?.responseData?.translatedText as string | undefined;
-    if (!translated) return text;
-    if (/MYMEMORY WARNING/i.test(translated)) return text;
-    return text.length > 480 ? translated + "…" : translated;
-  } catch {
-    return text;
+  const MAX = 460;
+  if (text.length <= MAX) return translateChunk(text);
+  // Split into sentence-ish chunks under MAX chars.
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  const chunks: string[] = [];
+  let cur = "";
+  for (const s of sentences) {
+    if ((cur + " " + s).trim().length > MAX) {
+      if (cur) chunks.push(cur.trim());
+      cur = s;
+    } else {
+      cur = cur ? cur + " " + s : s;
+    }
   }
+  if (cur) chunks.push(cur.trim());
+  const out = await Promise.all(chunks.map(translateChunk));
+  return out.join(" ");
 }
 
 type DisplayNews = NewsItem & { displayTitle: string; displaySummary: string };
@@ -131,32 +150,6 @@ function NoticiasPage() {
               FUENTE · {opened.source.toUpperCase()}
             </p>
           )}
-          {(() => {
-            const raw = opened.url;
-            console.log("[noticias] raw article url:", raw);
-            const trimmed = (raw ?? "").trim();
-            const href = trimmed
-              ? (trimmed.startsWith("http") ? trimmed : `https://${trimmed}`)
-              : "";
-            if (!href) {
-              return (
-                <p className="mt-5 text-xs text-center" style={{ color: "var(--muted-foreground)" }}>
-                  Artículo no disponible externamente
-                </p>
-              );
-            }
-            return (
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 w-full py-3 rounded-full text-sm font-semibold flex items-center justify-center gap-2"
-                style={{ background: "var(--navy)", color: "var(--cream)" }}
-              >
-                Leer artículo completo <ExternalLink size={14} />
-              </a>
-            );
-          })()}
         </article>
       </div>
     );
