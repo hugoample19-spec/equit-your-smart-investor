@@ -984,14 +984,6 @@ function DetailScreen({
         <p className="text-2xl font-semibold tabular-nums mt-1" style={{ color: "var(--navy)" }}>
           {fmtEUR(px)}
         </p>
-        {price?.changePct != null && (
-          <p
-            className="text-sm font-medium tabular-nums"
-            style={{ color: price.changePct >= 0 ? "var(--success)" : "var(--danger)" }}
-          >
-            {fmtPct(price.changePct)} hoy
-          </p>
-        )}
         {price?.reference && (
           <p className="text-xs mt-1 text-muted-foreground">Precio de referencia</p>
         )}
