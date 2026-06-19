@@ -191,6 +191,33 @@ export type Database = {
         }
         Relationships: []
       }
+      price_cache: {
+        Row: {
+          change_pct: number | null
+          fetched_at: string
+          prev_close: number | null
+          price: number
+          source: string | null
+          ticker: string
+        }
+        Insert: {
+          change_pct?: number | null
+          fetched_at?: string
+          prev_close?: number | null
+          price: number
+          source?: string | null
+          ticker: string
+        }
+        Update: {
+          change_pct?: number | null
+          fetched_at?: string
+          prev_close?: number | null
+          price?: number
+          source?: string | null
+          ticker?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
