@@ -1246,7 +1246,7 @@ function SellScreen({
 
 const RANGES: ChartRange[] = ["1D", "1W", "1M", "3M", "1Y"];
 
-function PriceChart({ ticker }: { ticker: string }) {
+function PriceChart({ ticker, livePrice }: { ticker: string; livePrice?: number | null }) {
   const [range, setRange] = useState<ChartRange>("1M");
   const getHistoryFn = useServerFn(getHistory);
   const q = useQuery({
@@ -1256,7 +1256,22 @@ function PriceChart({ ticker }: { ticker: string }) {
     refetchOnWindowFocus: false,
   });
 
-  const data = q.data?.points ?? [];
+  // Unify chart's latest point with the live quote so the chart and the header
+  // never disagree about "current price". If we have a live price, append/replace
+  // the last point so both sources line up.
+  const rawPoints = q.data?.points ?? [];
+  const data = (() => {
+    if (!livePrice || rawPoints.length === 0) return rawPoints;
+    const lastT = rawPoints[rawPoints.length - 1].t;
+    const nowT = Date.now();
+    const merged = [...rawPoints];
+    if (nowT - lastT < 60_000) {
+      merged[merged.length - 1] = { ...merged[merged.length - 1], price: livePrice };
+    } else {
+      merged.push({ t: nowT, price: livePrice, volume: 0 });
+    }
+    return merged;
+  })();
   const isReference = q.data?.reference;
   const hasData = data.length > 1;
   const first = hasData ? data[0].price : 0;
