@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Holding = {
   ticker: string;
@@ -26,7 +28,27 @@ export type Portfolio = {
 
 export type ChatMessage = { from: "me" | "them"; text: string; at: number };
 
+export type Profile = {
+  id: string;
+  display_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  friend_code: string;
+  starting_balance: number | null;
+  onboarded: boolean;
+  is_portfolio_public: boolean;
+  favorite_referente_id: string | null;
+};
+
 type AppState = {
+  // Auth
+  user: User | null;
+  profile: Profile | null;
+  isAuthenticated: boolean;
+  authLoading: boolean;
+  signOut: () => Promise<void>;
+
+  // Existing local state
   username: string;
   fullName: string;
   setFullName: (s: string) => void;
@@ -41,7 +63,6 @@ type AppState = {
   setPortfolio: (p: Portfolio) => void;
   pendingCopy: Investor | null;
   setPendingCopy: (i: Investor | null) => void;
-  // new
   friendCode: string;
   favoriteReferenteId: string | null;
   setFavoriteReferente: (id: string | null) => void;
@@ -52,10 +73,8 @@ type AppState = {
   removeFriend: (code: string) => void;
   chats: Record<string, ChatMessage[]>;
   sendMessage: (code: string, text: string) => void;
-  // streak
   streak: { current: number; longest: number; lastReadDate: string | null };
   markNewsRead: () => void;
-  // referentes update tracker
   seenFilingDates: Record<string, string>;
   markFilingSeen: (investorId: string, date: string) => void;
 };
@@ -69,9 +88,7 @@ function load<T>(k: string, fallback: T): T {
   try {
     const v = localStorage.getItem(k);
     return v ? (JSON.parse(v) as T) : fallback;
-  } catch {
-    return fallback;
-  }
+  } catch { return fallback; }
 }
 function save(k: string, v: unknown) {
   if (typeof window === "undefined") return;
@@ -79,6 +96,10 @@ function save(k: string, v: unknown) {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [username, setUsername] = useState("alexmtz");
   const [fullName, setFullName] = useState("Alejandro Martínez");
   const [avatar, setAvatarState] = useState<string | null>(null);
@@ -95,18 +116,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [streak, setStreak] = useState<{ current: number; longest: number; lastReadDate: string | null }>({ current: 0, longest: 0, lastReadDate: null });
   const [seenFilingDates, setSeenFilingDates] = useState<Record<string, string>>({});
 
+  // Load local state
   useEffect(() => {
     if (typeof window === "undefined") return;
     const a = localStorage.getItem("equit_avatar");
     if (a) setAvatarState(a);
-
     let code = localStorage.getItem("equit_friend_code");
-    if (!code) {
-      code = genCode();
-      localStorage.setItem("equit_friend_code", code);
-    }
+    if (!code) { code = genCode(); localStorage.setItem("equit_friend_code", code); }
     setFriendCode(code);
-
     setFavoriteState(load<string | null>("equit_fav_ref", null));
     setPortfolioPublicState(load<boolean>("equit_portfolio_public", true));
     setFriendCodes(load<string[]>("equit_friends", ["47392810", "82910374", "65103982"]));
@@ -115,21 +132,60 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSeenFilingDates(load<Record<string, string>>("equit_seen_filings", {}));
   }, []);
 
+  // Auth: subscribe to session
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      setUser(data.session?.user ?? null);
+      setAuthLoading(false);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => { mounted = false; sub.subscription.unsubscribe(); };
+  }, []);
+
+  // Hydrate profile when user changes
+  useEffect(() => {
+    if (!user) { setProfile(null); return; }
+    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle().then(({ data }) => {
+      if (!data) return;
+      setProfile(data as Profile);
+      if (data.display_name) setFullName(data.display_name);
+      if (data.username) setUsername(data.username);
+      if (data.avatar_url) setAvatarState(data.avatar_url);
+      if (data.friend_code) setFriendCode(data.friend_code);
+      if (data.starting_balance) setBudget(Number(data.starting_balance));
+      setPortfolioPublicState(data.is_portfolio_public);
+      setFavoriteState(data.favorite_referente_id);
+    });
+  }, [user]);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setProfile(null);
+  };
+
   const setAvatar = (s: string | null) => {
     setAvatarState(s);
     if (typeof window !== "undefined") {
       if (s) localStorage.setItem("equit_avatar", s);
       else localStorage.removeItem("equit_avatar");
     }
+    if (user) supabase.from("profiles").update({ avatar_url: s }).eq("id", user.id);
   };
 
   const setFavoriteReferente = (id: string | null) => {
     setFavoriteState(id);
     save("equit_fav_ref", id);
+    if (user) supabase.from("profiles").update({ favorite_referente_id: id }).eq("id", user.id);
   };
   const setIsPortfolioPublic = (b: boolean) => {
     setPortfolioPublicState(b);
     save("equit_portfolio_public", b);
+    if (user) supabase.from("profiles").update({ is_portfolio_public: b }).eq("id", user.id);
   };
   const addFriend = (code: string) => {
     setFriendCodes((prev) => {
@@ -166,6 +222,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       save("equit_streak", next);
       return next;
     });
+    // Also log to Supabase if authenticated (server-side tracking for notifications)
+    if (user) {
+      const madridDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Madrid" })).toISOString().slice(0, 10);
+      supabase.from("news_reads").upsert({ user_id: user.id, read_date: madridDate }, { onConflict: "user_id,read_date" });
+    }
   };
 
   const markFilingSeen = (investorId: string, date: string) => {
@@ -179,6 +240,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider value={{
+      user, profile, isAuthenticated: !!user, authLoading, signOut,
       username, setUsername, fullName, setFullName,
       avatar, setAvatar, isPremium, setIsPremium,
       budget, setBudget, portfolio, setPortfolio,
@@ -199,4 +261,10 @@ export function useApp() {
   const c = useContext(Ctx);
   if (!c) throw new Error("useApp must be used within AppProvider");
   return c;
+}
+
+// Alias for auth-only consumers
+export function useAuth() {
+  const { user, profile, isAuthenticated, authLoading, signOut } = useApp();
+  return { user, profile, isAuthenticated, authLoading, signOut };
 }

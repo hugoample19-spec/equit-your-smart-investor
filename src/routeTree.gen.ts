@@ -11,12 +11,16 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as NotificacionesRouteImport } from './routes/notificaciones'
 import { Route as NoticiasRouteImport } from './routes/noticias'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReferentesIndexRouteImport } from './routes/referentes.index'
 import { Route as UCodeRouteImport } from './routes/u.$code'
 import { Route as ReferentesIdRouteImport } from './routes/referentes.$id'
 import { Route as ChatCodeRouteImport } from './routes/chat.$code'
+import { Route as ApiPublicCronNotificationsRouteImport } from './routes/api/public/cron.notifications'
 
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
@@ -28,9 +32,24 @@ const PerfilRoute = PerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificacionesRoute = NotificacionesRouteImport.update({
+  id: '/notificaciones',
+  path: '/notificaciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NoticiasRoute = NoticiasRouteImport.update({
   id: '/noticias',
   path: '/noticias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -58,80 +77,114 @@ const ChatCodeRoute = ChatCodeRouteImport.update({
   path: '/chat/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronNotificationsRoute =
+  ApiPublicCronNotificationsRouteImport.update({
+    id: '/api/public/cron/notifications',
+    path: '/api/public/cron/notifications',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/noticias': typeof NoticiasRoute
+  '/notificaciones': typeof NotificacionesRoute
+  '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
   '/wallet': typeof WalletRoute
   '/chat/$code': typeof ChatCodeRoute
   '/referentes/$id': typeof ReferentesIdRoute
   '/u/$code': typeof UCodeRoute
   '/referentes/': typeof ReferentesIndexRoute
+  '/api/public/cron/notifications': typeof ApiPublicCronNotificationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/noticias': typeof NoticiasRoute
+  '/notificaciones': typeof NotificacionesRoute
+  '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
   '/wallet': typeof WalletRoute
   '/chat/$code': typeof ChatCodeRoute
   '/referentes/$id': typeof ReferentesIdRoute
   '/u/$code': typeof UCodeRoute
   '/referentes': typeof ReferentesIndexRoute
+  '/api/public/cron/notifications': typeof ApiPublicCronNotificationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/noticias': typeof NoticiasRoute
+  '/notificaciones': typeof NotificacionesRoute
+  '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
   '/wallet': typeof WalletRoute
   '/chat/$code': typeof ChatCodeRoute
   '/referentes/$id': typeof ReferentesIdRoute
   '/u/$code': typeof UCodeRoute
   '/referentes/': typeof ReferentesIndexRoute
+  '/api/public/cron/notifications': typeof ApiPublicCronNotificationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/noticias'
+    | '/notificaciones'
+    | '/onboarding'
     | '/perfil'
     | '/wallet'
     | '/chat/$code'
     | '/referentes/$id'
     | '/u/$code'
     | '/referentes/'
+    | '/api/public/cron/notifications'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
     | '/noticias'
+    | '/notificaciones'
+    | '/onboarding'
     | '/perfil'
     | '/wallet'
     | '/chat/$code'
     | '/referentes/$id'
     | '/u/$code'
     | '/referentes'
+    | '/api/public/cron/notifications'
   id:
     | '__root__'
     | '/'
+    | '/auth'
     | '/noticias'
+    | '/notificaciones'
+    | '/onboarding'
     | '/perfil'
     | '/wallet'
     | '/chat/$code'
     | '/referentes/$id'
     | '/u/$code'
     | '/referentes/'
+    | '/api/public/cron/notifications'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   NoticiasRoute: typeof NoticiasRoute
+  NotificacionesRoute: typeof NotificacionesRoute
+  OnboardingRoute: typeof OnboardingRoute
   PerfilRoute: typeof PerfilRoute
   WalletRoute: typeof WalletRoute
   ChatCodeRoute: typeof ChatCodeRoute
   ReferentesIdRoute: typeof ReferentesIdRoute
   UCodeRoute: typeof UCodeRoute
   ReferentesIndexRoute: typeof ReferentesIndexRoute
+  ApiPublicCronNotificationsRoute: typeof ApiPublicCronNotificationsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -150,11 +203,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notificaciones': {
+      id: '/notificaciones'
+      path: '/notificaciones'
+      fullPath: '/notificaciones'
+      preLoaderRoute: typeof NotificacionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/noticias': {
       id: '/noticias'
       path: '/noticias'
       fullPath: '/noticias'
       preLoaderRoute: typeof NoticiasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -192,29 +266,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/notifications': {
+      id: '/api/public/cron/notifications'
+      path: '/api/public/cron/notifications'
+      fullPath: '/api/public/cron/notifications'
+      preLoaderRoute: typeof ApiPublicCronNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   NoticiasRoute: NoticiasRoute,
+  NotificacionesRoute: NotificacionesRoute,
+  OnboardingRoute: OnboardingRoute,
   PerfilRoute: PerfilRoute,
   WalletRoute: WalletRoute,
   ChatCodeRoute: ChatCodeRoute,
   ReferentesIdRoute: ReferentesIdRoute,
   UCodeRoute: UCodeRoute,
   ReferentesIndexRoute: ReferentesIndexRoute,
+  ApiPublicCronNotificationsRoute: ApiPublicCronNotificationsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
