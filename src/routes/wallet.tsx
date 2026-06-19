@@ -397,6 +397,7 @@ function HomeScreen({
           <section className="bg-card rounded-2xl p-2 shadow-soft">
             {positionsValued.map((p) => {
               const asset = findAsset(p.ticker);
+              const unavail = p.unavailable;
               return (
                 <button
                   key={p.ticker}
@@ -409,25 +410,34 @@ function HomeScreen({
                     </p>
                     <p className="text-xs text-muted-foreground">{asset?.name ?? p.ticker}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">
-                      {p.qty.toLocaleString("es-ES", { maximumFractionDigits: 4 })} ud · {fmtEUR(p.price)}
-                      {p.stale && " · desactualizado"}
+                      {p.qty.toLocaleString("es-ES", { maximumFractionDigits: 4 })} ud
+                      {p.price != null ? ` · ${fmtEUR(p.price)}` : ""}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold tabular-nums" style={{ color: "var(--navy)" }}>
-                      {fmtEUR(p.value)}
-                    </p>
-                    <p
-                      className="text-xs tabular-nums font-medium"
-                      style={{ color: p.gain >= 0 ? "var(--success)" : "var(--danger)" }}
-                    >
-                      {fmtPct(p.gainPct)}
-                    </p>
+                    {unavail ? (
+                      <p className="text-xs font-medium flex items-center gap-1 justify-end" style={{ color: "var(--danger)" }}>
+                        <AlertTriangle size={13} /> Precio no disponible
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold tabular-nums" style={{ color: "var(--navy)" }}>
+                          {fmtEUR(p.value)}
+                        </p>
+                        <p
+                          className="text-xs tabular-nums font-medium"
+                          style={{ color: (p.gain ?? 0) >= 0 ? "var(--success)" : "var(--danger)" }}
+                        >
+                          {fmtPct(p.gainPct ?? 0)}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </button>
               );
             })}
           </section>
+
         </>
       )}
 
