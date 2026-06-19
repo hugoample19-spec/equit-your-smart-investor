@@ -38,6 +38,7 @@ export type Profile = {
   onboarded: boolean;
   is_portfolio_public: boolean;
   favorite_referente_id: string | null;
+  is_premium: boolean;
 };
 
 type AppState = {
