@@ -172,4 +172,3 @@ export function usePortfolioSummary(): PortfolioSummary {
     };
   }, [state, pricesResp, ready]);
 }
-}
