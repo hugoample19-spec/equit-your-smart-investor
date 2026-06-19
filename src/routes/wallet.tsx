@@ -7,6 +7,7 @@ import {
   Search,
   TrendingUp,
   AlertTriangle,
+  Check,
   X,
 } from "lucide-react";
 import {
