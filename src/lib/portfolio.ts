@@ -171,6 +171,9 @@ export function usePortfolioSummary() {
       hasUnavailable: assets.some((a) => a.unavailable),
       assets,
       series,
+      refresh: () => query.refetch(),
+      isRefreshing: query.isFetching,
+      lastFetchedAt: pricesResp?.fetchedAt ?? null,
     };
-  }, [state, pricesResp, ready]);
+  }, [state, pricesResp, ready, query.isFetching]);
 }
