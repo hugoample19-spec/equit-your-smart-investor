@@ -1149,9 +1149,17 @@ function SellScreen({
       </div>
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
-        <Row label="Precio actual" value={fmtEUR(px)} bold />
+        <Row
+          label="Precio actual"
+          value={hasPrice ? fmtEUR(px!) : "Precio no disponible"}
+          color={hasPrice ? undefined : "var(--danger)"}
+          bold
+        />
         <Row label="Participaciones" value={owned.toLocaleString("es-ES", { maximumFractionDigits: 6 })} />
         <Row label="Precio medio compra" value={fmtEUR(avg)} />
+        {price?.stale && hasPrice && (
+          <p className="text-[11px] text-muted-foreground">Última actualización: {fmtAgo(price.fetchedAt)}</p>
+        )}
       </section>
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
