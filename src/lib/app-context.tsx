@@ -309,7 +309,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setIsPremiumPersist = (b: boolean) => {
     setIsPremium(b);
-    if (user) supabase.from("profiles").update({ is_premium: b }).eq("id", user.id);
+    if (user) {
+      supabase.from("profiles").update({ is_premium: b }).eq("id", user.id).then(({ error }) => {
+        if (error) console.error("Failed to persist is_premium:", error);
+      });
+    }
   };
 
   return (

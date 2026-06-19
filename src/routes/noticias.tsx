@@ -64,7 +64,7 @@ async function translateToSpanish(text: string): Promise<string> {
 type DisplayNews = NewsItem & { displayTitle: string; displaySummary: string };
 
 function NoticiasPage() {
-  const { streak, markNewsRead, isPremium, setIsPremium } = useApp();
+  const { streak, markNewsRead, isPremium, setIsPremium, refreshProfile } = useApp();
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const [insight, setInsight] = useState<string | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
@@ -141,7 +141,13 @@ function NoticiasPage() {
     setInsightLoading(true);
     setInsightError(null);
     try {
-      const res = await getNewsInsight({ data: { headline: opened.displayTitle, summary: opened.displaySummary } });
+      let res = await getNewsInsight({ data: { headline: opened.displayTitle, summary: opened.displaySummary } });
+      // If the server says premium_required but local thinks user is premium,
+      // the DB write may have raced — refresh the profile and retry once.
+      if (!res.ok && res.reason === "premium_required") {
+        await refreshProfile();
+        res = await getNewsInsight({ data: { headline: opened.displayTitle, summary: opened.displaySummary } });
+      }
       if (res.ok) {
         setInsight(res.insight);
       } else if (res.reason === "premium_required") {
@@ -176,11 +182,6 @@ function NoticiasPage() {
           <h1 className="text-xl font-semibold mt-3 leading-tight" style={{ color: "var(--navy)" }}>
             {opened.displayTitle}
           </h1>
-          {opened.displaySummary && (
-            <p className="text-sm mt-3 leading-relaxed" style={{ color: "var(--navy)" }}>
-              {opened.displaySummary}
-            </p>
-          )}
           {opened.source && (
             <p className="text-[10px] tracking-wider mt-4 font-medium" style={{ color: "var(--muted-foreground)" }}>
               FUENTE · {opened.source.toUpperCase()}
