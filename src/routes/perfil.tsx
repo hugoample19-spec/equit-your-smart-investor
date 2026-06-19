@@ -32,6 +32,7 @@ function PerfilPage() {
   const [search, setSearch] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(fullName);
+  const [nameError, setNameError] = useState<string | null>(null);
   const [avatarMenu, setAvatarMenu] = useState(false);
 
   useEffect(() => { setNameDraft(fullName); }, [fullName]);
