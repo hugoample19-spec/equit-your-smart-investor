@@ -166,11 +166,11 @@ export const trendingStocks = [
   { ticker: "NVDA", name: "Nvidia", users: 1284, color: "#76B900" },
   { ticker: "TSLA", name: "Tesla", users: 982, color: "#CC0000" },
   { ticker: "AAPL", name: "Apple", users: 874, color: "#1A1A2E" },
-  { ticker: "BTC", name: "Bitcoin", users: 712, color: "#F7931A" },
+  { ticker: "BTC-USD", name: "Bitcoin", users: 712, color: "#F7931A" },
   { ticker: "MSFT", name: "Microsoft", users: 643, color: "#00A4EF" },
   { ticker: "GOOGL", name: "Alphabet", users: 521, color: "#4285F4" },
   { ticker: "META", name: "Meta", users: 487, color: "#0866FF" },
-  { ticker: "ITX", name: "Inditex", users: 392, color: "#1A1A2E" },
+  { ticker: "ITX.MC", name: "Inditex", users: 392, color: "#1A1A2E" },
 ];
 
 export const news = [
