@@ -64,7 +64,7 @@ async function translateToSpanish(text: string): Promise<string> {
 type DisplayNews = NewsItem & { displayTitle: string; displaySummary: string };
 
 function NoticiasPage() {
-  const { streak, markNewsRead, isPremium, setIsPremium } = useApp();
+  const { streak, markNewsRead, isPremium, setIsPremium, refreshProfile } = useApp();
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const [insight, setInsight] = useState<string | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
