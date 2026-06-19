@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useWallet, positionQty, positionInvested } from "./wallet-store";
 import { getPrices } from "./prices.functions";
+import { useApp } from "./app-context";
 
 export type PortfolioSummary = {
   ready: boolean;
