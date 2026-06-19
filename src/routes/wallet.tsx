@@ -331,10 +331,7 @@ function HomeScreen({
   // Single shared calculation — same numbers as Home (/) by construction.
   const summary = usePortfolioSummary();
   const positions = Object.values(state.positions);
-  const positionsValued = summary.assets.map((a) => ({
-    ...a,
-    ticker: a.ticker,
-  }));
+  const positionsValued = summary.assets;
   const totalValue = summary.totalValue;
   const totalReturn = summary.totalReturn;
   const totalReturnPct = summary.totalReturnPct;
