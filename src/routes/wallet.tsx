@@ -56,6 +56,15 @@ const fmtEUR0 = (n: number) =>
   "€" + n.toLocaleString("es-ES", { maximumFractionDigits: 0 });
 const fmtPct = (n: number) =>
   (n >= 0 ? "+" : "") + n.toLocaleString("es-ES", { maximumFractionDigits: 2 }) + "%";
+function fmtAgo(ts?: number): string {
+  if (!ts) return "";
+  const mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
+  if (mins < 1) return "Actualizado ahora";
+  if (mins === 1) return "Actualizado hace 1 min";
+  if (mins < 60) return `Actualizado hace ${mins} min`;
+  const hrs = Math.round(mins / 60);
+  return hrs === 1 ? "Actualizado hace 1 h" : `Actualizado hace ${hrs} h`;
+}
 
 type Screen =
   | { kind: "home" }
