@@ -7,6 +7,7 @@ import {
   Search,
   TrendingUp,
   AlertTriangle,
+  Check,
   X,
 } from "lucide-react";
 import {
@@ -57,7 +58,15 @@ type Screen =
   | { kind: "buyList" }
   | { kind: "buy"; ticker: string }
   | { kind: "detail"; ticker: string }
-  | { kind: "sell"; ticker: string };
+  | { kind: "sell"; ticker: string }
+  | {
+      kind: "confirmation";
+      mode: "buy" | "sell";
+      ticker: string;
+      qty: number;
+      price: number;
+      amount: number;
+    };
 
 function WalletPage() {
   const { state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds } = useWallet();
@@ -77,7 +86,12 @@ function WalletPage() {
   const tickersToFetch = useMemo(() => {
     const base = new Set<string>(ownedTickers);
     if (screen.kind === "buyList") CATALOG.forEach((c) => base.add(c.ticker));
-    if (screen.kind === "buy" || screen.kind === "detail" || screen.kind === "sell")
+    if (
+      screen.kind === "buy" ||
+      screen.kind === "detail" ||
+      screen.kind === "sell" ||
+      screen.kind === "confirmation"
+    )
       base.add(screen.ticker);
     return Array.from(base);
   }, [ownedTickers, screen]);
@@ -98,77 +112,120 @@ function WalletPage() {
 
   const prices = pricesQuery.data?.prices ?? {};
 
-  if (screen.kind === "buyList")
+  const renderScreen = (): React.ReactNode => {
+    if (screen.kind === "buyList")
+      return (
+        <BuyListScreen
+          prices={prices}
+          loading={pricesQuery.isLoading}
+          onBack={() => setScreen({ kind: "home" })}
+          onPick={(t) => setScreen({ kind: "buy", ticker: t })}
+        />
+      );
+
+    if (screen.kind === "buy")
+      return (
+        <BuyScreen
+          ticker={screen.ticker}
+          price={prices[screen.ticker]}
+          cash={state.cash}
+          onBack={() => setScreen({ kind: "buyList" })}
+          onConfirm={(qty, price) => {
+            buy(screen.ticker, qty, price);
+            setScreen({
+              kind: "confirmation",
+              mode: "buy",
+              ticker: screen.ticker,
+              qty,
+              price,
+              amount: qty * price,
+            });
+          }}
+        />
+      );
+
+    if (screen.kind === "detail") {
+      const pos = state.positions[screen.ticker];
+      if (!pos) {
+        setScreen({ kind: "home" });
+        return null;
+      }
+      return (
+        <DetailScreen
+          position={pos}
+          price={prices[screen.ticker]}
+          onBack={() => setScreen({ kind: "home" })}
+          onSell={() => setScreen({ kind: "sell", ticker: screen.ticker })}
+        />
+      );
+    }
+
+    if (screen.kind === "sell") {
+      const pos = state.positions[screen.ticker];
+      if (!pos) {
+        setScreen({ kind: "home" });
+        return null;
+      }
+      return (
+        <SellScreen
+          position={pos}
+          price={prices[screen.ticker]}
+          onBack={() => setScreen({ kind: "detail", ticker: screen.ticker })}
+          onConfirm={(qty, price) => {
+            sell(screen.ticker, qty, price);
+            setScreen({
+              kind: "confirmation",
+              mode: "sell",
+              ticker: screen.ticker,
+              qty,
+              price,
+              amount: qty * price,
+            });
+          }}
+        />
+      );
+    }
+
+    if (screen.kind === "confirmation")
+      return (
+        <ConfirmationScreen
+          mode={screen.mode}
+          ticker={screen.ticker}
+          qty={screen.qty}
+          price={screen.price}
+          amount={screen.amount}
+          onDone={() => setScreen({ kind: "home" })}
+        />
+      );
+
     return (
-      <BuyListScreen
+      <HomeScreen
+        state={state}
         prices={prices}
-        loading={pricesQuery.isLoading}
-        onBack={() => setScreen({ kind: "home" })}
-        onPick={(t) => setScreen({ kind: "buy", ticker: t })}
+        onBuy={() => setScreen({ kind: "buyList" })}
+        onReset={reset}
+        onOpenAsset={(t) => setScreen({ kind: "detail", ticker: t })}
+        onAddFunds={addFunds}
+        onWithdrawFunds={withdrawFunds}
       />
     );
+  };
 
-  if (screen.kind === "buy")
-    return (
-      <BuyScreen
-        ticker={screen.ticker}
-        price={prices[screen.ticker]}
-        cash={state.cash}
-        onBack={() => setScreen({ kind: "buyList" })}
-        onConfirm={(qty, price) => {
-          buy(screen.ticker, qty, price);
-          setScreen({ kind: "home" });
-        }}
-      />
-    );
-
-  if (screen.kind === "detail") {
-    const pos = state.positions[screen.ticker];
-    if (!pos) {
-      setScreen({ kind: "home" });
-      return null;
-    }
-    return (
-      <DetailScreen
-        position={pos}
-        price={prices[screen.ticker]}
-        onBack={() => setScreen({ kind: "home" })}
-        onSell={() => setScreen({ kind: "sell", ticker: screen.ticker })}
-      />
-    );
-  }
-
-  if (screen.kind === "sell") {
-    const pos = state.positions[screen.ticker];
-    if (!pos) {
-      setScreen({ kind: "home" });
-      return null;
-    }
-    return (
-      <SellScreen
-        position={pos}
-        price={prices[screen.ticker]}
-        onBack={() => setScreen({ kind: "detail", ticker: screen.ticker })}
-        onConfirm={(qty, price) => {
-          sell(screen.ticker, qty, price);
-          setScreen({ kind: "home" });
-        }}
-      />
-    );
-  }
+  const screenKey =
+    screen.kind +
+    ("ticker" in screen ? ":" + screen.ticker : "") +
+    (screen.kind === "confirmation" ? ":" + screen.mode : "");
 
   return (
-    <HomeScreen
-      state={state}
-      prices={prices}
-      onBuy={() => setScreen({ kind: "buyList" })}
-      onReset={reset}
-      onOpenAsset={(t) => setScreen({ kind: "detail", ticker: t })}
-      onAddFunds={addFunds}
-      onWithdrawFunds={withdrawFunds}
-    />
+    <div
+      key={screenKey}
+      className="animate-in fade-in slide-in-from-right-2 duration-300"
+    >
+      {renderScreen()}
+    </div>
   );
 }
+
 
 /* ============================== Setup ============================== */
 
@@ -665,7 +722,7 @@ function BuyListScreen({
         ))}
       </div>
 
-      <section className="bg-card rounded-2xl p-2 shadow-soft">
+      <section key={tab} className="bg-card rounded-2xl p-2 shadow-soft animate-in fade-in duration-200">
         {(() => {
           // Group stocks by sector; flat list otherwise.
           const groups: { sector: string | null; items: typeof list }[] = [];
@@ -1239,6 +1296,66 @@ function PriceChart({ ticker }: { ticker: string }) {
         </p>
       )}
     </section>
+  );
+}
+
+function ConfirmationScreen({
+  mode,
+  ticker,
+  qty,
+  price,
+  amount,
+  onDone,
+}: {
+  mode: "buy" | "sell";
+  ticker: string;
+  qty: number;
+  price: number;
+  amount: number;
+  onDone: () => void;
+}) {
+  const asset = findAsset(ticker);
+  const isBuy = mode === "buy";
+  const title = isBuy ? "Compra realizada" : "Venta realizada";
+  const qtyStr = qty.toLocaleString("es-ES", { maximumFractionDigits: 6 });
+  const summary = isBuy
+    ? `Has comprado ${qtyStr} participaciones de ${asset?.display ?? ticker} por ${fmtEUR(amount)}`
+    : `Has vendido ${qtyStr} participaciones de ${asset?.display ?? ticker} por ${fmtEUR(amount)}`;
+
+  return (
+    <div className="space-y-6 pb-6 pt-4 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-300">
+      <div
+        className="w-20 h-20 rounded-full flex items-center justify-center shadow-card animate-in zoom-in-50 duration-500"
+        style={{ background: "var(--gold)" }}
+      >
+        <Check size={42} strokeWidth={3} color="var(--navy)" />
+      </div>
+      <div className="space-y-2 px-4">
+        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>
+          {title}
+        </h1>
+        <p className="text-sm leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+          {summary}
+        </p>
+      </div>
+      <section className="bg-card rounded-2xl p-5 shadow-soft w-full space-y-2">
+        <Row label="Activo" value={asset?.display ?? ticker} />
+        <Row label="Participaciones" value={qtyStr} />
+        <Row label="Precio por participación" value={fmtEUR(price)} />
+        <Row
+          label={isBuy ? "Importe pagado" : "Importe recibido"}
+          value={fmtEUR(amount)}
+          bold
+        />
+      </section>
+      <button
+        onClick={onDone}
+        className="w-full rounded-xl py-3.5 text-sm font-semibold"
+        style={{ background: "var(--navy)", color: "var(--cream)" }}
+      >
+        Ver mi cartera
+      </button>
+    </div>
   );
 }
 
