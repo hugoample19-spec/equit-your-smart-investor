@@ -129,7 +129,26 @@ function NoticiasPage() {
 
   const openArticle = (idx: number) => {
     setOpenIdx(idx);
+    setInsight(null);
+    setInsightError(null);
     markNewsRead();
+  };
+
+  const handleInsight = async () => {
+    if (!opened) return;
+    if (!isPremium) { setShowPremium(true); return; }
+    if (insight || insightLoading) return;
+    setInsightLoading(true);
+    setInsightError(null);
+    try {
+      const res = await getNewsInsight({ data: { headline: opened.displayTitle, summary: opened.displaySummary } });
+      setInsight(res.insight);
+    } catch (e) {
+      setInsightError("No se pudo generar el análisis. Inténtalo de nuevo en un momento.");
+      console.error(e);
+    } finally {
+      setInsightLoading(false);
+    }
   };
 
   if (opened) {
@@ -162,6 +181,52 @@ function NoticiasPage() {
             </p>
           )}
         </article>
+
+        {!insight && !insightLoading && (
+          <button
+            type="button"
+            onClick={handleInsight}
+            className="w-full flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-semibold shadow-soft"
+            style={{ background: "var(--navy)", color: "var(--gold)" }}
+          >
+            {!isPremium && <Lock size={14} />}
+            <Sparkles size={16} />
+            ¿Por qué importa esta noticia y cómo afecta a mi cartera?
+          </button>
+        )}
+
+        {insightLoading && (
+          <div className="rounded-2xl p-5 shadow-soft animate-pulse" style={{ background: "color-mix(in srgb, var(--gold) 14%, var(--card))" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Lightbulb size={16} style={{ color: "var(--gold)" }} />
+              <span className="text-[11px] tracking-widest font-bold" style={{ color: "var(--navy)" }}>ANALIZANDO…</span>
+            </div>
+            <div className="h-3 rounded w-full mb-2" style={{ background: "var(--muted)" }} />
+            <div className="h-3 rounded w-[92%] mb-2" style={{ background: "var(--muted)" }} />
+            <div className="h-3 rounded w-[70%]" style={{ background: "var(--muted)" }} />
+          </div>
+        )}
+
+        {insight && (
+          <div className="rounded-2xl p-5 shadow-soft" style={{ background: "color-mix(in srgb, var(--gold) 18%, var(--card))", border: "1px solid color-mix(in srgb, var(--gold) 40%, transparent)" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Lightbulb size={16} style={{ color: "var(--gold)" }} fill="var(--gold)" />
+              <span className="text-[11px] tracking-widest font-bold" style={{ color: "var(--navy)" }}>POR QUÉ IMPORTA</span>
+            </div>
+            <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--navy)" }}>{insight}</p>
+          </div>
+        )}
+
+        {insightError && (
+          <p className="text-xs text-center" style={{ color: "var(--muted-foreground)" }}>{insightError}</p>
+        )}
+
+        {showPremium && (
+          <PremiumModal
+            onClose={() => setShowPremium(false)}
+            onSubscribe={() => { setIsPremium(true); setShowPremium(false); }}
+          />
+        )}
       </div>
     );
   }
