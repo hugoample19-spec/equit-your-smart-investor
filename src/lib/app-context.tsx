@@ -185,9 +185,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) supabase.from("profiles").update({ avatar_url: s }).eq("id", user.id);
   };
 
-  const setFullNamePersist = (s: string) => {
-    setFullName(s);
-    if (user) supabase.from("profiles").update({ display_name: s }).eq("id", user.id);
+  const setFullNamePersist = async (s: string): Promise<{ ok: boolean; error?: string }> => {
+    const trimmed = s.trim();
+    if (!trimmed) return { ok: false, error: "El nombre no puede estar vacío" };
+    if (trimmed === fullName) return { ok: true };
+    // Uniqueness check
+    try {
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("id")
+        .ilike("display_name", trimmed)
+        .limit(1);
+      if (existing && existing.length > 0 && (!user || existing[0].id !== user.id)) {
+        return { ok: false, error: "Este nombre ya está en uso" };
+      }
+    } catch { /* allow offline */ }
+    setFullName(trimmed);
+    if (user) {
+      const { error } = await supabase.from("profiles").update({ display_name: trimmed }).eq("id", user.id);
+      if (error) return { ok: false, error: "No se pudo guardar" };
+    }
+    return { ok: true };
   };
 
 
