@@ -282,9 +282,6 @@ function PerfilPage() {
         </ul>
       </section>
 
-      {/* Performance card — real data from wallet */}
-      <PerformanceCard />
-
       {/* Streak card — bigger, with weekly view */}
       <StreakCard
         current={streak.current}
