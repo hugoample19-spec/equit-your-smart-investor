@@ -22,7 +22,8 @@ export type PortfolioSummary = {
 };
 
 export function usePortfolioSummary(): PortfolioSummary {
-  const { state, ready } = useWallet();
+  const { user } = useApp();
+  const { state, ready } = useWallet(user?.id ?? null);
   const tickers = useMemo(() => Object.keys(state.positions), [state.positions]);
 
   const getPricesFn = useServerFn(getPrices);
