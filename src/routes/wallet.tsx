@@ -71,10 +71,20 @@ type Screen =
     };
 
 function WalletPage() {
-  const { state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds } = useWallet();
+  const { user, profile, isPremium } = useApp();
+  const { state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds } = useWallet(user?.id ?? null);
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const [screen, setScreen] = useState<Screen>({ kind: "home" });
+
+  // Auto-seed wallet from profile.starting_balance once profile loads.
+  // The onboarding tour sets this to €1.000 by default; users never see SetupScreen.
+  useEffect(() => {
+    if (!ready) return;
+    if (state.starting != null) return;
+    const seed = profile?.starting_balance ?? (profile ? 1000 : null);
+    if (seed != null && Number(seed) > 0) setupStarting(Number(seed));
+  }, [ready, state.starting, profile, setupStarting]);
 
   // Open asset detail when navigated with ?asset=TICKER
   useEffect(() => {
@@ -110,7 +120,8 @@ function WalletPage() {
 
   if (!ready) return <div className="py-10 text-center text-sm text-muted-foreground">Cargando…</div>;
 
-  if (state.starting == null) return <SetupScreen onPick={setupStarting} />;
+  if (state.starting == null)
+    return <div className="py-10 text-center text-sm text-muted-foreground">Preparando tu cartera…</div>;
 
   const prices = pricesQuery.data?.prices ?? {};
 
