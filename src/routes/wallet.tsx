@@ -340,26 +340,44 @@ function HomeScreen({
   return (
     <div className="space-y-5 pb-6">
       <section className="bg-card rounded-2xl p-5 shadow-soft">
-        <div>
-          <p className="text-xs text-muted-foreground">Valor total de cartera</p>
-          <p
-            className="text-3xl font-semibold tracking-tight tabular-nums mt-1"
-            style={{ color: "var(--navy)" }}
-          >
-            {fmtEUR(totalValue)}
-            <span style={{ color: "var(--gold)" }}>.</span>
-          </p>
-          <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
-            <span
-              className="tabular-nums font-medium"
-              style={{ color: totalReturn >= 0 ? "var(--success)" : "var(--danger)" }}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs text-muted-foreground">Valor total de cartera</p>
+            <p
+              className="text-3xl font-semibold tracking-tight tabular-nums mt-1"
+              style={{ color: "var(--navy)" }}
             >
-              {totalReturn >= 0 ? "+" : ""}
-              {fmtEUR(totalReturn)} · {fmtPct(totalReturnPct)}
-            </span>
-            <span className="text-xs text-muted-foreground">Rendimiento total</span>
+              {fmtEUR(totalValue)}
+              <span style={{ color: "var(--gold)" }}>.</span>
+            </p>
+            <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
+              <span
+                className="tabular-nums font-medium"
+                style={{ color: totalReturn >= 0 ? "var(--success)" : "var(--danger)" }}
+              >
+                {totalReturn >= 0 ? "+" : ""}
+                {fmtEUR(totalReturn)} · {fmtPct(totalReturnPct)}
+              </span>
+              <span className="text-xs text-muted-foreground">Rendimiento total</span>
+            </div>
           </div>
+          <button
+            onClick={() => summary.refresh()}
+            disabled={summary.isRefreshing}
+            className="rounded-full border px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 shrink-0"
+            style={{ borderColor: "var(--border)", color: "var(--navy)", opacity: summary.isRefreshing ? 0.6 : 1 }}
+            aria-label="Actualizar precios"
+          >
+            <RefreshCw size={13} className={summary.isRefreshing ? "animate-spin" : ""} />
+            Actualizar precios
+          </button>
         </div>
+        {summary.hasUnavailable && (
+          <div className="mt-3 flex items-start gap-2 text-xs rounded-lg p-2.5" style={{ background: "rgba(255,122,138,0.10)", color: "var(--danger)" }}>
+            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+            <span>Algunos precios no se han podido actualizar. El rendimiento total excluye esos activos hasta que vuelva el dato en vivo.</span>
+          </div>
+        )}
         <div className="mt-4 pt-4 border-t flex justify-between text-xs" style={{ borderColor: "var(--border)" }}>
           <span className="text-muted-foreground">Efectivo disponible</span>
           <span className="tabular-nums font-medium" style={{ color: "var(--navy)" }}>
@@ -367,6 +385,7 @@ function HomeScreen({
           </span>
         </div>
       </section>
+
 
       {positions.length === 0 ? (
         <section className="bg-card rounded-2xl p-8 shadow-soft text-center">
