@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-ro
 import { ArrowLeft, Lock, Star } from "lucide-react";
 import { investors } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
+import { InvestorLogo } from "@/components/InvestorLogo";
+
 
 export const Route = createFileRoute("/referentes/$id")({
   head: ({ params }) => {
@@ -37,7 +39,7 @@ function InvestorDetail() {
           <ArrowLeft size={16} /> Referentes
         </Link>
         <div className="rounded-3xl overflow-hidden relative aspect-[4/5] shadow-card">
-          <img src={investor.photo} alt={investor.name} className="w-full h-full object-cover" />
+          <InvestorLogo src={investor.photo} name={investor.name} />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 backdrop-blur-md" style={{ background: "rgba(26,26,46,0.65)" }}>
             <Lock size={36} style={{ color: "var(--gold)" }} />
             <p className="mt-3 text-[10px] tracking-widest font-semibold" style={{ color: "var(--gold)" }}>EQUIT PREMIUM</p>
@@ -71,7 +73,7 @@ function InvestorDetail() {
       </div>
 
       <div className="rounded-3xl overflow-hidden relative aspect-[4/5] shadow-card">
-        <img src={investor.photo} alt={investor.name} className="w-full h-full object-cover" />
+        <InvestorLogo src={investor.photo} name={investor.name} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(26,26,46,0) 40%, rgba(26,26,46,0.9) 100%)" }} />
         <div className="absolute bottom-0 left-0 right-0 p-5 text-left">
           <p className="text-[10px] uppercase tracking-widest" style={{ color: "var(--gold)" }}>{investor.fund}</p>

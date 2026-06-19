@@ -3,6 +3,8 @@ import { Lock, Star } from "lucide-react";
 import { investors } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
 import { PremiumBanner } from "./index";
+import { InvestorLogo } from "@/components/InvestorLogo";
+
 
 export const Route = createFileRoute("/referentes/")({
   head: () => ({
@@ -39,13 +41,13 @@ function ReferentesPage() {
                 <Star size={16} fill={isFav ? "var(--gold)" : "none"} color="var(--gold)" strokeWidth={2} />
               </button>
               <Link to="/referentes/$id" params={{ id: i.id }}>
-                <div className="aspect-[3/4] relative">
-                  <img
-                    src={i.photo}
-                    alt={i.name}
-                    className="w-full h-full object-cover"
-                    style={locked ? { filter: "blur(14px)", transform: "scale(1.1)" } : undefined}
-                  />
+                <div className="aspect-[3/4] relative" style={{ background: "var(--navy)" }}>
+                  <div
+                    className="absolute inset-0"
+                    style={locked ? { filter: "blur(10px)" } : undefined}
+                  >
+                    <InvestorLogo src={i.photo} name={i.name} />
+                  </div>
                   <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(26,26,46,0) 35%, rgba(26,26,46,0.85) 100%)" }} />
                   {locked && (
                     <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(26,26,46,0.35)" }}>
