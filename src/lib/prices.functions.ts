@@ -6,10 +6,11 @@ export type PriceData = {
   prevClose: number | null;
   changePct: number | null;
   spark: number[];
-  stale: boolean;            // true = no live price available
+  stale: boolean;            // true = served from cache, live fetch failed this round
   reference?: boolean;       // true = static reference price, not live
-  source?: "finnhub" | "yahoo" | "reference" | "none";
+  source?: "finnhub" | "yahoo" | "reference" | "cache" | "none";
   error?: string;            // human-readable reason when price is null
+  fetchedAt?: number;        // ms timestamp of when this price was actually fetched
 };
 
 // Reference prices for commodities (real APIs require paid plans).
