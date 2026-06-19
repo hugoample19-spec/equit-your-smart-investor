@@ -41,7 +41,7 @@ export type PortfolioSummary = {
 
 function compute(
   positions: Record<string, Position>,
-  prices: Record<string, { price?: number; stale?: boolean } | undefined>,
+  prices: Record<string, { price?: number | null; stale?: boolean } | undefined>,
 ): { assets: AssetBreakdown[]; marketValue: number; totalReturn: number } {
   let marketValue = 0;
   let totalReturn = 0;
