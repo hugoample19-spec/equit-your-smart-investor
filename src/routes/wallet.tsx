@@ -131,6 +131,7 @@ function WalletPage() {
         <BuyListScreen
           prices={prices}
           loading={pricesQuery.isLoading}
+          isPremium={isPremium}
           onBack={() => setScreen({ kind: "home" })}
           onPick={(t) => setScreen({ kind: "buy", ticker: t })}
         />
