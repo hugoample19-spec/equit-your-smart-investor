@@ -173,7 +173,7 @@ function LeaderboardList({ rows }: { rows: typeof globalUsers }) {
               {String(idx + 1).padStart(2, "0")}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{u.handle}</p>
+              <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{u.name}</p>
               <p className="text-[10px] tracking-wider font-medium" style={{ color: "var(--muted-foreground)" }}>{u.strategy}</p>
             </div>
             <span className="text-sm font-semibold tabular-nums" style={{ color: u.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
