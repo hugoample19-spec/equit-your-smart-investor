@@ -47,6 +47,8 @@ type AppState = {
   isAuthenticated: boolean;
   authLoading: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+
 
   // Existing local state
   username: string;
