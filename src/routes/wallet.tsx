@@ -10,7 +10,6 @@ import {
   Check,
   X,
   Lock,
-  RefreshCw,
 } from "lucide-react";
 import {
   CATALOG,
