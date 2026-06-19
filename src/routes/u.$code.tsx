@@ -49,7 +49,7 @@ function PublicProfile() {
         <p className="text-lg font-semibold tabular-nums mt-2" style={{ color: user.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
           {user.perf >= 0 ? "+" : ""}{user.perf.toFixed(1)}%
         </p>
-        <p className="text-[10px] tracking-wider" style={{ color: "var(--muted-foreground)" }}>{user.strategy}</p>
+        
       </div>
 
       <div className="flex gap-2">
