@@ -18,14 +18,15 @@ export type AssetBreakdown = {
   ticker: string;
   qty: number;
   avg: number;
-  price: number | null;       // null = live price unavailable
+  price: number | null;       // null = no price at all (live failed AND no cache)
   invested: number;
-  value: number;              // qty * price (or qty*avg as placeholder when unavailable)
-  gain: number | null;        // null when price unavailable — never fake 0
-  gainPct: number | null;     // null when price unavailable
-  unavailable: boolean;
+  value: number;
+  gain: number | null;
+  gainPct: number | null;
+  unavailable: boolean;       // true only when we have NO price (first-ever failure)
   priceError?: string;
-  stale?: boolean;
+  stale?: boolean;            // true = served from cache (last-known-good)
+  fetchedAt?: number;
 };
 
 export type PortfolioSummary = {
