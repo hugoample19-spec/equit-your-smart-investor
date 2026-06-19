@@ -374,3 +374,85 @@ function StreakCard({ current, longest, lastReadDate }: { current: number; longe
   );
 }
 
+
+function NotificationSettings() {
+  const { isAuthenticated } = useApp();
+  const getPrefs = useServerFn(getNotificationPrefs);
+  const updatePrefs = useServerFn(updateNotificationPrefs);
+  const [prefs, setPrefs] = useState<{ friend_alerts: boolean; news_reminder: boolean; daily_summary: boolean; push_enabled: boolean } | null>(null);
+  const [pushPerm, setPushPerm] = useState<NotificationPermission>("default");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setPushPerm(Notification.permission);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    getPrefs().then((p) => setPrefs(p as any)).catch(() => {});
+  }, [isAuthenticated, getPrefs]);
+
+  const toggle = async (key: "friend_alerts" | "news_reminder" | "daily_summary") => {
+    if (!prefs) return;
+    const next = { ...prefs, [key]: !prefs[key] };
+    setPrefs(next);
+    try { await updatePrefs({ data: { [key]: next[key] } }); }
+    catch { toast.error("No se ha podido guardar"); }
+  };
+
+  const enablePush = async () => {
+    if (!("Notification" in window)) {
+      toast.error("Tu navegador no soporta notificaciones");
+      return;
+    }
+    const perm = await Notification.requestPermission();
+    setPushPerm(perm);
+    if (perm === "granted") {
+      await updatePrefs({ data: { push_enabled: true } });
+      setPrefs((p) => (p ? { ...p, push_enabled: true } : p));
+      new Notification("Equit", { body: "Notificaciones activadas" });
+    }
+  };
+
+  if (!isAuthenticated) return null;
+  if (!prefs) {
+    return (
+      <section className="bg-card rounded-2xl p-4 shadow-soft">
+        <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Cargando preferencias…</p>
+      </section>
+    );
+  }
+
+  const Row = ({ label, desc, value, onToggle }: { label: string; desc: string; value: boolean; onToggle: () => void }) => (
+    <button onClick={onToggle} className="w-full flex items-center justify-between py-3">
+      <div className="text-left">
+        <p className="text-sm font-medium" style={{ color: "var(--navy)" }}>{label}</p>
+        <p className="text-[11px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>{desc}</p>
+      </div>
+      <div className="w-10 h-6 rounded-full p-0.5 transition-colors shrink-0" style={{ background: value ? "var(--gold)" : "rgba(0,0,0,0.12)" }}>
+        <div className="w-5 h-5 rounded-full bg-white shadow transition-transform" style={{ transform: value ? "translateX(16px)" : "translateX(0)" }} />
+      </div>
+    </button>
+  );
+
+  return (
+    <section className="bg-card rounded-2xl p-4 shadow-soft">
+      <div className="flex items-center gap-2 mb-1">
+        <Bell size={14} style={{ color: "var(--navy)" }} />
+        <p className="text-[10px] tracking-widest" style={{ color: "var(--muted-foreground)" }}>NOTIFICACIONES</p>
+      </div>
+      <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+        <Row label="Alertas de amigos" desc="Cuando un amigo te supere en rendimiento." value={prefs.friend_alerts} onToggle={() => toggle("friend_alerts")} />
+        <Row label="Recordatorio de noticias" desc="Te avisamos si no has leído nada hoy." value={prefs.news_reminder} onToggle={() => toggle("news_reminder")} />
+        <Row label="Resumen diario" desc="Tu cierre del día a las 21:00." value={prefs.daily_summary} onToggle={() => toggle("daily_summary")} />
+      </div>
+      {pushPerm !== "granted" && (
+        <button onClick={enablePush} className="w-full mt-3 h-10 rounded-xl text-xs font-medium border" style={{ borderColor: "var(--border)", color: "var(--navy)" }}>
+          Activar notificaciones del dispositivo
+        </button>
+      )}
+      <p className="text-[10px] mt-3" style={{ color: "var(--muted-foreground)" }}>Máximo 2 notificaciones al día.</p>
+    </section>
+  );
+}
