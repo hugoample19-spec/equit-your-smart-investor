@@ -722,7 +722,7 @@ function BuyListScreen({
         ))}
       </div>
 
-      <section className="bg-card rounded-2xl p-2 shadow-soft">
+      <section key={tab} className="bg-card rounded-2xl p-2 shadow-soft animate-in fade-in duration-200">
         {(() => {
           // Group stocks by sector; flat list otherwise.
           const groups: { sector: string | null; items: typeof list }[] = [];
