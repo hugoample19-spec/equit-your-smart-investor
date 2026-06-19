@@ -18,8 +18,11 @@ export const Route = createFileRoute("/")({
 const fmt = (n: number) => n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function HomePage() {
-  const { username, friendCodes } = useApp();
+  const { fullName, username, profile, friendCodes } = useApp();
   const summary = usePortfolioSummary();
+
+  const displayName = (profile?.display_name?.trim() || fullName?.trim() || username || "").trim();
+  const firstName = displayName.split(" ")[0] || displayName;
 
   const myFriends = globalUsers
     .filter((u) => friendCodes.includes(u.code))
@@ -35,7 +38,7 @@ function HomePage() {
     <div className="space-y-6">
       {/* Portfolio card */}
       <section className="rounded-3xl p-6 shadow-card" style={{ background: "var(--navy)", color: "var(--cream)" }}>
-        <p className="text-xs" style={{ color: "rgba(250,248,245,0.6)" }}>Hola, {username}</p>
+        <p className="text-xs" style={{ color: "rgba(250,248,245,0.6)" }}>Hola, {firstName}</p>
         {summary.hasWallet ? (
           <>
             <h1 className="mt-2 text-[40px] leading-none font-semibold tracking-tight tabular-nums">
