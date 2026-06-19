@@ -39,6 +39,9 @@ export const Route = createFileRoute("/wallet")({
       { name: "description", content: "Tu cartera simulada con precios reales." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    asset: typeof s.asset === "string" ? s.asset : undefined,
+  }),
   component: WalletPage,
 });
 
