@@ -448,6 +448,9 @@ function HomeScreen({
                         >
                           {fmtPct(p.gainPct ?? 0)}
                         </p>
+                        {p.stale && p.fetchedAt && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{fmtAgo(p.fetchedAt)}</p>
+                        )}
                       </>
                     )}
                   </div>
