@@ -22,7 +22,7 @@ export const Route = createFileRoute("/perfil")({
 
 function PerfilPage() {
   const {
-    username, fullName, avatar, setAvatar, isPremium, setIsPremium,
+    username, fullName, setFullName, avatar, setAvatar, isPremium, setIsPremium,
     friendCode, favoriteReferenteId, isPortfolioPublic, setIsPortfolioPublic,
     friendCodes, addFriend, removeFriend, streak,
     isAuthenticated, signOut,
@@ -30,6 +30,11 @@ function PerfilPage() {
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(fullName);
+  const [avatarMenu, setAvatarMenu] = useState(false);
+
+  useEffect(() => { setNameDraft(fullName); }, [fullName]);
 
   const initials = fullName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   const favRef = investors.find((i) => i.id === favoriteReferenteId);
@@ -40,6 +45,14 @@ function PerfilPage() {
     const reader = new FileReader();
     reader.onload = () => setAvatar(reader.result as string);
     reader.readAsDataURL(file);
+    setAvatarMenu(false);
+  };
+
+  const commitName = () => {
+    const v = nameDraft.trim();
+    if (!v) { setNameDraft(fullName); setEditingName(false); return; }
+    if (v !== fullName) setFullName(v);
+    setEditingName(false);
   };
 
   const cleaned = search.replace(/[^0-9]/g, "");
@@ -50,19 +63,25 @@ function PerfilPage() {
     <div className="space-y-5 pb-6">
       <div className="flex flex-col items-center pt-2">
         <div className="relative w-24 h-24">
-          <div className="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center shadow-card" style={{ background: "var(--navy)" }}>
+          <button
+            type="button"
+            onClick={() => setAvatarMenu((v) => !v)}
+            aria-label="Cambiar foto"
+            className="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center shadow-card"
+            style={{ background: "var(--navy)" }}
+          >
             {avatar ? (
               <img src={avatar} alt={fullName} className="w-full h-full object-cover" />
             ) : (
               <span className="text-2xl font-semibold" style={{ color: "var(--cream)" }}>{initials}</span>
             )}
-          </div>
+          </button>
 
           {/* Camera button — bottom-left */}
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
-            aria-label="Cambiar foto"
+            onClick={() => setAvatarMenu((v) => !v)}
+            aria-label="Opciones de foto"
             className="absolute -bottom-0.5 -left-0.5 w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-soft"
             style={{ background: "var(--gold)", borderColor: "var(--cream)" }}
           >
@@ -80,6 +99,41 @@ function PerfilPage() {
               <Star size={14} color="var(--gold)" />
             )}
           </span>
+
+          {avatarMenu && (
+            <>
+              <button
+                type="button"
+                aria-label="Cerrar"
+                onClick={() => setAvatarMenu(false)}
+                className="fixed inset-0 z-20 cursor-default"
+                style={{ background: "transparent" }}
+              />
+              <div
+                className="absolute z-30 left-1/2 -translate-x-1/2 mt-2 top-full w-44 rounded-2xl shadow-card overflow-hidden"
+                style={{ background: "var(--cream)", border: "1px solid var(--border)" }}
+              >
+                <button
+                  type="button"
+                  onClick={() => { fileRef.current?.click(); }}
+                  className="w-full text-left px-4 py-3 text-sm font-medium"
+                  style={{ color: "var(--navy)" }}
+                >
+                  Subir foto
+                </button>
+                {avatar && (
+                  <button
+                    type="button"
+                    onClick={() => { setAvatar(null); setAvatarMenu(false); }}
+                    className="w-full text-left px-4 py-3 text-sm font-medium border-t"
+                    style={{ color: "#D9534F", borderColor: "var(--border)" }}
+                  >
+                    Quitar foto
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
         <input
           ref={fileRef}
@@ -90,11 +144,36 @@ function PerfilPage() {
           aria-hidden="true"
           tabIndex={-1}
         />
-        <h1 className="mt-3 text-xl font-semibold" style={{ color: "var(--navy)" }}>{fullName}</h1>
+        {editingName ? (
+          <input
+            autoFocus
+            value={nameDraft}
+            onChange={(e) => setNameDraft(e.target.value)}
+            onBlur={commitName}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitName();
+              if (e.key === "Escape") { setNameDraft(fullName); setEditingName(false); }
+            }}
+            maxLength={40}
+            className="mt-3 text-xl font-semibold text-center bg-transparent outline-none border-b"
+            style={{ color: "var(--navy)", borderColor: "var(--gold)" }}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditingName(true)}
+            className="mt-3 text-xl font-semibold"
+            style={{ color: "var(--navy)" }}
+            aria-label="Editar nombre"
+          >
+            {fullName}
+          </button>
+        )}
         <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>@{username}</p>
         <p className="text-base font-semibold mt-1 tabular-nums" style={{ color: "var(--gold)" }}>#{friendCode}</p>
         <p className="text-[10px] tracking-wider" style={{ color: "var(--muted-foreground)" }}>TU CÓDIGO DE AMIGO</p>
       </div>
+
 
 
       {/* Settings — privacy toggle */}

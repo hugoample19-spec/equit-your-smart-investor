@@ -47,6 +47,8 @@ type AppState = {
   isAuthenticated: boolean;
   authLoading: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+
 
   // Existing local state
   username: string;
@@ -147,20 +149,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Hydrate profile when user changes
+  const loadProfile = async (uid: string) => {
+    const { data } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
+    if (!data) return;
+    setProfile(data as Profile);
+    if (data.display_name) setFullName(data.display_name);
+    if (data.username) setUsername(data.username);
+    if (data.avatar_url) setAvatarState(data.avatar_url);
+    if (data.friend_code) setFriendCode(data.friend_code);
+    if (data.starting_balance) setBudget(Number(data.starting_balance));
+    setPortfolioPublicState(data.is_portfolio_public);
+    setFavoriteState(data.favorite_referente_id);
+  };
   useEffect(() => {
     if (!user) { setProfile(null); return; }
-    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle().then(({ data }) => {
-      if (!data) return;
-      setProfile(data as Profile);
-      if (data.display_name) setFullName(data.display_name);
-      if (data.username) setUsername(data.username);
-      if (data.avatar_url) setAvatarState(data.avatar_url);
-      if (data.friend_code) setFriendCode(data.friend_code);
-      if (data.starting_balance) setBudget(Number(data.starting_balance));
-      setPortfolioPublicState(data.is_portfolio_public);
-      setFavoriteState(data.favorite_referente_id);
-    });
+    loadProfile(user.id);
   }, [user]);
+
+  const refreshProfile = async () => {
+    if (user) await loadProfile(user.id);
+  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -176,6 +184,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (user) supabase.from("profiles").update({ avatar_url: s }).eq("id", user.id);
   };
+
+  const setFullNamePersist = (s: string) => {
+    setFullName(s);
+    if (user) supabase.from("profiles").update({ display_name: s }).eq("id", user.id);
+  };
+
 
   const setFavoriteReferente = (id: string | null) => {
     setFavoriteState(id);
@@ -240,8 +254,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider value={{
-      user, profile, isAuthenticated: !!user, authLoading, signOut,
-      username, setUsername, fullName, setFullName,
+      user, profile, isAuthenticated: !!user, authLoading, signOut, refreshProfile,
+      username, setUsername, fullName, setFullName: setFullNamePersist,
       avatar, setAvatar, isPremium, setIsPremium,
       budget, setBudget, portfolio, setPortfolio,
       pendingCopy, setPendingCopy,
@@ -252,6 +266,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       streak, markNewsRead,
       seenFilingDates, markFilingSeen,
     }}>
+
       {children}
     </Ctx.Provider>
   );
