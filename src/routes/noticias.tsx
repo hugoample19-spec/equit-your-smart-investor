@@ -176,11 +176,6 @@ function NoticiasPage() {
           <h1 className="text-xl font-semibold mt-3 leading-tight" style={{ color: "var(--navy)" }}>
             {opened.displayTitle}
           </h1>
-          {opened.displaySummary && (
-            <p className="text-sm mt-3 leading-relaxed" style={{ color: "var(--navy)" }}>
-              {opened.displaySummary}
-            </p>
-          )}
           {opened.source && (
             <p className="text-[10px] tracking-wider mt-4 font-medium" style={{ color: "var(--muted-foreground)" }}>
               FUENTE · {opened.source.toUpperCase()}
