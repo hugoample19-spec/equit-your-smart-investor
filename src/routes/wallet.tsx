@@ -173,7 +173,10 @@ function WalletPage() {
           ticker={screen.ticker}
           price={prices[screen.ticker]}
           cash={state.cash}
-          onBack={() => setScreen({ kind: "buyList" })}
+          onBack={() => {
+            if (goBackToOrigin()) return;
+            setScreen({ kind: "buyList" });
+          }}
           onConfirm={(qty, price) => {
             buy(screen.ticker, qty, price);
             setScreen({
@@ -198,7 +201,10 @@ function WalletPage() {
         <DetailScreen
           position={pos}
           price={prices[screen.ticker]}
-          onBack={() => setScreen({ kind: "home" })}
+          onBack={() => {
+            if (goBackToOrigin()) return;
+            setScreen({ kind: "home" });
+          }}
           onSell={() => setScreen({ kind: "sell", ticker: screen.ticker })}
         />
       );
