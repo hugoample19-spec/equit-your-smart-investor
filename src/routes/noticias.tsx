@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Check, Zap, Lightbulb, Sparkles, Lock } from "lucide-react";
 import { getMarketNews, type NewsItem } from "@/lib/news.functions";
 import { getNewsInsight } from "@/lib/news-insight.functions";
-import { useApp } from "@/lib/app-context";
+import { useApp, madridDateISO } from "@/lib/app-context";
 import { PremiumModal } from "@/components/PremiumModal";
 
 export const Route = createFileRoute("/noticias")({
