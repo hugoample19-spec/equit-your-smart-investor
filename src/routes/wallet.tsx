@@ -86,6 +86,11 @@ function WalletPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const [screen, setScreen] = useState<Screen>({ kind: "home" });
+  // Track when the user arrived at an asset view from outside the wallet
+  // (e.g. tapping a card in Home's "Lo más comprado"). Used so the back
+  // button on the asset screen returns to the prior page instead of the
+  // wallet root.
+  const [cameFromOutside, setCameFromOutside] = useState(false);
 
   // Auto-seed wallet from profile.starting_balance once profile loads.
   // The onboarding tour sets this to €1.000 by default; users never see SetupScreen.
@@ -104,10 +109,20 @@ function WalletPage() {
     if (!ready) return;
     if (!search.asset || !findAsset(search.asset)) return;
     const owned = !!state.positions[search.asset];
+    setCameFromOutside(true);
     setScreen(owned ? { kind: "detail", ticker: search.asset } : { kind: "buy", ticker: search.asset });
     navigate({ search: {}, replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.asset, ready, state.positions, navigate]);
+
+  const goBackToOrigin = (): boolean => {
+    if (cameFromOutside && typeof window !== "undefined") {
+      setCameFromOutside(false);
+      window.history.back();
+      return true;
+    }
+    return false;
+  };
 
   const ownedTickers = useMemo(() => Object.keys(state.positions), [state.positions]);
   const tickersToFetch = useMemo(() => {
