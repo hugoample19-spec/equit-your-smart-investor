@@ -345,7 +345,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isPortfolioPublic, setIsPortfolioPublic,
       friendCodes, addFriend, removeFriend,
       chats, sendMessage,
-      streak, markNewsRead,
+      streak, streakReady, markNewsRead,
       seenFilingDates, markFilingSeen,
     }}>
 
