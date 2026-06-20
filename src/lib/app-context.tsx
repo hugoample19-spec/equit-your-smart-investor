@@ -77,6 +77,7 @@ type AppState = {
   chats: Record<string, ChatMessage[]>;
   sendMessage: (code: string, text: string) => void;
   streak: { current: number; longest: number; lastReadDate: string | null };
+  streakReady: boolean;
   markNewsRead: () => void;
   seenFilingDates: Record<string, string>;
   markFilingSeen: (investorId: string, date: string) => void;
@@ -98,6 +99,24 @@ function save(k: string, v: unknown) {
   try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
 }
 
+// Compute YYYY-MM-DD in Europe/Madrid timezone (consistent with how the
+// streak is stored in Supabase news_reads.read_date).
+export function madridDateISO(d: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
+
+function prevDateISO(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - 1);
+  return dt.toISOString().slice(0, 10);
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -117,6 +136,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [friendCodes, setFriendCodes] = useState<string[]>([]);
   const [chats, setChats] = useState<Record<string, ChatMessage[]>>({});
   const [streak, setStreak] = useState<{ current: number; longest: number; lastReadDate: string | null }>({ current: 0, longest: 0, lastReadDate: null });
+  const [streakReady, setStreakReady] = useState(false);
   const [seenFilingDates, setSeenFilingDates] = useState<Record<string, string>>({});
 
   // Load local state
@@ -131,7 +151,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPortfolioPublicState(load<boolean>("equit_portfolio_public", true));
     setFriendCodes(load<string[]>("equit_friends", ["47392810", "82910374", "65103982"]));
     setChats(load<Record<string, ChatMessage[]>>("equit_chats", {}));
-    setStreak(load("equit_streak", { current: 0, longest: 0, lastReadDate: null as string | null }));
+    // Do NOT hydrate streak from localStorage — we wait for the authoritative
+    // Supabase rebuild to avoid a flash of stale value (streakReady gates UI).
     setSeenFilingDates(load<Record<string, string>>("equit_seen_filings", {}));
   }, []);
 
@@ -163,7 +184,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFavoriteState(data.favorite_referente_id);
     setIsPremium(!!(data as { is_premium?: boolean }).is_premium);
 
-    // Rebuild streak from authoritative server-side news_reads log.
+    // Rebuild streak from authoritative server-side news_reads log,
+    // using Europe/Madrid as the canonical calendar day.
     try {
       const { data: reads } = await supabase
         .from("news_reads")
@@ -171,35 +193,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .eq("user_id", uid)
         .order("read_date", { ascending: false })
         .limit(400);
-      if (reads) {
-        const set = new Set(reads.map((r) => r.read_date as string));
-        const today = new Date();
-        const fmt = (d: Date) => d.toISOString().slice(0, 10);
-        let current = 0;
-        const cursor = new Date(today);
-        // Streak counts from today (or yesterday if today not yet read).
-        if (!set.has(fmt(cursor))) cursor.setDate(cursor.getDate() - 1);
-        while (set.has(fmt(cursor))) {
-          current += 1;
-          cursor.setDate(cursor.getDate() - 1);
-        }
-        const lastReadDate = reads[0]?.read_date as string | null ?? null;
-        const local = load<{ current: number; longest: number; lastReadDate: string | null }>(
-          "equit_streak",
-          { current: 0, longest: 0, lastReadDate: null },
-        );
-        const next = {
-          current,
-          longest: Math.max(current, local.longest),
-          lastReadDate,
-        };
-        setStreak(next);
-        save("equit_streak", next);
+      const set = new Set((reads ?? []).map((r) => r.read_date as string));
+      let current = 0;
+      let cursor = madridDateISO();
+      // Streak counts from today (or yesterday if today not yet read).
+      if (!set.has(cursor)) cursor = prevDateISO(cursor);
+      while (set.has(cursor)) {
+        current += 1;
+        cursor = prevDateISO(cursor);
       }
+      const lastReadDate = (reads && reads[0]?.read_date as string) ?? null;
+      const local = load<{ current: number; longest: number; lastReadDate: string | null }>(
+        "equit_streak",
+        { current: 0, longest: 0, lastReadDate: null },
+      );
+      const next = {
+        current,
+        longest: Math.max(current, local.longest),
+        lastReadDate,
+      };
+      setStreak(next);
+      save("equit_streak", next);
     } catch { /* offline ok */ }
+    setStreakReady(true);
   };
   useEffect(() => {
-    if (!user) { setProfile(null); return; }
+    if (!user) { setProfile(null); setStreakReady(true); return; }
+    setStreakReady(false);
     loadProfile(user.id);
   }, [user]);
 
@@ -281,11 +301,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const markNewsRead = () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = madridDateISO();
+    const yesterday = prevDateISO(today);
     setStreak((prev) => {
       if (prev.lastReadDate === today) return prev;
-      const y = new Date(); y.setDate(y.getDate() - 1);
-      const yesterday = y.toISOString().slice(0, 10);
       const current = prev.lastReadDate === yesterday ? prev.current + 1 : 1;
       const next = { current, longest: Math.max(current, prev.longest), lastReadDate: today };
       save("equit_streak", next);
@@ -293,8 +312,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     // Also log to Supabase if authenticated (server-side tracking for notifications)
     if (user) {
-      const madridDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Madrid" })).toISOString().slice(0, 10);
-      supabase.from("news_reads").upsert({ user_id: user.id, read_date: madridDate }, { onConflict: "user_id,read_date" });
+      supabase.from("news_reads").upsert({ user_id: user.id, read_date: today }, { onConflict: "user_id,read_date" });
     }
   };
 
@@ -327,7 +345,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isPortfolioPublic, setIsPortfolioPublic,
       friendCodes, addFriend, removeFriend,
       chats, sendMessage,
-      streak, markNewsRead,
+      streak, streakReady, markNewsRead,
       seenFilingDates, markFilingSeen,
     }}>
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Check, Zap, Lightbulb, Sparkles, Lock } from "lucide-react";
 import { getMarketNews, type NewsItem } from "@/lib/news.functions";
 import { getNewsInsight } from "@/lib/news-insight.functions";
-import { useApp } from "@/lib/app-context";
+import { useApp, madridDateISO } from "@/lib/app-context";
 import { PremiumModal } from "@/components/PremiumModal";
 
 export const Route = createFileRoute("/noticias")({
@@ -65,7 +65,7 @@ async function translateToSpanish(text: string): Promise<string> {
 type DisplayNews = NewsItem & { displayTitle: string; displaySummary: string };
 
 function NoticiasPage() {
-  const { streak, markNewsRead, isPremium, setIsPremium, refreshProfile } = useApp();
+  const { streak, streakReady, markNewsRead, isPremium, setIsPremium, refreshProfile } = useApp();
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const [insight, setInsight] = useState<string | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
@@ -89,15 +89,16 @@ function NoticiasPage() {
     })),
   });
 
-  const today = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short" }).replace(".", "").toUpperCase();
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short", timeZone: "Europe/Madrid" }).replace(".", "").toUpperCase();
+  const todayISO = madridDateISO();
   const readToday = streak.lastReadDate === todayISO;
 
-  // Mark the streak as soon as the user lands on the Noticias tab — no need
-  // to open an individual article.
+  // Mark the streak as soon as the user lands on the Noticias tab — only
+  // after the authoritative Supabase rebuild has run, to avoid spurious writes.
   useEffect(() => {
+    if (!streakReady) return;
     if (!readToday) markNewsRead();
-  }, [readToday, markNewsRead]);
+  }, [streakReady, readToday, markNewsRead]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
@@ -109,7 +110,7 @@ function NoticiasPage() {
     if (target.getTime() <= now.getTime()) return;
     const ms = target.getTime() - now.getTime();
     const t = setTimeout(() => {
-      const nowISO = new Date().toISOString().slice(0, 10);
+      const nowISO = madridDateISO();
       if (streak.lastReadDate === nowISO) return;
       try {
         new Notification("Equit", {
@@ -246,7 +247,7 @@ function NoticiasPage() {
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Noticias</h1>
           <p className="text-[11px] tracking-widest font-semibold mt-2" style={{ color: "var(--muted-foreground)" }}>HOY · {today}</p>
         </div>
-        <StreakBadge current={streak.current} readToday={readToday} />
+        <StreakBadge current={streak.current} readToday={readToday} ready={streakReady} />
       </div>
 
       {isLoading ? (
@@ -286,7 +287,7 @@ function NoticiasPage() {
 }
 
 
-function StreakBadge({ current, readToday }: { current: number; readToday: boolean }) {
+function StreakBadge({ current, readToday, ready }: { current: number; readToday: boolean; ready: boolean }) {
   const bg = readToday ? "var(--gold)" : "var(--muted)";
   const fg = readToday ? "var(--navy)" : "var(--navy)";
   const boltColor = readToday ? "var(--navy)" : "var(--muted-foreground)";
@@ -312,9 +313,13 @@ function StreakBadge({ current, readToday }: { current: number; readToday: boole
         <span className="text-[9px] tracking-wider font-semibold uppercase" style={{ opacity: 0.7 }}>
           Racha
         </span>
-        <span className="text-sm font-bold tabular-nums">
-          {current} · {readToday ? "Hoy leído" : "Hoy pendiente"}
-        </span>
+        {ready ? (
+          <span className="text-sm font-bold tabular-nums">
+            {current} · {readToday ? "Hoy leído" : "Hoy pendiente"}
+          </span>
+        ) : (
+          <span className="h-3.5 w-24 rounded animate-pulse mt-0.5" style={{ background: "rgba(0,0,0,0.08)" }} />
+        )}
       </div>
     </div>
   );
