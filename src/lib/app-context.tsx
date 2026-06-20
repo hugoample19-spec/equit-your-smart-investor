@@ -229,9 +229,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) console.error("[auth] signOut error:", error);
+    } catch (e) {
+      console.error("[auth] signOut threw:", e);
+    }
     setUser(null);
     setProfile(null);
+    setStreak({ current: 0, longest: 0, lastReadDate: null });
+    setStreakReady(true);
+    if (typeof window !== "undefined") {
+      try {
+        // Best-effort clear of cached Supabase session keys so we don't
+        // rehydrate the signed-out user on next mount.
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith("sb-") || k === "equit_streak")
+          .forEach((k) => localStorage.removeItem(k));
+      } catch { /* ignore */ }
+    }
   };
 
   const setAvatar = (s: string | null) => {
