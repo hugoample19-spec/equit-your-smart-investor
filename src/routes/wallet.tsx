@@ -97,16 +97,17 @@ function WalletPage() {
   }, [ready, state.starting, profile, setupStarting]);
 
   // Open asset view when navigated with ?asset=TICKER.
-  // If the user already owns it, show the detail screen; otherwise open the
-  // buy screen which includes the price chart + Comprar CTA.
+  // Must wait until the wallet has actually finished loading from Supabase —
+  // otherwise state.positions is the empty initial value and every asset
+  // looks "not owned", routing the user to the buy screen by mistake.
   useEffect(() => {
-    if (search.asset && findAsset(search.asset)) {
-      const owned = !!state.positions[search.asset];
-      setScreen(owned ? { kind: "detail", ticker: search.asset } : { kind: "buy", ticker: search.asset });
-      navigate({ search: {}, replace: true });
-    }
+    if (!ready) return;
+    if (!search.asset || !findAsset(search.asset)) return;
+    const owned = !!state.positions[search.asset];
+    setScreen(owned ? { kind: "detail", ticker: search.asset } : { kind: "buy", ticker: search.asset });
+    navigate({ search: {}, replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search.asset, navigate]);
+  }, [search.asset, ready, state.positions, navigate]);
 
   const ownedTickers = useMemo(() => Object.keys(state.positions), [state.positions]);
   const tickersToFetch = useMemo(() => {

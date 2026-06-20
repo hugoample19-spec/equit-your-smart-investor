@@ -231,6 +231,8 @@ export type Database = {
           onboarded: boolean
           starting_balance: number | null
           username: string | null
+          wallet_cash: number | null
+          wallet_starting: number | null
         }
         Insert: {
           avatar_url?: string | null
@@ -244,6 +246,8 @@ export type Database = {
           onboarded?: boolean
           starting_balance?: number | null
           username?: string | null
+          wallet_cash?: number | null
+          wallet_starting?: number | null
         }
         Update: {
           avatar_url?: string | null
@@ -257,6 +261,8 @@ export type Database = {
           onboarded?: boolean
           starting_balance?: number | null
           username?: string | null
+          wallet_cash?: number | null
+          wallet_starting?: number | null
         }
         Relationships: []
       }
