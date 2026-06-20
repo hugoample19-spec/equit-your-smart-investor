@@ -6,6 +6,7 @@ import { getMarketNews, type NewsItem } from "@/lib/news.functions";
 import { getNewsInsight } from "@/lib/news-insight.functions";
 import { useApp, madridDateISO } from "@/lib/app-context";
 import { PremiumModal } from "@/components/PremiumModal";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/noticias")({
   head: () => ({
@@ -25,19 +26,97 @@ function isLikelyEnglish(text: string): boolean {
   return /\b(the|and|of|to|in|for|on|with|is|are|was|were|will|from|by|at|as|this|that|after|before)\b/.test(lower);
 }
 
-// Translate the full text by chunking on sentence boundaries (mymemory caps ~500 chars/call).
-async function translateChunk(chunk: string): Promise<string> {
+// SHA-256 hex hash for cache key (browser-native via Web Crypto).
+async function sha256Hex(input: string): Promise<string> {
+  const buf = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// Try MyMemory first, then fall back to Google Translate's unofficial endpoint.
+async function translateViaMyMemory(chunk: string): Promise<string | null> {
   try {
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=en|es`;
     const res = await fetch(url);
-    if (!res.ok) return chunk;
+    if (!res.ok) {
+      console.warn("[translate] MyMemory HTTP error:", res.status);
+      return null;
+    }
     const json = await res.json();
     const translated = json?.responseData?.translatedText as string | undefined;
-    if (!translated || /MYMEMORY WARNING/i.test(translated)) return chunk;
+    if (!translated || /MYMEMORY WARNING/i.test(translated)) {
+      console.warn("[translate] MyMemory fallback triggered (likely quota):", translated?.slice(0, 120));
+      return null;
+    }
     return translated;
-  } catch {
-    return chunk;
+  } catch (e) {
+    console.warn("[translate] MyMemory threw:", e);
+    return null;
   }
+}
+
+async function translateViaGoogle(chunk: string): Promise<string | null> {
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(chunk)}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn("[translate] Google fallback HTTP error:", res.status);
+      return null;
+    }
+    const data = await res.json();
+    // Response shape: [[["translated", "original", ...], ...], ...]
+    if (!Array.isArray(data) || !Array.isArray(data[0])) return null;
+    const joined = (data[0] as unknown[])
+      .map((seg) => (Array.isArray(seg) && typeof seg[0] === "string" ? (seg[0] as string) : ""))
+      .join("");
+    if (!joined) return null;
+    console.log("[translate] Google fallback OK");
+    return joined;
+  } catch (e) {
+    console.warn("[translate] Google fallback threw:", e);
+    return null;
+  }
+}
+
+// Translate the full text by chunking on sentence boundaries (mymemory caps ~500 chars/call).
+async function translateChunk(chunk: string): Promise<string> {
+  // 1. Check shared Supabase cache first.
+  let hash: string | null = null;
+  try {
+    hash = await sha256Hex(chunk);
+    const { data: cached, error } = await supabase
+      .from("news_translations")
+      .select("translated_text")
+      .eq("content_hash", hash)
+      .eq("lang", "es")
+      .maybeSingle();
+    if (error) console.warn("[translate] cache read error:", error);
+    if (cached?.translated_text) return cached.translated_text;
+  } catch (e) {
+    console.warn("[translate] cache lookup threw:", e);
+  }
+
+  // 2. MyMemory → Google fallback.
+  let translated = await translateViaMyMemory(chunk);
+  if (!translated) translated = await translateViaGoogle(chunk);
+  if (!translated) return chunk; // last resort: original English
+
+  // 3. Write-through to shared cache (best-effort, ignore RLS-anon failures).
+  if (hash) {
+    try {
+      const { error } = await supabase
+        .from("news_translations")
+        .insert({ content_hash: hash, lang: "es", translated_text: translated });
+      if (error && error.code !== "23505") {
+        console.warn("[translate] cache write error:", error);
+      }
+    } catch (e) {
+      console.warn("[translate] cache write threw:", e);
+    }
+  }
+  return translated;
 }
 
 async function translateToSpanish(text: string): Promise<string> {
@@ -61,6 +140,7 @@ async function translateToSpanish(text: string): Promise<string> {
   const out = await Promise.all(chunks.map(translateChunk));
   return out.join(" ");
 }
+
 
 type DisplayNews = NewsItem & { displayTitle: string; displaySummary: string };
 
