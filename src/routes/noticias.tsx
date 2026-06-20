@@ -287,7 +287,7 @@ function NoticiasPage() {
 }
 
 
-function StreakBadge({ current, readToday }: { current: number; readToday: boolean }) {
+function StreakBadge({ current, readToday, ready }: { current: number; readToday: boolean; ready: boolean }) {
   const bg = readToday ? "var(--gold)" : "var(--muted)";
   const fg = readToday ? "var(--navy)" : "var(--navy)";
   const boltColor = readToday ? "var(--navy)" : "var(--muted-foreground)";
@@ -313,9 +313,13 @@ function StreakBadge({ current, readToday }: { current: number; readToday: boole
         <span className="text-[9px] tracking-wider font-semibold uppercase" style={{ opacity: 0.7 }}>
           Racha
         </span>
-        <span className="text-sm font-bold tabular-nums">
-          {current} · {readToday ? "Hoy leído" : "Hoy pendiente"}
-        </span>
+        {ready ? (
+          <span className="text-sm font-bold tabular-nums">
+            {current} · {readToday ? "Hoy leído" : "Hoy pendiente"}
+          </span>
+        ) : (
+          <span className="h-3.5 w-24 rounded animate-pulse mt-0.5" style={{ background: "rgba(0,0,0,0.08)" }} />
+        )}
       </div>
     </div>
   );
