@@ -193,7 +193,7 @@ export function useWallet(userId: string | null = null) {
 
   const writeCash = useCallback(
     async (uid: string, cash: number, starting?: number) => {
-      const patch: Record<string, number> = { wallet_cash: cash };
+      const patch: { wallet_cash: number; wallet_starting?: number } = { wallet_cash: cash };
       if (starting !== undefined) patch.wallet_starting = starting;
       const { error } = await supabase.from("profiles").update(patch).eq("id", uid);
       if (error) throw error;
