@@ -77,6 +77,7 @@ type AppState = {
   chats: Record<string, ChatMessage[]>;
   sendMessage: (code: string, text: string) => void;
   streak: { current: number; longest: number; lastReadDate: string | null };
+  streakReady: boolean;
   markNewsRead: () => void;
   seenFilingDates: Record<string, string>;
   markFilingSeen: (investorId: string, date: string) => void;
@@ -96,6 +97,24 @@ function load<T>(k: string, fallback: T): T {
 function save(k: string, v: unknown) {
   if (typeof window === "undefined") return;
   try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
+}
+
+// Compute YYYY-MM-DD in Europe/Madrid timezone (consistent with how the
+// streak is stored in Supabase news_reads.read_date).
+export function madridDateISO(d: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
+
+function prevDateISO(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - 1);
+  return dt.toISOString().slice(0, 10);
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
