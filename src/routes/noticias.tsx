@@ -89,15 +89,16 @@ function NoticiasPage() {
     })),
   });
 
-  const today = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short" }).replace(".", "").toUpperCase();
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short", timeZone: "Europe/Madrid" }).replace(".", "").toUpperCase();
+  const todayISO = madridDateISO();
   const readToday = streak.lastReadDate === todayISO;
 
-  // Mark the streak as soon as the user lands on the Noticias tab — no need
-  // to open an individual article.
+  // Mark the streak as soon as the user lands on the Noticias tab — only
+  // after the authoritative Supabase rebuild has run, to avoid spurious writes.
   useEffect(() => {
+    if (!streakReady) return;
     if (!readToday) markNewsRead();
-  }, [readToday, markNewsRead]);
+  }, [streakReady, readToday, markNewsRead]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
