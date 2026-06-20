@@ -136,6 +136,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [friendCodes, setFriendCodes] = useState<string[]>([]);
   const [chats, setChats] = useState<Record<string, ChatMessage[]>>({});
   const [streak, setStreak] = useState<{ current: number; longest: number; lastReadDate: string | null }>({ current: 0, longest: 0, lastReadDate: null });
+  const [streakReady, setStreakReady] = useState(false);
   const [seenFilingDates, setSeenFilingDates] = useState<Record<string, string>>({});
 
   // Load local state
@@ -150,7 +151,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPortfolioPublicState(load<boolean>("equit_portfolio_public", true));
     setFriendCodes(load<string[]>("equit_friends", ["47392810", "82910374", "65103982"]));
     setChats(load<Record<string, ChatMessage[]>>("equit_chats", {}));
-    setStreak(load("equit_streak", { current: 0, longest: 0, lastReadDate: null as string | null }));
+    // Do NOT hydrate streak from localStorage — we wait for the authoritative
+    // Supabase rebuild to avoid a flash of stale value (streakReady gates UI).
     setSeenFilingDates(load<Record<string, string>>("equit_seen_filings", {}));
   }, []);
 
