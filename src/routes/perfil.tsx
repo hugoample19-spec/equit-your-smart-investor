@@ -311,11 +311,19 @@ function PerfilPage() {
 
       <button
         onClick={async () => {
-          await signOut();
-          navigate({ to: "/auth" });
+          try {
+            await signOut();
+          } catch (e) {
+            console.error("[perfil] signOut failed:", e);
+          }
+          // Force a hard redirect so any in-memory state is fully cleared.
+          if (typeof window !== "undefined") {
+            window.location.href = "/auth";
+          } else {
+            navigate({ to: "/auth" });
+          }
         }}
-        disabled={!isAuthenticated}
-        className="w-full py-3 rounded-full text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-40"
+        className="w-full py-3 rounded-full text-sm font-medium flex items-center justify-center gap-2"
         style={{ color: "var(--muted-foreground)" }}
       >
         <LogOut size={14} /> Cerrar sesión
