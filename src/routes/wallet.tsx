@@ -86,14 +86,13 @@ function WalletPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const [screen, setScreen] = useState<Screen>({ kind: "home" });
-  // Track when the user arrived at an asset view from outside the wallet
-  // (e.g. tapping a card in Home's "Lo más comprado"). Used so the back
-  // button on the asset screen returns to the prior page instead of the
-  // wallet root.
   const [cameFromOutside, setCameFromOutside] = useState(false);
+  // Pending asset requested via ?asset=TICKER. Held until the wallet store
+  // has actually resolved positions, so we never decide detail-vs-buy from
+  // a stale empty snapshot.
+  const [pendingAsset, setPendingAsset] = useState<string | null>(null);
 
   // Auto-seed wallet from profile.starting_balance once profile loads.
-  // The onboarding tour sets this to €1.000 by default; users never see SetupScreen.
   useEffect(() => {
     if (!ready) return;
     if (state.starting != null) return;
@@ -101,19 +100,27 @@ function WalletPage() {
     if (seed != null && Number(seed) > 0) setupStarting(Number(seed));
   }, [ready, state.starting, profile, setupStarting]);
 
-  // Open asset view when navigated with ?asset=TICKER.
-  // Must wait until the wallet has actually finished loading from Supabase —
-  // otherwise state.positions is the empty initial value and every asset
-  // looks "not owned", routing the user to the buy screen by mistake.
+  // Step 1: capture ?asset=TICKER → pendingAsset, clear the URL param.
   useEffect(() => {
-    if (!ready) return;
     if (!search.asset || !findAsset(search.asset)) return;
-    const owned = !!state.positions[search.asset];
+    setPendingAsset(search.asset);
     setCameFromOutside(true);
-    setScreen(owned ? { kind: "detail", ticker: search.asset } : { kind: "buy", ticker: search.asset });
     navigate({ search: {}, replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search.asset, ready, state.positions, navigate]);
+  }, [search.asset, navigate]);
+
+  // Step 2: resolve the pending asset only once `ready` is true (the wallet
+  // store sets ready = query.isSuccess, so positions are guaranteed to
+  // reflect the Supabase payload at that point).
+  useEffect(() => {
+    if (!ready || !pendingAsset) return;
+    const owned = !!state.positions[pendingAsset];
+    setScreen(
+      owned
+        ? { kind: "detail", ticker: pendingAsset }
+        : { kind: "buy", ticker: pendingAsset },
+    );
+    setPendingAsset(null);
+  }, [ready, pendingAsset, state.positions]);
 
   const goBackToOrigin = (): boolean => {
     if (cameFromOutside && typeof window !== "undefined") {
@@ -123,6 +130,22 @@ function WalletPage() {
     }
     return false;
   };
+
+  // If the user lands on the detail screen but the position is (briefly)
+  // missing, give the store a moment to hydrate before bouncing home.
+  // This prevents the "flash then redirect" race when arriving from Home.
+  useEffect(() => {
+    if (screen.kind !== "detail") return;
+    if (!ready) return;
+    if (state.positions[screen.ticker]) return;
+    const t = setTimeout(() => {
+      // Re-check at fire time — the position may have arrived meanwhile.
+      if (!state.positions[screen.ticker]) {
+        setScreen({ kind: "home" });
+      }
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [screen, ready, state.positions]);
 
   const ownedTickers = useMemo(() => Object.keys(state.positions), [state.positions]);
   const tickersToFetch = useMemo(() => {
@@ -194,8 +217,14 @@ function WalletPage() {
     if (screen.kind === "detail") {
       const pos = state.positions[screen.ticker];
       if (!pos) {
-        setScreen({ kind: "home" });
-        return null;
+        // Position not yet hydrated. Render a loading placeholder; the
+        // grace-period effect above will redirect to home only if the
+        // position is still missing after the store has settled.
+        return (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            Cargando…
+          </div>
+        );
       }
       return (
         <DetailScreen
