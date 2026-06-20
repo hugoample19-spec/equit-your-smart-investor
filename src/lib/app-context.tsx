@@ -301,11 +301,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const markNewsRead = () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = madridDateISO();
+    const yesterday = prevDateISO(today);
     setStreak((prev) => {
       if (prev.lastReadDate === today) return prev;
-      const y = new Date(); y.setDate(y.getDate() - 1);
-      const yesterday = y.toISOString().slice(0, 10);
       const current = prev.lastReadDate === yesterday ? prev.current + 1 : 1;
       const next = { current, longest: Math.max(current, prev.longest), lastReadDate: today };
       save("equit_streak", next);
@@ -313,8 +312,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     // Also log to Supabase if authenticated (server-side tracking for notifications)
     if (user) {
-      const madridDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Madrid" })).toISOString().slice(0, 10);
-      supabase.from("news_reads").upsert({ user_id: user.id, read_date: madridDate }, { onConflict: "user_id,read_date" });
+      supabase.from("news_reads").upsert({ user_id: user.id, read_date: today }, { onConflict: "user_id,read_date" });
     }
   };
 
