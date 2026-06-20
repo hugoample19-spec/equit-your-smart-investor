@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Bell, Camera, LogOut, Search, Star, X, Zap } from "lucide-react";
-import { useApp } from "@/lib/app-context";
+import { Bell, Camera, Check, LogOut, Search, Star, X, Zap } from "lucide-react";
+import { useApp, madridDateISO } from "@/lib/app-context";
 import { investors, globalUsers, findUserByCode } from "@/lib/data";
 import { useServerFn } from "@tanstack/react-start";
 import { getNotificationPrefs, updateNotificationPrefs } from "@/lib/notifications.functions";
