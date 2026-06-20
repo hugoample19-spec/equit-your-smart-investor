@@ -325,25 +325,33 @@ function PerfilPage() {
 }
 
 
-function StreakCard({ current, longest, lastReadDate }: { current: number; longest: number; lastReadDate: string | null }) {
-  // Build last 7 days view (Mon..Sun of current week).
-  const today = new Date();
-  const todayISO = today.toISOString().slice(0, 10);
-  const weekday = (today.getDay() + 6) % 7; // 0=Mon
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - weekday);
+function StreakCard({ current, longest, lastReadDate, ready }: { current: number; longest: number; lastReadDate: string | null; ready: boolean }) {
+  // Build last 7 days view (Mon..Sun of current week) using Madrid timezone.
+  const todayISO = madridDateISO();
+  const weekdayName = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Madrid", weekday: "long" }).format(new Date());
+  const weekdayMap: Record<string, number> = { Monday: 0, Tuesday: 1, Wednesday: 2, Thursday: 3, Friday: 4, Saturday: 5, Sunday: 6 };
+  const weekday = weekdayMap[weekdayName] ?? 0;
+  // Walk back from today to Monday using string-date arithmetic.
+  let mondayISO = todayISO;
+  for (let i = 0; i < weekday; i++) mondayISO = (function prev(iso: string) {
+    const [y, m, d] = iso.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    dt.setUTCDate(dt.getUTCDate() - 1);
+    return dt.toISOString().slice(0, 10);
+  })(mondayISO);
 
   const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    const iso = d.toISOString().slice(0, 10);
+    const [y, m, d] = mondayISO.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    dt.setUTCDate(dt.getUTCDate() + i);
+    const iso = dt.toISOString().slice(0, 10);
     const isFuture = iso > todayISO;
     const isToday = iso === todayISO;
-    // A day is "read" if it's within the consecutive streak window ending on lastReadDate
     let read = false;
     if (lastReadDate && current > 0) {
-      const last = new Date(lastReadDate + "T00:00:00");
-      const diffDays = Math.round((last.getTime() - d.getTime()) / 86_400_000);
+      const [ly, lm, ld] = lastReadDate.split("-").map(Number);
+      const last = new Date(Date.UTC(ly, lm - 1, ld));
+      const diffDays = Math.round((last.getTime() - dt.getTime()) / 86_400_000);
       read = diffDays >= 0 && diffDays < current;
     }
     const missed = !read && !isFuture && !isToday;
@@ -356,17 +364,21 @@ function StreakCard({ current, longest, lastReadDate }: { current: number; longe
         <div className="flex-1">
           <p className="text-[10px] tracking-widest" style={{ color: "var(--muted-foreground)" }}>RACHA DE LECTURA</p>
           <div className="flex items-baseline gap-2 mt-1">
-            <p className="text-6xl font-semibold tabular-nums leading-none" style={{ color: "var(--gold)" }}>{current}</p>
+            {ready ? (
+              <p className="text-6xl font-semibold tabular-nums leading-none" style={{ color: "var(--gold)" }}>{current}</p>
+            ) : (
+              <span className="block h-[3.75rem] w-20 rounded-2xl animate-pulse" style={{ background: "var(--muted)" }} />
+            )}
             <p className="text-sm" style={{ color: "var(--navy)" }}>días</p>
           </div>
           <p className="text-xs mt-2" style={{ color: "var(--navy)" }}>días consecutivos leyendo</p>
           <p className="text-[11px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>
-            Récord personal · {longest} días
+            Récord personal · {ready ? `${longest} días` : "—"}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
           {[7, 30, 100].map((m) => {
-            const earned = longest >= m;
+            const earned = ready && longest >= m;
             return (
               <span
                 key={m}
@@ -389,22 +401,30 @@ function StreakCard({ current, longest, lastReadDate }: { current: number; longe
       <div className="mt-5 pt-5 border-t" style={{ borderColor: "var(--border)" }}>
         <p className="text-[10px] tracking-widest mb-3" style={{ color: "var(--muted-foreground)" }}>ESTA SEMANA</p>
         <div className="flex items-center justify-between">
-          {days.map((d) => (
-            <div key={d.iso} className="flex flex-col items-center gap-1.5">
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center"
-                style={{
-                  background: d.read ? "var(--gold)" : d.isToday ? "transparent" : d.missed ? "rgba(255,122,138,0.12)" : "var(--muted)",
-                  border: d.isToday ? "2px solid var(--gold)" : "none",
-                }}
-              >
-                {d.missed && (
-                  <X size={12} color="#FF7A8A" strokeWidth={2.5} />
-                )}
+          {days.map((d) => {
+            const todayCompleted = d.isToday && d.read;
+            const todayPending = d.isToday && !d.read;
+            return (
+              <div key={d.iso} className="flex flex-col items-center gap-1.5">
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center"
+                  style={{
+                    background:
+                      todayCompleted ? "transparent" :
+                      d.read ? "var(--gold)" :
+                      todayPending ? "transparent" :
+                      d.missed ? "rgba(255,122,138,0.12)" : "var(--muted)",
+                    border:
+                      todayCompleted || todayPending ? "2px solid var(--gold)" : "none",
+                  }}
+                >
+                  {todayCompleted && <Check size={14} color="var(--gold)" strokeWidth={3} />}
+                  {d.missed && <X size={12} color="#FF7A8A" strokeWidth={2.5} />}
+                </div>
+                <span className="text-[10px] font-medium" style={{ color: d.isToday ? "var(--navy)" : "var(--muted-foreground)" }}>{d.label}</span>
               </div>
-              <span className="text-[10px] font-medium" style={{ color: d.isToday ? "var(--navy)" : "var(--muted-foreground)" }}>{d.label}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
