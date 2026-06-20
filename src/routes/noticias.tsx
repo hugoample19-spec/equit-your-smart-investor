@@ -110,7 +110,7 @@ function NoticiasPage() {
     if (target.getTime() <= now.getTime()) return;
     const ms = target.getTime() - now.getTime();
     const t = setTimeout(() => {
-      const nowISO = new Date().toISOString().slice(0, 10);
+      const nowISO = madridDateISO();
       if (streak.lastReadDate === nowISO) return;
       try {
         new Notification("Equit", {
