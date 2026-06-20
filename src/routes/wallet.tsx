@@ -1091,14 +1091,14 @@ function SellScreen({
   const owned = positionQty(position);
   const avg = positionAvg(position);
   const px = price?.price ?? avg;
-  const [mode, setMode] = useState<"qty" | "eur">("qty");
   const [input, setInput] = useState("");
   const n = Number(input.replace(",", ".")) || 0;
-  const requestedQty = mode === "qty" ? n : px > 0 ? n / px : 0;
+  const requestedQty = px > 0 ? n / px : 0;
   const qty = Math.min(requestedQty, owned);
   const proceeds = qty * px;
   const realizedPnl = qty * (px - avg);
   const canSell = qty > 0;
+  const positionValue = owned * px;
 
   return (
     <div className="space-y-4 pb-6">
@@ -1118,32 +1118,12 @@ function SellScreen({
       </section>
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
-        <div className="flex gap-2 mb-3">
-          {(["qty", "eur"] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => {
-                setMode(m);
-                setInput("");
-              }}
-              className="flex-1 py-2 rounded-lg text-xs font-medium border"
-              style={{
-                background: mode === m ? "var(--navy)" : "transparent",
-                color: mode === m ? "var(--cream)" : "var(--navy)",
-                borderColor: mode === m ? "var(--navy)" : "var(--border)",
-              }}
-            >
-              {m === "qty" ? "Participaciones" : "Euros"}
-            </button>
-          ))}
-        </div>
-
         <div className="flex justify-between items-center mb-2">
           <p className="text-sm font-medium" style={{ color: "var(--navy)" }}>
             Cantidad a vender
           </p>
           <button
-            onClick={() => setInput(mode === "qty" ? String(owned) : String((owned * px).toFixed(2)))}
+            onClick={() => setInput(positionValue.toFixed(2))}
             className="text-xs font-semibold"
             style={{ color: "var(--gold)" }}
           >
@@ -1154,7 +1134,7 @@ function SellScreen({
           value={input}
           onChange={(e) => setInput(e.target.value.replace(/[^0-9.,]/g, ""))}
           inputMode="decimal"
-          placeholder={mode === "qty" ? "0" : "0,00 €"}
+          placeholder="0,00 €"
           className="w-full rounded-xl border px-4 py-3 text-base outline-none focus:border-[var(--navy)]"
           style={{ borderColor: "var(--border)" }}
         />
@@ -1178,7 +1158,7 @@ function SellScreen({
             {fmtEUR(realizedPnl)}
           </span>
         </div>
-        {mode === "eur" && requestedQty > owned && (
+        {requestedQty > owned && (
           <p className="text-xs mt-2" style={{ color: "var(--danger)" }}>
             Importe superior al valor de tu posición
           </p>
