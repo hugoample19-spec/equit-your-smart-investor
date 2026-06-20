@@ -1,5 +1,8 @@
-// Trading wallet state with localStorage persistence (per-user).
-import { useEffect, useState, useCallback, useRef } from "react";
+// Trading wallet state — persisted in Supabase (holdings, transactions, profiles).
+// No localStorage. The wallet is loaded once the authenticated user.id is known.
+import { useCallback, useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export type AssetCategory = "stocks" | "etfs" | "commodities" | "crypto";
 
@@ -56,14 +59,14 @@ export const CATALOG: CatalogAsset[] = [
   { ticker: "SIE.DE", display: "SIE", name: "Siemens", category: "stocks", sector: "Europa" },
   { ticker: "VOW3.DE", display: "VOW3", name: "Volkswagen", category: "stocks", sector: "Europa" },
   { ticker: "SHEL", display: "SHEL", name: "Shell", category: "stocks", sector: "Europa" },
-  // ETFs (liquid fund-based, Finnhub real-time)
+  // ETFs
   { ticker: "SPY", display: "SPY", name: "S&P 500", category: "etfs" },
   { ticker: "QQQ", display: "QQQ", name: "Nasdaq 100", category: "etfs" },
   { ticker: "VTI", display: "VTI", name: "Total US Market", category: "etfs" },
   { ticker: "VOO", display: "VOO", name: "Vanguard S&P 500", category: "etfs" },
   { ticker: "IWM", display: "IWM", name: "Russell 2000", category: "etfs" },
   { ticker: "DIA", display: "DIA", name: "Dow Jones 30", category: "etfs" },
-  // Commodities (liquid ETFs, Finnhub real-time)
+  // Commodities
   { ticker: "GLD", display: "GLD", name: "Oro (SPDR Gold)", category: "commodities" },
   { ticker: "SLV", display: "SLV", name: "Plata (iShares Silver)", category: "commodities" },
   { ticker: "USO", display: "USO", name: "Petróleo (US Oil Fund)", category: "commodities" },
@@ -82,170 +85,318 @@ export const CATALOG: CatalogAsset[] = [
 
 export const findAsset = (ticker: string) => CATALOG.find((a) => a.ticker === ticker);
 
+// We store a single synthetic lot per ticker, derived from holdings.avg_cost
+// (standard average-cost accounting). `lots` is kept as an array for backward
+// compat with the existing UI helpers below.
 export type Lot = { qty: number; price: number; at: number };
 export type Position = { ticker: string; lots: Lot[] };
 
 export type WalletState = {
-  starting: number | null; // null = needs setup
+  starting: number | null;
   cash: number;
   positions: Record<string, Position>;
   history: { type: "buy" | "sell"; ticker: string; qty: number; price: number; at: number }[];
 };
 
-const LEGACY_KEY = "equit_wallet_v1";
-const keyFor = (uid: string | null) => `equit_wallet_v1:${uid ?? "guest"}`;
 const empty: WalletState = { starting: null, cash: 0, positions: {}, history: [] };
 
-function load(uid: string | null): WalletState {
-  if (typeof window === "undefined") return empty;
-  try {
-    let v = localStorage.getItem(keyFor(uid));
-    // One-time migration: pull from any prior unscoped/guest wallet into the
-    // signed-in user's slot so we never silently lose existing data.
-    if (!v && uid) {
-      const candidates = [LEGACY_KEY, keyFor(null), "equit_wallet_v1:null"];
-      for (const k of candidates) {
-        const prior = localStorage.getItem(k);
-        if (!prior) continue;
-        try {
-          const parsed = JSON.parse(prior) as WalletState;
-          const hasData =
-            parsed &&
-            (parsed.starting != null ||
-              (parsed.history && parsed.history.length > 0) ||
-              (parsed.positions && Object.keys(parsed.positions).length > 0));
-          if (hasData) {
-            localStorage.setItem(keyFor(uid), prior);
-            localStorage.removeItem(k);
-            v = prior;
-            break;
-          }
-        } catch { /* ignore */ }
-      }
-    }
-    return v ? { ...empty, ...(JSON.parse(v) as WalletState) } : empty;
-  } catch {
-    return empty;
+type ProfileWalletRow = {
+  wallet_cash: number | null;
+  wallet_starting: number | null;
+  starting_balance: number | null;
+};
+type HoldingRow = { ticker: string; shares: number; avg_cost: number; updated_at: string };
+type TxRow = {
+  type: string;
+  ticker: string;
+  shares: number | null;
+  price: number | null;
+  amount: number | null;
+  executed_at: string;
+};
+
+async function fetchWallet(uid: string): Promise<WalletState> {
+  const [profileRes, holdingsRes, txRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("wallet_cash, wallet_starting, starting_balance")
+      .eq("id", uid)
+      .maybeSingle(),
+    supabase.from("holdings").select("ticker, shares, avg_cost, updated_at").eq("user_id", uid),
+    supabase
+      .from("transactions")
+      .select("type, ticker, shares, price, amount, executed_at")
+      .eq("user_id", uid)
+      .order("executed_at", { ascending: true }),
+  ]);
+
+  if (profileRes.error) throw profileRes.error;
+  if (holdingsRes.error) throw holdingsRes.error;
+  if (txRes.error) throw txRes.error;
+
+  const profile = (profileRes.data ?? null) as ProfileWalletRow | null;
+  const holdings = (holdingsRes.data ?? []) as HoldingRow[];
+  const txs = (txRes.data ?? []) as TxRow[];
+
+  const starting =
+    profile?.wallet_starting != null
+      ? Number(profile.wallet_starting)
+      : profile?.starting_balance != null
+      ? Number(profile.starting_balance)
+      : null;
+  const cash =
+    profile?.wallet_cash != null
+      ? Number(profile.wallet_cash)
+      : starting ?? 0;
+
+  const positions: Record<string, Position> = {};
+  for (const h of holdings) {
+    const qty = Number(h.shares);
+    const price = Number(h.avg_cost);
+    if (qty <= 0) continue;
+    positions[h.ticker] = {
+      ticker: h.ticker,
+      lots: [{ qty, price, at: new Date(h.updated_at).getTime() }],
+    };
   }
-}
-function persist(uid: string | null, s: WalletState) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(keyFor(uid), JSON.stringify(s));
-  } catch {}
+
+  const history: WalletState["history"] = [];
+  for (const t of txs) {
+    if (t.type !== "buy" && t.type !== "sell") continue;
+    history.push({
+      type: t.type,
+      ticker: t.ticker,
+      qty: Number(t.shares ?? 0),
+      price: Number(t.price ?? 0),
+      at: new Date(t.executed_at).getTime(),
+    });
+  }
+
+  return { starting, cash, positions, history };
 }
 
 export function useWallet(userId: string | null = null) {
-  const [state, setState] = useState<WalletState>(empty);
-  const [ready, setReady] = useState(false);
-  const uidRef = useRef<string | null>(userId);
+  const qc = useQueryClient();
+  const enabled = !!userId;
 
-  // Reload when the active user changes (login / logout / switch).
-  useEffect(() => {
-    uidRef.current = userId;
-    setState(load(userId));
-    setReady(true);
-  }, [userId]);
+  const query = useQuery({
+    queryKey: ["wallet", userId],
+    queryFn: () => fetchWallet(userId!),
+    enabled,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
 
-  const update = useCallback((mut: (s: WalletState) => WalletState) => {
-    setState((prev) => {
-      const next = mut(prev);
-      persist(uidRef.current, next);
+  const state: WalletState = query.data ?? empty;
+  // `ready` is true only once Supabase has actually returned data.
+  const ready = enabled && query.isSuccess;
+
+  const writeCash = useCallback(
+    async (uid: string, cash: number, starting?: number) => {
+      const patch: Record<string, number> = { wallet_cash: cash };
+      if (starting !== undefined) patch.wallet_starting = starting;
+      const { error } = await supabase.from("profiles").update(patch).eq("id", uid);
+      if (error) throw error;
+    },
+    [],
+  );
+
+  const setupStartingMut = useMutation({
+    mutationFn: async (amount: number) => {
+      if (!userId) throw new Error("no-user");
+      await writeCash(userId, amount, amount);
+      // Reset any pre-existing holdings/transactions if user explicitly sets a starting amount.
+      await supabase.from("holdings").delete().eq("user_id", userId);
+      await supabase.from("transactions").delete().eq("user_id", userId);
+      const next: WalletState = { starting: amount, cash: amount, positions: {}, history: [] };
       return next;
-    });
-  }, []);
+    },
+    onSuccess: (next) => qc.setQueryData(["wallet", userId], next),
+  });
 
-  const setupStarting = useCallback(
-    (amount: number) => update(() => ({ starting: amount, cash: amount, positions: {}, history: [] })),
-    [update]
+  const resetMut = useMutation({
+    mutationFn: async () => {
+      if (!userId) throw new Error("no-user");
+      const cur = qc.getQueryData<WalletState>(["wallet", userId]) ?? state;
+      if (cur.starting == null) return cur;
+      await writeCash(userId, cur.starting, cur.starting);
+      await supabase.from("holdings").delete().eq("user_id", userId);
+      await supabase.from("transactions").delete().eq("user_id", userId);
+      return { starting: cur.starting, cash: cur.starting, positions: {}, history: [] } as WalletState;
+    },
+    onSuccess: (next) => qc.setQueryData(["wallet", userId], next),
+  });
+
+  const buyMut = useMutation({
+    mutationFn: async (args: { ticker: string; qty: number; price: number }) => {
+      if (!userId) throw new Error("no-user");
+      const { ticker, qty, price } = args;
+      const cur = qc.getQueryData<WalletState>(["wallet", userId]) ?? state;
+      const cost = qty * price;
+      if (cost > cur.cash + 0.0001) return cur;
+
+      const prevPos = cur.positions[ticker];
+      const prevQty = prevPos ? prevPos.lots.reduce((a, l) => a + l.qty, 0) : 0;
+      const prevInvested = prevPos ? prevPos.lots.reduce((a, l) => a + l.qty * l.price, 0) : 0;
+      const newQty = prevQty + qty;
+      const newAvg = newQty > 0 ? (prevInvested + cost) / newQty : 0;
+      const name = findAsset(ticker)?.name ?? ticker;
+      const nowIso = new Date().toISOString();
+      const nowMs = Date.now();
+      const newCash = Math.max(0, cur.cash - cost);
+
+      const { error: hErr } = await supabase
+        .from("holdings")
+        .upsert(
+          { user_id: userId, ticker, name, shares: newQty, avg_cost: newAvg, updated_at: nowIso },
+          { onConflict: "user_id,ticker" },
+        );
+      if (hErr) throw hErr;
+
+      const { error: tErr } = await supabase.from("transactions").insert({
+        user_id: userId,
+        ticker,
+        name,
+        type: "buy",
+        shares: qty,
+        price,
+        amount: cost,
+        executed_at: nowIso,
+      });
+      if (tErr) throw tErr;
+
+      await writeCash(userId, newCash);
+
+      const next: WalletState = {
+        ...cur,
+        cash: newCash,
+        positions: {
+          ...cur.positions,
+          [ticker]: { ticker, lots: [{ qty: newQty, price: newAvg, at: nowMs }] },
+        },
+        history: [...cur.history, { type: "buy", ticker, qty, price, at: nowMs }],
+      };
+      return next;
+    },
+    onSuccess: (next) => qc.setQueryData(["wallet", userId], next),
+  });
+
+  const sellMut = useMutation({
+    mutationFn: async (args: { ticker: string; qty: number; price: number }) => {
+      if (!userId) throw new Error("no-user");
+      const { ticker, qty, price } = args;
+      const cur = qc.getQueryData<WalletState>(["wallet", userId]) ?? state;
+      const pos = cur.positions[ticker];
+      if (!pos) return cur;
+      const owned = pos.lots.reduce((a, l) => a + l.qty, 0);
+      const sellQty = Math.min(qty, owned);
+      if (sellQty <= 0) return cur;
+      const avg = pos.lots[0]?.price ?? 0;
+      const remaining = owned - sellQty;
+      const proceeds = sellQty * price;
+      const name = findAsset(ticker)?.name ?? ticker;
+      const nowIso = new Date().toISOString();
+      const nowMs = Date.now();
+      const newCash = cur.cash + proceeds;
+
+      if (remaining <= 0.0000001) {
+        const { error } = await supabase
+          .from("holdings")
+          .delete()
+          .eq("user_id", userId)
+          .eq("ticker", ticker);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("holdings")
+          .update({ shares: remaining, avg_cost: avg, updated_at: nowIso })
+          .eq("user_id", userId)
+          .eq("ticker", ticker);
+        if (error) throw error;
+      }
+
+      const { error: tErr } = await supabase.from("transactions").insert({
+        user_id: userId,
+        ticker,
+        name,
+        type: "sell",
+        shares: sellQty,
+        price,
+        amount: proceeds,
+        executed_at: nowIso,
+      });
+      if (tErr) throw tErr;
+
+      await writeCash(userId, newCash);
+
+      const newPositions = { ...cur.positions };
+      if (remaining <= 0.0000001) delete newPositions[ticker];
+      else newPositions[ticker] = { ticker, lots: [{ qty: remaining, price: avg, at: nowMs }] };
+
+      const next: WalletState = {
+        ...cur,
+        cash: newCash,
+        positions: newPositions,
+        history: [...cur.history, { type: "sell", ticker, qty: sellQty, price, at: nowMs }],
+      };
+      return next;
+    },
+    onSuccess: (next) => qc.setQueryData(["wallet", userId], next),
+  });
+
+  const addFundsMut = useMutation({
+    mutationFn: async (amount: number) => {
+      if (!userId) throw new Error("no-user");
+      const cur = qc.getQueryData<WalletState>(["wallet", userId]) ?? state;
+      if (amount <= 0 || cur.starting == null) return cur;
+      const newCash = cur.cash + amount;
+      const newStarting = cur.starting + amount;
+      await writeCash(userId, newCash, newStarting);
+      await supabase.from("transactions").insert({
+        user_id: userId,
+        ticker: "CASH",
+        type: "deposit",
+        amount,
+        executed_at: new Date().toISOString(),
+      });
+      return { ...cur, cash: newCash, starting: newStarting } as WalletState;
+    },
+    onSuccess: (next) => qc.setQueryData(["wallet", userId], next),
+  });
+
+  const withdrawFundsMut = useMutation({
+    mutationFn: async (amount: number) => {
+      if (!userId) throw new Error("no-user");
+      const cur = qc.getQueryData<WalletState>(["wallet", userId]) ?? state;
+      if (amount <= 0 || cur.starting == null) return cur;
+      const take = Math.min(amount, cur.cash);
+      if (take <= 0) return cur;
+      const newCash = cur.cash - take;
+      const newStarting = Math.max(0, cur.starting - take);
+      await writeCash(userId, newCash, newStarting);
+      await supabase.from("transactions").insert({
+        user_id: userId,
+        ticker: "CASH",
+        type: "withdraw",
+        amount: take,
+        executed_at: new Date().toISOString(),
+      });
+      return { ...cur, cash: newCash, starting: newStarting } as WalletState;
+    },
+    onSuccess: (next) => qc.setQueryData(["wallet", userId], next),
+  });
+
+  const setupStarting = useCallback((n: number) => { setupStartingMut.mutate(n); }, [setupStartingMut]);
+  const reset = useCallback(() => { resetMut.mutate(); }, [resetMut]);
+  const buy = useCallback((t: string, q: number, p: number) => { buyMut.mutate({ ticker: t, qty: q, price: p }); }, [buyMut]);
+  const sell = useCallback((t: string, q: number, p: number) => { sellMut.mutate({ ticker: t, qty: q, price: p }); }, [sellMut]);
+  const addFunds = useCallback((n: number) => { addFundsMut.mutate(n); }, [addFundsMut]);
+  const withdrawFunds = useCallback((n: number) => { withdrawFundsMut.mutate(n); }, [withdrawFundsMut]);
+
+  return useMemo(
+    () => ({ state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds }),
+    [state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds],
   );
-
-  const reset = useCallback(
-    () =>
-      update((s) =>
-        s.starting != null
-          ? { starting: s.starting, cash: s.starting, positions: {}, history: [] }
-          : s
-      ),
-    [update]
-  );
-
-  const buy = useCallback(
-    (ticker: string, qty: number, price: number) =>
-      update((s) => {
-        const cost = qty * price;
-        if (cost > s.cash + 0.0001) return s;
-        const pos = s.positions[ticker] ?? { ticker, lots: [] };
-        const next: WalletState = {
-          ...s,
-          cash: Math.max(0, s.cash - cost),
-          positions: {
-            ...s.positions,
-            [ticker]: { ticker, lots: [...pos.lots, { qty, price, at: Date.now() }] },
-          },
-          history: [...s.history, { type: "buy", ticker, qty, price, at: Date.now() }],
-        };
-        return next;
-      }),
-    [update]
-  );
-
-  const sell = useCallback(
-    (ticker: string, qty: number, price: number) =>
-      update((s) => {
-        const pos = s.positions[ticker];
-        if (!pos) return s;
-        const owned = pos.lots.reduce((a, l) => a + l.qty, 0);
-        const sellQty = Math.min(qty, owned);
-        if (sellQty <= 0) return s;
-        let remaining = sellQty;
-        const lots: Lot[] = [];
-        for (const lot of pos.lots) {
-          if (remaining <= 0) {
-            lots.push(lot);
-            continue;
-          }
-          if (lot.qty <= remaining) {
-            remaining -= lot.qty;
-          } else {
-            lots.push({ ...lot, qty: lot.qty - remaining });
-            remaining = 0;
-          }
-        }
-        const newPositions = { ...s.positions };
-        if (lots.length === 0) delete newPositions[ticker];
-        else newPositions[ticker] = { ticker, lots };
-        return {
-          ...s,
-          cash: s.cash + sellQty * price,
-          positions: newPositions,
-          history: [...s.history, { type: "sell", ticker, qty: sellQty, price, at: Date.now() }],
-        };
-      }),
-    [update]
-  );
-
-  const addFunds = useCallback(
-    (amount: number) =>
-      update((s) => {
-        if (amount <= 0 || s.starting == null) return s;
-        return { ...s, cash: s.cash + amount, starting: s.starting + amount };
-      }),
-    [update]
-  );
-
-  const withdrawFunds = useCallback(
-    (amount: number) =>
-      update((s) => {
-        if (amount <= 0 || s.starting == null) return s;
-        const take = Math.min(amount, s.cash);
-        if (take <= 0) return s;
-        return { ...s, cash: s.cash - take, starting: Math.max(0, s.starting - take) };
-      }),
-    [update]
-  );
-
-  return { state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds };
 }
 
 export const positionQty = (p: Position) => p.lots.reduce((a, l) => a + l.qty, 0);
