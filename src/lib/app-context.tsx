@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export type Holding = {
   ticker: string;
@@ -78,7 +79,7 @@ type AppState = {
   sendMessage: (code: string, text: string) => void;
   streak: { current: number; longest: number; lastReadDate: string | null };
   streakReady: boolean;
-  markNewsRead: () => void;
+  markNewsRead: () => Promise<void>;
   seenFilingDates: Record<string, string>;
   markFilingSeen: (investorId: string, date: string) => void;
 };
@@ -300,9 +301,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const markNewsRead = () => {
+  const markNewsRead = async () => {
     const today = madridDateISO();
     const yesterday = prevDateISO(today);
+    // No-op if already marked today (avoid duplicate writes/toasts)
+    if (streak.lastReadDate === today) {
+      console.log("[streak] already marked today:", today);
+      return;
+    }
+    // Persist to Supabase FIRST (only authoritative source). If not signed in,
+    // fall back to local-only optimistic update.
+    if (user) {
+      try {
+        const { data, error } = await supabase
+          .from("news_reads")
+          .upsert(
+            { user_id: user.id, read_date: today },
+            { onConflict: "user_id,read_date" },
+          )
+          .select();
+        if (error) {
+          console.error("[streak] news_reads upsert FAILED:", error);
+          toast.error("No se pudo guardar tu racha, inténtalo de nuevo");
+          return;
+        }
+        console.log("[streak] news_reads upsert OK for", today, data);
+      } catch (e) {
+        console.error("[streak] news_reads upsert threw:", e);
+        toast.error("No se pudo guardar tu racha, inténtalo de nuevo");
+        return;
+      }
+    }
+    // Write succeeded (or no user) — update local optimistic streak.
     setStreak((prev) => {
       if (prev.lastReadDate === today) return prev;
       const current = prev.lastReadDate === yesterday ? prev.current + 1 : 1;
@@ -310,10 +340,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       save("equit_streak", next);
       return next;
     });
-    // Also log to Supabase if authenticated (server-side tracking for notifications)
-    if (user) {
-      supabase.from("news_reads").upsert({ user_id: user.id, read_date: today }, { onConflict: "user_id,read_date" });
-    }
   };
 
   const markFilingSeen = (investorId: string, date: string) => {
