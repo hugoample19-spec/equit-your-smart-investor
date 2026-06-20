@@ -184,7 +184,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFavoriteState(data.favorite_referente_id);
     setIsPremium(!!(data as { is_premium?: boolean }).is_premium);
 
-    // Rebuild streak from authoritative server-side news_reads log.
+    // Rebuild streak from authoritative server-side news_reads log,
+    // using Europe/Madrid as the canonical calendar day.
     try {
       const { data: reads } = await supabase
         .from("news_reads")
@@ -192,35 +193,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .eq("user_id", uid)
         .order("read_date", { ascending: false })
         .limit(400);
-      if (reads) {
-        const set = new Set(reads.map((r) => r.read_date as string));
-        const today = new Date();
-        const fmt = (d: Date) => d.toISOString().slice(0, 10);
-        let current = 0;
-        const cursor = new Date(today);
-        // Streak counts from today (or yesterday if today not yet read).
-        if (!set.has(fmt(cursor))) cursor.setDate(cursor.getDate() - 1);
-        while (set.has(fmt(cursor))) {
-          current += 1;
-          cursor.setDate(cursor.getDate() - 1);
-        }
-        const lastReadDate = reads[0]?.read_date as string | null ?? null;
-        const local = load<{ current: number; longest: number; lastReadDate: string | null }>(
-          "equit_streak",
-          { current: 0, longest: 0, lastReadDate: null },
-        );
-        const next = {
-          current,
-          longest: Math.max(current, local.longest),
-          lastReadDate,
-        };
-        setStreak(next);
-        save("equit_streak", next);
+      const set = new Set((reads ?? []).map((r) => r.read_date as string));
+      let current = 0;
+      let cursor = madridDateISO();
+      // Streak counts from today (or yesterday if today not yet read).
+      if (!set.has(cursor)) cursor = prevDateISO(cursor);
+      while (set.has(cursor)) {
+        current += 1;
+        cursor = prevDateISO(cursor);
       }
+      const lastReadDate = (reads && reads[0]?.read_date as string) ?? null;
+      const local = load<{ current: number; longest: number; lastReadDate: string | null }>(
+        "equit_streak",
+        { current: 0, longest: 0, lastReadDate: null },
+      );
+      const next = {
+        current,
+        longest: Math.max(current, local.longest),
+        lastReadDate,
+      };
+      setStreak(next);
+      save("equit_streak", next);
     } catch { /* offline ok */ }
+    setStreakReady(true);
   };
   useEffect(() => {
-    if (!user) { setProfile(null); return; }
+    if (!user) { setProfile(null); setStreakReady(true); return; }
+    setStreakReady(false);
     loadProfile(user.id);
   }, [user]);
 
