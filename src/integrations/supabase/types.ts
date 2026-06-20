@@ -131,6 +131,27 @@ export type Database = {
         }
         Relationships: []
       }
+      news_translations: {
+        Row: {
+          content_hash: string
+          created_at: string
+          lang: string
+          translated_text: string
+        }
+        Insert: {
+          content_hash: string
+          created_at?: string
+          lang: string
+          translated_text: string
+        }
+        Update: {
+          content_hash?: string
+          created_at?: string
+          lang?: string
+          translated_text?: string
+        }
+        Relationships: []
+      }
       notification_prefs: {
         Row: {
           daily_summary: boolean
