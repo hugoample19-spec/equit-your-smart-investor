@@ -23,7 +23,7 @@ function PerfilPage() {
   const {
     fullName, setFullName, avatar, setAvatar, isPremium, setIsPremium,
     friendCode, favoriteReferenteId, isPortfolioPublic, setIsPortfolioPublic,
-    friendCodes, addFriend, removeFriend, streak,
+    friendCodes, addFriend, removeFriend, streak, streakReady,
     isAuthenticated, signOut,
   } = useApp();
   const navigate = useNavigate();
