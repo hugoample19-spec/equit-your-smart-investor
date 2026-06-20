@@ -286,6 +286,7 @@ function PerfilPage() {
         current={streak.current}
         longest={streak.longest}
         lastReadDate={streak.lastReadDate}
+        ready={streakReady}
       />
 
 
