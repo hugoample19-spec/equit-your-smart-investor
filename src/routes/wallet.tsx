@@ -217,8 +217,14 @@ function WalletPage() {
     if (screen.kind === "detail") {
       const pos = state.positions[screen.ticker];
       if (!pos) {
-        setScreen({ kind: "home" });
-        return null;
+        // Position not yet hydrated. Render a loading placeholder; the
+        // grace-period effect above will redirect to home only if the
+        // position is still missing after the store has settled.
+        return (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            Cargando…
+          </div>
+        );
       }
       return (
         <DetailScreen
