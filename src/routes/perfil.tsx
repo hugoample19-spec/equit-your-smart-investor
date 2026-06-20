@@ -24,7 +24,7 @@ function PerfilPage() {
     fullName, setFullName, avatar, setAvatar, isPremium, setIsPremium,
     friendCode, favoriteReferenteId, isPortfolioPublic, setIsPortfolioPublic,
     friendCodes, addFriend, removeFriend, streak, streakReady,
-    isAuthenticated, signOut,
+    signOut,
   } = useApp();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
