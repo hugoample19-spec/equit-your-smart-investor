@@ -247,7 +247,7 @@ function NoticiasPage() {
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Noticias</h1>
           <p className="text-[11px] tracking-widest font-semibold mt-2" style={{ color: "var(--muted-foreground)" }}>HOY · {today}</p>
         </div>
-        <StreakBadge current={streak.current} readToday={readToday} />
+        <StreakBadge current={streak.current} readToday={readToday} ready={streakReady} />
       </div>
 
       {isLoading ? (
