@@ -125,6 +125,33 @@ function InvestorDetail() {
             </li>
           ))}
         </ul>
+
+        {investor.sectorAffinity.length > 0 && (
+          <div className="mt-5 pt-4 border-t" style={{ borderColor: "var(--muted)" }}>
+            <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>
+              Afinidad por sectores
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {investor.sectorAffinity.map((a) => {
+                const Icon = SECTOR_ICON[a.sector] ?? Globe2;
+                const favors = a.direction === "favors";
+                const Arrow = favors ? ArrowUpRight : ArrowDownRight;
+                const color = favors ? "var(--success)" : "var(--danger)";
+                return (
+                  <span
+                    key={a.sector + a.direction}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                    style={{ background: "var(--muted)", color: "var(--navy)" }}
+                  >
+                    <Icon size={14} />
+                    {a.sector}
+                    <Arrow size={14} color={color} />
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </section>
 
       <button
@@ -134,6 +161,7 @@ function InvestorDetail() {
       >
         Copiar cartera
       </button>
+
     </div>
   );
 }
