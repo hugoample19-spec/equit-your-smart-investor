@@ -33,6 +33,7 @@ function PerfilPage() {
   const [nameDraft, setNameDraft] = useState(fullName);
   const [nameError, setNameError] = useState<string | null>(null);
   const [avatarMenu, setAvatarMenu] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   useEffect(() => { setNameDraft(fullName); }, [fullName]);
 
@@ -309,25 +310,69 @@ function PerfilPage() {
 
       <NotificationSettings />
 
-      <button
-        onClick={async () => {
-          try {
-            await signOut();
-          } catch (e) {
-            console.error("[perfil] signOut failed:", e);
-          }
-          // Force a hard redirect so any in-memory state is fully cleared.
-          if (typeof window !== "undefined") {
-            window.location.href = "/auth";
-          } else {
-            navigate({ to: "/auth" });
-          }
-        }}
-        className="w-full py-3 rounded-full text-sm font-medium flex items-center justify-center gap-2"
-        style={{ color: "var(--muted-foreground)" }}
+      <div
+        className="rounded-xl border p-1"
+        style={{ borderColor: "rgba(220, 38, 38, 0.25)" }}
       >
-        <LogOut size={14} /> Cerrar sesión
-      </button>
+        <button
+          onClick={() => setLogoutConfirmOpen(true)}
+          className="w-full py-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2"
+          style={{ color: "var(--danger)" }}
+        >
+          <LogOut size={14} /> Cerrar sesión
+        </button>
+      </div>
+
+      {logoutConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
+          <button
+            type="button"
+            aria-label="Cancelar"
+            onClick={() => setLogoutConfirmOpen(false)}
+            className="absolute inset-0 cursor-default"
+            style={{ background: "rgba(0,0,0,0.35)" }}
+          />
+          <div
+            className="relative z-10 w-full max-w-xs rounded-2xl p-5 shadow-card text-center"
+            style={{ background: "var(--cream)", border: "1px solid var(--border)" }}
+          >
+            <p className="text-sm font-medium" style={{ color: "var(--navy)" }}>
+              ¿Seguro que quieres cerrar sesión?
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setLogoutConfirmOpen(false)}
+                className="flex-1 rounded-xl py-2.5 text-sm font-medium"
+                style={{ background: "var(--muted)", color: "var(--navy)" }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setLogoutConfirmOpen(false);
+                  try {
+                    await signOut();
+                  } catch (e) {
+                    console.error("[perfil] signOut failed:", e);
+                  }
+                  // Force a hard redirect so any in-memory state is fully cleared.
+                  if (typeof window !== "undefined") {
+                    window.location.href = "/auth";
+                  } else {
+                    navigate({ to: "/auth" });
+                  }
+                }}
+                className="flex-1 rounded-xl py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5"
+                style={{ background: "var(--danger)", color: "var(--cream)" }}
+              >
+                <LogOut size={14} /> Cerrar sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

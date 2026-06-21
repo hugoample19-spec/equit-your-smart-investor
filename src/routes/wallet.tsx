@@ -401,6 +401,13 @@ function HomeScreen({
 
   return (
     <div className="space-y-5 pb-6">
+      <div
+        className="rounded-xl px-4 py-2.5 text-[11px] text-center"
+        style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}
+      >
+        Si no ves variación en los precios, puede deberse a que el mercado esté cerrado o la operativa de algún activo esté pausada.
+      </div>
+
       <section className="bg-card rounded-2xl p-5 shadow-soft">
         <div className="flex items-start justify-between gap-3">
           <div>
