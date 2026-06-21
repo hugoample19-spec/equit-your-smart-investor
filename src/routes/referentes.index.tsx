@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Lock, Star } from "lucide-react";
+import { Info, Lock, Star, X } from "lucide-react";
 import { investors } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
 import { PremiumBanner } from "./index";
 import { InvestorLogo } from "@/components/InvestorLogo";
 import { PremiumModal } from "@/components/PremiumModal";
+
 
 
 export const Route = createFileRoute("/referentes/")({
