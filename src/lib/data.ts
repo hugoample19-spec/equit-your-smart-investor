@@ -1,5 +1,7 @@
 import type { Investor } from "./app-context";
 
+const LOGO_TOKEN = (import.meta.env.VITE_LOGO_DEV_TOKEN as string | undefined) ?? "";
+const logo = (domain: string) => `https://img.logo.dev/${domain}?token=${LOGO_TOKEN}`;
 
 export const investors: Investor[] = [
   {
@@ -7,7 +9,7 @@ export const investors: Investor[] = [
     name: "Michael Burry",
     fund: "Scion Asset Mgmt",
     netWorth: "€300M",
-    photo: "https://logo.clearbit.com/scionasset.com",
+    photo: logo("scionasset.com"),
     locked: false,
     bio: "El de The Big Short. Contrarian extremo.",
     holdings: [
@@ -17,13 +19,17 @@ export const investors: Investor[] = [
       { ticker: "HCA", name: "HCA Healthcare", pct: 9.4, perf: 14.2 },
       { ticker: "MOH", name: "Molina Healthcare", pct: 8.2, perf: 7.1 },
     ],
+    sectorAffinity: [
+      { sector: "Salud", direction: "favors" },
+      { sector: "Tech", direction: "avoids" },
+    ],
   },
   {
     id: "icahn",
     name: "Carl Icahn",
     fund: "Icahn Enterprises",
     netWorth: "€6B",
-    photo: "https://logo.clearbit.com/icahnenterprises.com",
+    photo: logo("icahnenterprises.com"),
     locked: false,
     bio: "Activista veterano. Más de 50 años moviendo consejos.",
     holdings: [
@@ -33,13 +39,17 @@ export const investors: Investor[] = [
       { ticker: "FCX", name: "Freeport-McMoRan", pct: 9.6, perf: 16.2 },
       { ticker: "BHC", name: "Bausch Health", pct: 6.8, perf: -8.4 },
     ],
+    sectorAffinity: [
+      { sector: "Energía", direction: "favors" },
+      { sector: "Industriales", direction: "favors" },
+    ],
   },
   {
     id: "druckenmiller",
     name: "Stanley Druckenmiller",
     fund: "Duquesne Family",
     netWorth: "€11B",
-    photo: "https://logo.clearbit.com/duquesnefamilyoffice.com",
+    photo: logo("duquesnefamilyoffice.com"),
     locked: false,
     bio: "Macro + concentración. Récord de 30 años sin pérdidas.",
     holdings: [
@@ -49,13 +59,17 @@ export const investors: Investor[] = [
       { ticker: "TEVA", name: "Teva Pharma", pct: 6.4, perf: 11.2 },
       { ticker: "GLD", name: "Gold", pct: 9.1, perf: 28.1 },
     ],
+    sectorAffinity: [
+      { sector: "Tech", direction: "favors" },
+      { sector: "Macro", direction: "favors" },
+    ],
   },
   {
     id: "buffett",
     name: "Warren Buffett",
     fund: "Berkshire Hathaway",
     netWorth: "€347B",
-    photo: "https://logo.clearbit.com/berkshirehathaway.com",
+    photo: logo("berkshirehathaway.com"),
     locked: true,
     bio: "El Oráculo de Omaha. Value investing desde 1956.",
     holdings: [
@@ -66,13 +80,18 @@ export const investors: Investor[] = [
       { ticker: "CVX", name: "Chevron", pct: 5.9, perf: -2.1 },
       { ticker: "OXY", name: "Occidental", pct: 4.2, perf: 9.8 },
     ],
+    sectorAffinity: [
+      { sector: "Banca", direction: "favors" },
+      { sector: "Consumo", direction: "favors" },
+      { sector: "Cripto", direction: "avoids" },
+    ],
   },
   {
     id: "dalio",
     name: "Ray Dalio",
     fund: "Bridgewater Associates",
     netWorth: "€124B",
-    photo: "https://logo.clearbit.com/bridgewater.com",
+    photo: logo("bridgewater.com"),
     locked: true,
     bio: "Principios. All Weather Portfolio. Macro global.",
     holdings: [
@@ -83,13 +102,17 @@ export const investors: Investor[] = [
       { ticker: "VWO", name: "Vanguard EM", pct: 10.8, perf: 5.4 },
       { ticker: "PG", name: "Procter & Gamble", pct: 6.1, perf: 9.1 },
     ],
+    sectorAffinity: [
+      { sector: "Macro", direction: "favors" },
+      { sector: "Emergentes", direction: "favors" },
+    ],
   },
   {
     id: "ackman",
     name: "Bill Ackman",
     fund: "Pershing Square",
     netWorth: "€19B",
-    photo: "https://logo.clearbit.com/pershingsquareholdings.com",
+    photo: logo("pershingsquareholdings.com"),
     locked: true,
     bio: "Activista. Posiciones concentradas y convicción.",
     holdings: [
@@ -100,13 +123,17 @@ export const investors: Investor[] = [
       { ticker: "CP", name: "Canadian Pacific", pct: 10.1, perf: 6.4 },
       { ticker: "HHC", name: "Howard Hughes", pct: 8.6, perf: 3.1 },
     ],
+    sectorAffinity: [
+      { sector: "Consumo", direction: "favors" },
+      { sector: "Inmobiliario", direction: "favors" },
+    ],
   },
   {
     id: "wood",
     name: "Cathie Wood",
     fund: "ARK Invest",
     netWorth: "€14B",
-    photo: "https://logo.clearbit.com/ark-invest.com",
+    photo: logo("ark-invest.com"),
     locked: true,
     bio: "Innovación disruptiva. Tech exponencial.",
     holdings: [
@@ -117,13 +144,18 @@ export const investors: Investor[] = [
       { ticker: "PLTR", name: "Palantir", pct: 6.8, perf: 87.4 },
       { ticker: "HOOD", name: "Robinhood", pct: 5.9, perf: 32.1 },
     ],
+    sectorAffinity: [
+      { sector: "Tech", direction: "favors" },
+      { sector: "Cripto", direction: "favors" },
+      { sector: "Banca", direction: "avoids" },
+    ],
   },
   {
     id: "soros",
     name: "George Soros",
     fund: "Soros Fund Mgmt",
     netWorth: "€8B",
-    photo: "https://logo.clearbit.com/soros.com",
+    photo: logo("soros.com"),
     locked: true,
     bio: "Reflexividad. El hombre que rompió el Banco de Inglaterra.",
     holdings: [
@@ -133,13 +165,17 @@ export const investors: Investor[] = [
       { ticker: "RIVN", name: "Rivian", pct: 6.2, perf: -14.2 },
       { ticker: "TSM", name: "TSMC", pct: 9.4, perf: 38.1 },
     ],
+    sectorAffinity: [
+      { sector: "Macro", direction: "favors" },
+      { sector: "Tech", direction: "favors" },
+    ],
   },
   {
     id: "musk",
     name: "Elon Musk",
     fund: "Tesla / SpaceX",
     netWorth: "€420B",
-    photo: "https://logo.clearbit.com/tesla.com",
+    photo: logo("tesla.com"),
     locked: true,
     bio: "Tesla, SpaceX, xAI. Apuestas tecnológicas de muy largo plazo.",
     holdings: [
@@ -148,13 +184,17 @@ export const investors: Investor[] = [
       { ticker: "SPACEX", name: "SpaceX (privada)", pct: 14.1, perf: 28.6 },
       { ticker: "BORING", name: "Boring Co.", pct: 3.2, perf: 4.1 },
     ],
+    sectorAffinity: [
+      { sector: "Tech", direction: "favors" },
+      { sector: "Energía", direction: "favors" },
+    ],
   },
   {
     id: "thiel",
     name: "Peter Thiel",
     fund: "Founders Fund",
     netWorth: "€18B",
-    photo: "https://logo.clearbit.com/foundersfund.com",
+    photo: logo("foundersfund.com"),
     locked: true,
     bio: "Cofundador de PayPal y Palantir. Venture contrarian.",
     holdings: [
@@ -164,8 +204,13 @@ export const investors: Investor[] = [
       { ticker: "STRIPE", name: "Stripe (privada)", pct: 10.4, perf: 14.6 },
       { ticker: "BTC-USD", name: "Bitcoin", pct: 8.7, perf: 42.1 },
     ],
+    sectorAffinity: [
+      { sector: "Tech", direction: "favors" },
+      { sector: "Cripto", direction: "favors" },
+    ],
   },
 ];
+
 
 
 export type GlobalUser = {

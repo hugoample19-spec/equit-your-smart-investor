@@ -10,6 +10,11 @@ export type Holding = {
   perf: number;
 };
 
+export type SectorAffinity = {
+  sector: string;
+  direction: "favors" | "avoids";
+};
+
 export type Investor = {
   id: string;
   name: string;
@@ -19,6 +24,7 @@ export type Investor = {
   locked: boolean;
   bio: string;
   holdings: Holding[];
+  sectorAffinity: SectorAffinity[];
 };
 
 export type Portfolio = {

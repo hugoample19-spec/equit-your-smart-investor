@@ -1,10 +1,28 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Star } from "lucide-react";
+import { useEffect, useState, type ComponentType } from "react";
+import {
+  ArrowLeft, Star, ArrowUpRight, ArrowDownRight,
+  Cpu, Zap, HeartPulse, Landmark, ShoppingBag, Bitcoin, Building2,
+  Globe2, Factory, TrendingUp,
+} from "lucide-react";
 import { investors } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
 import { InvestorLogo } from "@/components/InvestorLogo";
 import { PremiumModal } from "@/components/PremiumModal";
+
+const SECTOR_ICON: Record<string, ComponentType<{ size?: number }>> = {
+  Tech: Cpu,
+  Energía: Zap,
+  Salud: HeartPulse,
+  Banca: Landmark,
+  Consumo: ShoppingBag,
+  Cripto: Bitcoin,
+  Inmobiliario: Building2,
+  Macro: Globe2,
+  Industriales: Factory,
+  Emergentes: TrendingUp,
+};
+
 
 
 export const Route = createFileRoute("/referentes/$id")({
@@ -107,6 +125,33 @@ function InvestorDetail() {
             </li>
           ))}
         </ul>
+
+        {investor.sectorAffinity.length > 0 && (
+          <div className="mt-5 pt-4 border-t" style={{ borderColor: "var(--muted)" }}>
+            <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>
+              Afinidad por sectores
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {investor.sectorAffinity.map((a) => {
+                const Icon = SECTOR_ICON[a.sector] ?? Globe2;
+                const favors = a.direction === "favors";
+                const Arrow = favors ? ArrowUpRight : ArrowDownRight;
+                const color = favors ? "var(--success)" : "var(--danger)";
+                return (
+                  <span
+                    key={a.sector + a.direction}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                    style={{ background: "var(--muted)", color: "var(--navy)" }}
+                  >
+                    <Icon size={14} />
+                    {a.sector}
+                    <Arrow size={14} color={color} />
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </section>
 
       <button
@@ -116,6 +161,7 @@ function InvestorDetail() {
       >
         Copiar cartera
       </button>
+
     </div>
   );
 }
