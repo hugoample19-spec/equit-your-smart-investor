@@ -174,7 +174,7 @@ function WalletPage() {
     refetchOnWindowFocus: false,
   });
 
-  if (!ready) return <div className="py-10 text-center text-sm text-muted-foreground">Cargando…</div>;
+  if (authLoading || !ready) return <div className="py-10 text-center text-sm text-muted-foreground">Cargando…</div>;
 
   if (state.starting == null)
     return <div className="py-10 text-center text-sm text-muted-foreground">Preparando tu cartera…</div>;
