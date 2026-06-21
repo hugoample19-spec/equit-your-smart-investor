@@ -105,6 +105,38 @@ function ReferentesPage() {
       {showPremium && (
         <PremiumModal onClose={() => setShowPremium(false)} />
       )}
+
+      {infoOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+          style={{ background: "rgba(10,18,40,0.55)" }}
+          onClick={() => setInfoOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-5 shadow-soft relative"
+            style={{ background: "var(--card)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setInfoOpen(false)}
+              className="absolute top-3 right-3"
+              aria-label="Cerrar"
+            >
+              <X size={18} style={{ color: "var(--muted-foreground)" }} />
+            </button>
+            <div className="flex items-center gap-2">
+              <Info size={18} style={{ color: "var(--gold)" }} />
+              <h2 className="text-lg font-semibold" style={{ color: "var(--navy)" }}>
+                ¿Cómo funciona esto?
+              </h2>
+            </div>
+            <p className="text-sm mt-3 leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+              Las carteras que ves provienen de los informes 13F que todos los grandes fondos de EE. UU. deben presentar públicamente ante la SEC cada trimestre. Los datos se actualizan cada ~3 meses, unos 45 días después de cerrar cada trimestre, por lo que reflejan la última posición pública declarada y no las tenencias en tiempo real.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
