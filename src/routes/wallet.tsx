@@ -81,7 +81,7 @@ type Screen =
     };
 
 function WalletPage() {
-  const { user, profile, isPremium } = useApp();
+  const { user, profile, isPremium, authLoading } = useApp();
   const { state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds } = useWallet(user?.id ?? null);
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
@@ -136,16 +136,19 @@ function WalletPage() {
   // This prevents the "flash then redirect" race when arriving from Home.
   useEffect(() => {
     if (screen.kind !== "detail") return;
+    // Wait for auth to resolve AND wallet query to be ready before deciding
+    // the position is truly missing. Otherwise we can fire the timer while
+    // user.id is still null (auth not hydrated) and wrongly bounce home.
+    if (authLoading) return;
     if (!ready) return;
     if (state.positions[screen.ticker]) return;
     const t = setTimeout(() => {
-      // Re-check at fire time — the position may have arrived meanwhile.
       if (!state.positions[screen.ticker]) {
         setScreen({ kind: "home" });
       }
     }, 1500);
     return () => clearTimeout(t);
-  }, [screen, ready, state.positions]);
+  }, [screen, ready, authLoading, state.positions]);
 
   const ownedTickers = useMemo(() => Object.keys(state.positions), [state.positions]);
   const tickersToFetch = useMemo(() => {
@@ -171,7 +174,7 @@ function WalletPage() {
     refetchOnWindowFocus: false,
   });
 
-  if (!ready) return <div className="py-10 text-center text-sm text-muted-foreground">Cargando…</div>;
+  if (authLoading || !ready) return <div className="py-10 text-center text-sm text-muted-foreground">Cargando…</div>;
 
   if (state.starting == null)
     return <div className="py-10 text-center text-sm text-muted-foreground">Preparando tu cartera…</div>;
