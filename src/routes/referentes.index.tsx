@@ -22,14 +22,27 @@ export const Route = createFileRoute("/referentes/")({
 function ReferentesPage() {
   const { isPremium, favoriteReferenteId, setFavoriteReferente } = useApp();
   const [showPremium, setShowPremium] = useState(false);
-  
+  const [infoOpen, setInfoOpen] = useState(false);
 
   return (
     <div className="space-y-5 pb-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Referentes</h1>
-        <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>Aprende y copia a los grandes</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Referentes</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>Aprende y copia a los grandes</p>
+        </div>
+        <button
+          type="button"
+          aria-label="¿Cómo funciona esto?"
+          onClick={() => setInfoOpen(true)}
+          className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors"
+          style={{ background: "var(--muted)", color: "var(--navy)" }}
+        >
+          <Info size={14} />
+          <span className="hidden sm:inline">¿Cómo funciona esto?</span>
+        </button>
       </div>
+
 
       <div className="grid grid-cols-2 gap-3">
         {investors.map((i) => {
