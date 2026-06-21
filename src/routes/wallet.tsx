@@ -81,7 +81,7 @@ type Screen =
     };
 
 function WalletPage() {
-  const { user, profile, isPremium } = useApp();
+  const { user, profile, isPremium, authLoading } = useApp();
   const { state, ready, setupStarting, reset, buy, sell, addFunds, withdrawFunds } = useWallet(user?.id ?? null);
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
