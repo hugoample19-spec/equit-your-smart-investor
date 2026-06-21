@@ -1,10 +1,28 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Star } from "lucide-react";
+import { useEffect, useState, type ComponentType } from "react";
+import {
+  ArrowLeft, Star, ArrowUpRight, ArrowDownRight,
+  Cpu, Zap, HeartPulse, Landmark, ShoppingBag, Bitcoin, Building2,
+  Globe2, Factory, TrendingUp,
+} from "lucide-react";
 import { investors } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
 import { InvestorLogo } from "@/components/InvestorLogo";
 import { PremiumModal } from "@/components/PremiumModal";
+
+const SECTOR_ICON: Record<string, ComponentType<{ size?: number }>> = {
+  Tech: Cpu,
+  Energía: Zap,
+  Salud: HeartPulse,
+  Banca: Landmark,
+  Consumo: ShoppingBag,
+  Cripto: Bitcoin,
+  Inmobiliario: Building2,
+  Macro: Globe2,
+  Industriales: Factory,
+  Emergentes: TrendingUp,
+};
+
 
 
 export const Route = createFileRoute("/referentes/$id")({
