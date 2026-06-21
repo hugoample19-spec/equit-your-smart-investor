@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Lock, Star } from "lucide-react";
+import { Info, Lock, Star, X } from "lucide-react";
 import { investors } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
 import { PremiumBanner } from "./index";
 import { InvestorLogo } from "@/components/InvestorLogo";
 import { PremiumModal } from "@/components/PremiumModal";
+
 
 
 export const Route = createFileRoute("/referentes/")({
@@ -21,14 +22,27 @@ export const Route = createFileRoute("/referentes/")({
 function ReferentesPage() {
   const { isPremium, favoriteReferenteId, setFavoriteReferente } = useApp();
   const [showPremium, setShowPremium] = useState(false);
-  
+  const [infoOpen, setInfoOpen] = useState(false);
 
   return (
     <div className="space-y-5 pb-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Referentes</h1>
-        <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>Aprende y copia a los grandes</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Referentes</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>Aprende y copia a los grandes</p>
+        </div>
+        <button
+          type="button"
+          aria-label="¿Cómo funciona esto?"
+          onClick={() => setInfoOpen(true)}
+          className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors"
+          style={{ background: "var(--muted)", color: "var(--navy)" }}
+        >
+          <Info size={14} />
+          <span className="hidden sm:inline">¿Cómo funciona esto?</span>
+        </button>
       </div>
+
 
       <div className="grid grid-cols-2 gap-3">
         {investors.map((i) => {
@@ -91,6 +105,38 @@ function ReferentesPage() {
       {showPremium && (
         <PremiumModal onClose={() => setShowPremium(false)} />
       )}
+
+      {infoOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+          style={{ background: "rgba(10,18,40,0.55)" }}
+          onClick={() => setInfoOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-5 shadow-soft relative"
+            style={{ background: "var(--card)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setInfoOpen(false)}
+              className="absolute top-3 right-3"
+              aria-label="Cerrar"
+            >
+              <X size={18} style={{ color: "var(--muted-foreground)" }} />
+            </button>
+            <div className="flex items-center gap-2">
+              <Info size={18} style={{ color: "var(--gold)" }} />
+              <h2 className="text-lg font-semibold" style={{ color: "var(--navy)" }}>
+                ¿Cómo funciona esto?
+              </h2>
+            </div>
+            <p className="text-sm mt-3 leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+              Las carteras que ves provienen de los informes 13F que todos los grandes fondos de EE. UU. deben presentar públicamente ante la SEC cada trimestre. Los datos se actualizan cada ~3 meses, unos 45 días después de cerrar cada trimestre, por lo que reflejan la última posición pública declarada y no las tenencias en tiempo real.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
