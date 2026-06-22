@@ -251,6 +251,7 @@ export type Database = {
           is_premium: boolean
           onboarded: boolean
           starting_balance: number | null
+          stripe_customer_id: string | null
           username: string | null
           wallet_cash: number | null
           wallet_starting: number | null
@@ -266,6 +267,7 @@ export type Database = {
           is_premium?: boolean
           onboarded?: boolean
           starting_balance?: number | null
+          stripe_customer_id?: string | null
           username?: string | null
           wallet_cash?: number | null
           wallet_starting?: number | null
@@ -281,6 +283,7 @@ export type Database = {
           is_premium?: boolean
           onboarded?: boolean
           starting_balance?: number | null
+          stripe_customer_id?: string | null
           username?: string | null
           wallet_cash?: number | null
           wallet_starting?: number | null
