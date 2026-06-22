@@ -428,7 +428,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       pendingCopy, setPendingCopy,
       friendCode, favoriteReferenteId, setFavoriteReferente,
       isPortfolioPublic, setIsPortfolioPublic,
-      friendCodes, addFriend, removeFriend,
+      friendsLeaderboard, friendsLoading: friendsQuery.isLoading, addFriend, removeFriend,
       chats, sendMessage,
       streak, streakReady, markNewsRead,
       seenFilingDates, markFilingSeen,
