@@ -8,7 +8,6 @@ import { investors, globalUsers, trendingStocks } from "@/lib/data";
 import { usePortfolioSummary } from "@/lib/portfolio";
 import { createCheckoutSession } from "@/lib/stripe.functions";
 
-
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
