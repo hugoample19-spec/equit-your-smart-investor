@@ -198,6 +198,7 @@ function WalletPage() {
         <BuyScreen
           ticker={screen.ticker}
           price={prices[screen.ticker]}
+          loading={pricesQuery.isLoading}
           cash={state.cash}
           onBack={() => {
             if (goBackToOrigin()) return;
