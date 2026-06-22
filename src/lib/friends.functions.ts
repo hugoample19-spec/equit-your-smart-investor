@@ -24,11 +24,10 @@ type ProfileLite = {
 };
 
 async function computePerf(
-  supabase: ReturnType<typeof requireSupabaseAuth> extends never
-    ? never
-    : import("@supabase/supabase-js").SupabaseClient,
+  supabase: SupabaseClient,
   profiles: ProfileLite[],
 ): Promise<Map<string, { perf: number | null; totalValue: number | null }>> {
+
   const out = new Map<string, { perf: number | null; totalValue: number | null }>();
   const ids = profiles.map((p) => p.id);
   if (ids.length === 0) return out;
