@@ -334,11 +334,12 @@ function PerfilPage() {
           </p>
         </div>
         <button
-          onClick={() => setIsPremium(!isPremium)}
-          className="px-4 py-2 rounded-full border text-xs font-medium"
+          onClick={handleCheckout}
+          disabled={checkoutLoading}
+          className="px-4 py-2 rounded-full border text-xs font-medium disabled:opacity-70"
           style={{ borderColor: "var(--border)", color: "var(--navy)" }}
         >
-          {isPremium ? "Cambiar a Free" : "Probar Premium"}
+          {checkoutLoading ? "Procesando…" : (isPremium ? "Gestionar" : "Probar Premium")}
         </button>
       </div>
 
