@@ -74,15 +74,15 @@ function PerfilPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    if (params.get("premium") !== "success") return;
+    const isPremiumSuccess = params.get("premium") === "success";
     (async () => {
       try {
         await refreshProfile();
-        toast.success("¡Bienvenido a Equit Premium! 🎉");
+        if (isPremiumSuccess) toast.success("¡Bienvenido a Equit Premium! 🎉");
       } catch (e) {
-        console.error("[perfil] refresh after premium failed:", e);
+        console.error("[perfil] refresh on mount failed:", e);
       } finally {
-        window.history.replaceState({}, "", "/perfil");
+        if (isPremiumSuccess) window.history.replaceState({}, "", "/perfil");
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
