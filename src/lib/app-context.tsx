@@ -174,7 +174,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFriendCode(code);
     setFavoriteState(load<string | null>("equit_fav_ref", null));
     setPortfolioPublicState(load<boolean>("equit_portfolio_public", true));
-    setFriendCodes(load<string[]>("equit_friends", ["47392810", "82910374", "65103982"]));
+    
     setChats(load<Record<string, ChatMessage[]>>("equit_chats", {}));
     // Do NOT hydrate streak from localStorage — we wait for the authoritative
     // Supabase rebuild to avoid a flash of stale value (streakReady gates UI).
