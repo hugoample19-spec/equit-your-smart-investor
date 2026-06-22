@@ -371,11 +371,12 @@ function PerfilPage() {
                   <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{f.name}</p>
                   <p className="text-[10px] tabular-nums" style={{ color: "var(--muted-foreground)" }}>#{f.code}</p>
                 </div>
-                <span className="text-sm font-semibold tabular-nums" style={{ color: f.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
-                  {f.perf >= 0 ? "+" : ""}{f.perf.toFixed(1)}%
+                <span className="text-sm font-semibold tabular-nums" style={{ color: f.perf == null ? "var(--muted-foreground)" : f.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
+                  {f.perf == null ? "Privada" : `${f.perf >= 0 ? "+" : ""}${f.perf.toFixed(1)}%`}
                 </span>
               </Link>
-              <button onClick={() => removeFriend(f.code)} className="p-1" aria-label="Eliminar">
+              <button onClick={() => { void removeFriend(f.code); }} className="p-1" aria-label="Eliminar">
+
                 <X size={14} color="#9A9AAB" />
               </button>
             </li>
