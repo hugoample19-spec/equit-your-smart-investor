@@ -6,6 +6,7 @@ import { investors, globalUsers, findUserByCode } from "@/lib/data";
 import { InvestorLogo } from "@/components/InvestorLogo";
 import { useServerFn } from "@tanstack/react-start";
 import { getNotificationPrefs, updateNotificationPrefs } from "@/lib/notifications.functions";
+import { createCheckoutSession } from "@/lib/stripe.functions";
 import { toast } from "sonner";
 
 
@@ -22,19 +23,34 @@ export const Route = createFileRoute("/perfil")({
 
 function PerfilPage() {
   const {
-    fullName, setFullName, avatar, setAvatar, isPremium, setIsPremium,
+    fullName, setFullName, avatar, setAvatar, isPremium,
     friendCode, favoriteReferenteId, isPortfolioPublic, setIsPortfolioPublic,
     friendCodes, addFriend, removeFriend, streak, streakReady,
     signOut, refreshProfile,
   } = useApp();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  const checkout = useServerFn(createCheckoutSession);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(fullName);
   const [nameError, setNameError] = useState<string | null>(null);
   const [avatarMenu, setAvatarMenu] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const { url } = await checkout();
+      if (!url) throw new Error("No checkout URL");
+      window.location.href = url;
+    } catch (err) {
+      console.error("[perfil] checkout failed:", err);
+      toast.error("Error al procesar el pago. Inténtalo de nuevo.");
+      setCheckoutLoading(false);
+    }
+  };
 
   useEffect(() => { setNameDraft(fullName); }, [fullName]);
 
@@ -318,11 +334,12 @@ function PerfilPage() {
           </p>
         </div>
         <button
-          onClick={() => setIsPremium(!isPremium)}
-          className="px-4 py-2 rounded-full border text-xs font-medium"
+          onClick={handleCheckout}
+          disabled={checkoutLoading}
+          className="px-4 py-2 rounded-full border text-xs font-medium disabled:opacity-70"
           style={{ borderColor: "var(--border)", color: "var(--navy)" }}
         >
-          {isPremium ? "Cambiar a Free" : "Probar Premium"}
+          {checkoutLoading ? "Procesando…" : (isPremium ? "Gestionar" : "Probar Premium")}
         </button>
       </div>
 

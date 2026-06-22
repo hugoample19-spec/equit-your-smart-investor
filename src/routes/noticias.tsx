@@ -145,7 +145,7 @@ async function translateToSpanish(text: string): Promise<string> {
 type DisplayNews = NewsItem & { displayTitle: string; displaySummary: string };
 
 function NoticiasPage() {
-  const { streak, streakReady, markNewsRead, isPremium, setIsPremium, refreshProfile } = useApp();
+  const { streak, streakReady, markNewsRead, isPremium, refreshProfile } = useApp();
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const [insight, setInsight] = useState<string | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
@@ -313,7 +313,6 @@ function NoticiasPage() {
         {showPremium && (
           <PremiumModal
             onClose={() => setShowPremium(false)}
-            onSubscribe={() => { setIsPremium(true); setShowPremium(false); }}
           />
         )}
       </div>
