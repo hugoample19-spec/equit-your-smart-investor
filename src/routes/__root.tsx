@@ -13,6 +13,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppProvider } from "../lib/app-context";
 import { Layout } from "../components/Layout";
 import { Toaster } from "../components/ui/sonner";
+import { CONTENT_SECURITY_POLICY } from "../lib/csp";
 
 function NotFoundComponent() {
   return (
