@@ -931,12 +931,14 @@ function BuyListScreen({
 function BuyScreen({
   ticker,
   price,
+  loading,
   cash,
   onBack,
   onConfirm,
 }: {
   ticker: string;
   price?: PriceData;
+  loading: boolean;
   cash: number;
   onBack: () => void;
   onConfirm: (qty: number, price: number) => void;
