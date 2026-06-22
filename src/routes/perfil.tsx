@@ -25,7 +25,7 @@ function PerfilPage() {
     fullName, setFullName, avatar, setAvatar, isPremium, setIsPremium,
     friendCode, favoriteReferenteId, isPortfolioPublic, setIsPortfolioPublic,
     friendCodes, addFriend, removeFriend, streak, streakReady,
-    signOut,
+    signOut, refreshProfile,
   } = useApp();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -37,6 +37,23 @@ function PerfilPage() {
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   useEffect(() => { setNameDraft(fullName); }, [fullName]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("premium") !== "success") return;
+    (async () => {
+      try {
+        await refreshProfile();
+        toast.success("¡Bienvenido a Equit Premium! 🎉");
+      } catch (e) {
+        console.error("[perfil] refresh after premium failed:", e);
+      } finally {
+        window.history.replaceState({}, "", "/perfil");
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const initials = fullName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   const favRef = investors.find((i) => i.id === favoriteReferenteId);
