@@ -416,23 +416,32 @@ function HomeScreen({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs text-muted-foreground">Valor total de cartera</p>
-            <p
-              className="text-3xl font-semibold tracking-tight tabular-nums mt-1"
-              style={{ color: "var(--navy)" }}
-            >
-              {fmtEUR(totalValue)}
-              <span style={{ color: "var(--gold)" }}>.</span>
-            </p>
-            <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
-              <span
-                className="tabular-nums font-medium"
-                style={{ color: totalReturn >= 0 ? "var(--success)" : "var(--danger)" }}
-              >
-                {totalReturn >= 0 ? "+" : ""}
-                {fmtEUR(totalReturn)} · {fmtPct(totalReturnPct)}
-              </span>
-              <span className="text-xs text-muted-foreground">Rendimiento total</span>
-            </div>
+            {!pricesSuccess ? (
+              <>
+                <div className="h-8 w-32 rounded animate-pulse bg-black/10 mt-1" />
+                <div className="h-4 w-24 rounded animate-pulse bg-black/10 mt-2" />
+              </>
+            ) : (
+              <>
+                <p
+                  className="text-3xl font-semibold tracking-tight tabular-nums mt-1"
+                  style={{ color: "var(--navy)" }}
+                >
+                  {fmtEUR(totalValue)}
+                  <span style={{ color: "var(--gold)" }}>.</span>
+                </p>
+                <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
+                  <span
+                    className="tabular-nums font-medium"
+                    style={{ color: totalReturn >= 0 ? "var(--success)" : "var(--danger)" }}
+                  >
+                    {totalReturn >= 0 ? "+" : ""}
+                    {fmtEUR(totalReturn)} · {fmtPct(totalReturnPct)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">Rendimiento total</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
         {summary.hasUnavailable && (
