@@ -313,7 +313,6 @@ function NoticiasPage() {
         {showPremium && (
           <PremiumModal
             onClose={() => setShowPremium(false)}
-            onSubscribe={() => { setIsPremium(true); setShowPremium(false); }}
           />
         )}
       </div>

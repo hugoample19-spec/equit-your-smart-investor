@@ -1,8 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Trophy, ArrowUpRight, Lock, Users } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { useApp } from "@/lib/app-context";
 import { investors, globalUsers, trendingStocks } from "@/lib/data";
 import { usePortfolioSummary } from "@/lib/portfolio";
+import { createCheckoutSession } from "@/lib/stripe.functions";
 
 
 export const Route = createFileRoute("/")({

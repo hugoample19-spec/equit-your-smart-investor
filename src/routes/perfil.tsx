@@ -6,6 +6,7 @@ import { investors, globalUsers, findUserByCode } from "@/lib/data";
 import { InvestorLogo } from "@/components/InvestorLogo";
 import { useServerFn } from "@tanstack/react-start";
 import { getNotificationPrefs, updateNotificationPrefs } from "@/lib/notifications.functions";
+import { createCheckoutSession } from "@/lib/stripe.functions";
 import { toast } from "sonner";
 
 
