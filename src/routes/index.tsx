@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Trophy, ArrowUpRight, Lock, Users } from "lucide-react";
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useApp } from "@/lib/app-context";
