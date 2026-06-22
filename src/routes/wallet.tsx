@@ -510,7 +510,12 @@ function HomeScreen({
                     </p>
                   </div>
                   <div className="text-right">
-                    {unavail ? (
+                    {pricesLoading ? (
+                      <div className="space-y-1">
+                        <div className="h-4 w-16 rounded animate-pulse bg-black/10 ml-auto" />
+                        <div className="h-3 w-10 rounded animate-pulse bg-black/10 ml-auto" />
+                      </div>
+                    ) : unavail ? (
                       <p className="text-xs font-medium flex items-center gap-1 justify-end" style={{ color: "var(--danger)" }}>
                         <AlertTriangle size={13} /> Precio no disponible
                       </p>
