@@ -290,11 +290,14 @@ function NoticiasPage() {
           <h1 className="text-xl font-semibold mt-3 leading-tight" style={{ color: "var(--navy)" }}>
             {opened.displayTitle}
           </h1>
-          {opened.source && (
-            <p className="text-[10px] tracking-wider mt-4 font-medium" style={{ color: "var(--muted-foreground)" }}>
-              FUENTE · {opened.source.toUpperCase()}
-            </p>
-          )}
+          {(() => {
+            const src = displaySource(opened);
+            return src ? (
+              <p className="text-[10px] tracking-wider mt-4 font-medium" style={{ color: "var(--muted-foreground)" }}>
+                FUENTE · {src.toUpperCase()}
+              </p>
+            ) : null;
+          })()}
         </article>
 
         {!insight && !insightLoading && (
