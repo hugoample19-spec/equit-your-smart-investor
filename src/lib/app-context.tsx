@@ -317,21 +317,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     save("equit_portfolio_public", b);
     if (user) supabase.from("profiles").update({ is_portfolio_public: b }).eq("id", user.id);
   };
-  const addFriend = (code: string) => {
-    setFriendCodes((prev) => {
-      if (prev.includes(code)) return prev;
-      const next = [...prev, code];
-      save("equit_friends", next);
-      return next;
-    });
+  const addFriendCall = useServerFn(addFriendFn);
+  const removeFriendCall = useServerFn(removeFriendFn);
+  const getFriendsLeaderboardFn = useServerFn(getFriendsLeaderboard);
+  const queryClient = useQueryClient();
+
+  const friendsQuery = useQuery({
+    queryKey: ["friends-leaderboard", user?.id ?? null],
+    queryFn: () => getFriendsLeaderboardFn(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+  const friendsLeaderboard: FriendLeaderRow[] = friendsQuery.data ?? [];
+  const invalidateFriends = () =>
+    queryClient.invalidateQueries({ queryKey: ["friends-leaderboard"] });
+
+  const addFriend = async (code: string) => {
+    try {
+      const res = await addFriendCall({ data: { code } });
+      if (res.ok) invalidateFriends();
+      return res;
+    } catch (e) {
+      console.error("[friends] addFriend failed:", e);
+      return { ok: false, reason: "error" };
+    }
   };
-  const removeFriend = (code: string) => {
-    setFriendCodes((prev) => {
-      const next = prev.filter((c) => c !== code);
-      save("equit_friends", next);
-      return next;
-    });
+  const removeFriend = async (code: string) => {
+    try {
+      await removeFriendCall({ data: { code } });
+      invalidateFriends();
+    } catch (e) {
+      console.error("[friends] removeFriend failed:", e);
+    }
   };
+
   const sendMessage = (code: string, text: string) => {
     setChats((prev) => {
       const list = prev[code] ?? [];
