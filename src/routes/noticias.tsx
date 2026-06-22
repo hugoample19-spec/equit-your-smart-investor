@@ -142,6 +142,32 @@ async function translateToSpanish(text: string): Promise<string> {
 }
 
 
+const KNOWN_SOURCES: Array<{ match: RegExp; label: string }> = [
+  { match: /reuters\./i, label: "Reuters" },
+  { match: /cnbc\./i, label: "CNBC" },
+  { match: /bloomberg\./i, label: "Bloomberg" },
+  { match: /ft\.com/i, label: "FT" },
+  { match: /wsj\.com/i, label: "WSJ" },
+  { match: /nytimes\./i, label: "NY Times" },
+  { match: /marketwatch\./i, label: "MarketWatch" },
+  { match: /seekingalpha\./i, label: "Seeking Alpha" },
+];
+
+function displaySource(item: NewsItem): string {
+  const raw = (item.source || "").trim();
+  const isGeneric = !raw || /^finnhub$/i.test(raw);
+  if (!isGeneric) return raw;
+  try {
+    const host = new URL(item.url).hostname.toLowerCase().replace(/^www\./, "");
+    for (const { match, label } of KNOWN_SOURCES) {
+      if (match.test(host)) return label;
+    }
+    return host || raw;
+  } catch {
+    return raw;
+  }
+}
+
 type DisplayNews = NewsItem & { displayTitle: string; displaySummary: string };
 
 function NoticiasPage() {
@@ -264,11 +290,14 @@ function NoticiasPage() {
           <h1 className="text-xl font-semibold mt-3 leading-tight" style={{ color: "var(--navy)" }}>
             {opened.displayTitle}
           </h1>
-          {opened.source && (
-            <p className="text-[10px] tracking-wider mt-4 font-medium" style={{ color: "var(--muted-foreground)" }}>
-              FUENTE · {opened.source.toUpperCase()}
-            </p>
-          )}
+          {(() => {
+            const src = displaySource(opened);
+            return src ? (
+              <p className="text-[10px] tracking-wider mt-4 font-medium" style={{ color: "var(--muted-foreground)" }}>
+                FUENTE · {src.toUpperCase()}
+              </p>
+            ) : null;
+          })()}
         </article>
 
         {!insight && !insightLoading && (
@@ -350,11 +379,14 @@ function NoticiasPage() {
                     <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>{n.time}</span>
                   </div>
                   <h2 className="text-base font-semibold mt-2 leading-snug" style={{ color: "var(--navy)" }}>{title}</h2>
-                  {n.source && (
-                    <p className="text-[10px] tracking-wider mt-2 font-medium" style={{ color: "var(--muted-foreground)" }}>
-                      {n.source.toUpperCase()}
-                    </p>
-                  )}
+                  {(() => {
+                    const src = displaySource(n);
+                    return src ? (
+                      <p className="text-[10px] tracking-wider mt-2 font-medium" style={{ color: "var(--muted-foreground)" }}>
+                        {src.toUpperCase()}
+                      </p>
+                    ) : null;
+                  })()}
                 </button>
               </li>
             );
