@@ -131,24 +131,6 @@ function WalletPage() {
     return false;
   };
 
-  // If the user lands on the detail screen but the position is (briefly)
-  // missing, give the store a moment to hydrate before bouncing home.
-  // This prevents the "flash then redirect" race when arriving from Home.
-  useEffect(() => {
-    if (screen.kind !== "detail") return;
-    // Wait for auth to resolve AND wallet query to be ready before deciding
-    // the position is truly missing. Otherwise we can fire the timer while
-    // user.id is still null (auth not hydrated) and wrongly bounce home.
-    if (authLoading) return;
-    if (!ready) return;
-    if (state.positions[screen.ticker]) return;
-    const t = setTimeout(() => {
-      if (!state.positions[screen.ticker]) {
-        setScreen({ kind: "home" });
-      }
-    }, 1500);
-    return () => clearTimeout(t);
-  }, [screen, ready, authLoading, state.positions]);
 
   const ownedTickers = useMemo(() => Object.keys(state.positions), [state.positions]);
   const tickersToFetch = useMemo(() => {
