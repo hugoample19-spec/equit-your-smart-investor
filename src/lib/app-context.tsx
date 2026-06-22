@@ -94,9 +94,11 @@ type AppState = {
   setFavoriteReferente: (id: string | null) => void;
   isPortfolioPublic: boolean;
   setIsPortfolioPublic: (b: boolean) => void;
-  friendCodes: string[];
-  addFriend: (code: string) => void;
-  removeFriend: (code: string) => void;
+  friendsLeaderboard: FriendLeaderRow[];
+  friendsLoading: boolean;
+  addFriend: (code: string) => Promise<{ ok: boolean; reason?: string }>;
+  removeFriend: (code: string) => Promise<void>;
+
   chats: Record<string, ChatMessage[]>;
   sendMessage: (code: string, text: string) => void;
   streak: { current: number; longest: number; lastReadDate: string | null };
