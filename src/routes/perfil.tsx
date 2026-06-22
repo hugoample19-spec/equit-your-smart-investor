@@ -118,8 +118,54 @@ function PerfilPage() {
   };
 
   const cleaned = search.replace(/[^0-9]/g, "");
-  const found = cleaned.length === 8 ? findUserByCode(cleaned) : undefined;
-  const myFriends = globalUsers.filter((u) => friendCodes.includes(u.code)).sort((a, b) => b.perf - a.perf);
+  const [found, setFound] = useState<{ code: string; name: string } | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    if (cleaned.length !== 8) { setFound(null); return; }
+    if (cleaned === friendCode) { setFound(null); return; }
+    let cancelled = false;
+    setSearching(true);
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("friend_code, display_name, username")
+        .eq("friend_code", cleaned)
+        .maybeSingle();
+      if (cancelled) return;
+      setSearching(false);
+      setFound(
+        data
+          ? { code: data.friend_code, name: data.display_name ?? data.username ?? "Sin nombre" }
+          : null,
+      );
+    })();
+    return () => { cancelled = true; };
+  }, [cleaned, friendCode]);
+
+  const myFriends = friendsLeaderboard;
+  const isAlreadyFriend = found ? myFriends.some((f) => f.code === found.code) : false;
+
+  const handleAdd = async () => {
+    if (!found) return;
+    setAdding(true);
+    const res = await addFriend(found.code);
+    setAdding(false);
+    if (res.ok) {
+      toast.success("Amigo añadido");
+      setSearch("");
+    } else if (res.reason === "already_added") {
+      toast.info("Ya es tu amigo");
+    } else if (res.reason === "self") {
+      toast.error("No puedes añadirte a ti mismo");
+    } else if (res.reason === "not_found") {
+      toast.error("Código no encontrado");
+    } else {
+      toast.error("No se pudo añadir");
+    }
+  };
+
 
   return (
     <div className="space-y-5 pb-6">
