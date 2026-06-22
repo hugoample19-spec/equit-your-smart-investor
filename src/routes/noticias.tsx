@@ -379,11 +379,14 @@ function NoticiasPage() {
                     <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>{n.time}</span>
                   </div>
                   <h2 className="text-base font-semibold mt-2 leading-snug" style={{ color: "var(--navy)" }}>{title}</h2>
-                  {n.source && (
-                    <p className="text-[10px] tracking-wider mt-2 font-medium" style={{ color: "var(--muted-foreground)" }}>
-                      {n.source.toUpperCase()}
-                    </p>
-                  )}
+                  {(() => {
+                    const src = displaySource(n);
+                    return src ? (
+                      <p className="text-[10px] tracking-wider mt-2 font-medium" style={{ color: "var(--muted-foreground)" }}>
+                        {src.toUpperCase()}
+                      </p>
+                    ) : null;
+                  })()}
                 </button>
               </li>
             );
