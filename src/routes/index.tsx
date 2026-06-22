@@ -2,11 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Trophy, ArrowUpRight, Lock, Users } from "lucide-react";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useApp } from "@/lib/app-context";
-import { investors, globalUsers, trendingStocks } from "@/lib/data";
+import { investors, trendingStocks } from "@/lib/data";
 import { usePortfolioSummary } from "@/lib/portfolio";
 import { createCheckoutSession } from "@/lib/stripe.functions";
+import { getGlobalLeaderboard } from "@/lib/friends.functions";
 import { WeeklyReport } from "@/components/WeeklyReport";
 
 export const Route = createFileRoute("/")({
@@ -21,17 +23,31 @@ export const Route = createFileRoute("/")({
 
 const fmt = (n: number) => n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+type LeaderRow = {
+  code: string;
+  name: string;
+  perf: number | null;
+  totalValue: number | null;
+  isPublic: boolean;
+  isMe?: boolean;
+};
+
 function HomePage() {
-  const { fullName, username, profile, friendCodes, isPremium } = useApp();
+  const { fullName, username, profile, friendCode, friendsLeaderboard, isPremium, user } = useApp();
   const summary = usePortfolioSummary();
+  const getGlobalFn = useServerFn(getGlobalLeaderboard);
+  const globalQuery = useQuery({
+    queryKey: ["global-leaderboard", user?.id ?? null],
+    queryFn: () => getGlobalFn(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+  const global: LeaderRow[] = globalQuery.data ?? [];
+  const myFriends: LeaderRow[] = friendsLeaderboard;
 
   const displayName = (profile?.display_name?.trim() || fullName?.trim() || username || "").trim();
   const firstName = displayName.split(" ")[0] || displayName;
 
-  const myFriends = globalUsers
-    .filter((u) => friendCodes.includes(u.code))
-    .sort((a, b) => b.perf - a.perf);
-  const global = [...globalUsers].sort((a, b) => b.perf - a.perf).slice(0, 8);
 
   const eur = summary.totalValue.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const [intPart, decPart] = eur.split(",");
@@ -150,7 +166,7 @@ function HomePage() {
         </div>
         {myFriends.length === 0 ? (
           <p className="text-xs text-center py-4" style={{ color: "var(--muted-foreground)" }}>
-            Añade amigos desde tu perfil para verlos aquí
+            Aún no tienes amigos en Equit. Comparte tu código #{friendCode} para empezar.
           </p>
         ) : (
           <LeaderboardList rows={myFriends} />
@@ -163,7 +179,13 @@ function HomePage() {
           <Trophy size={18} style={{ color: "var(--gold)" }} />
           <h2 className="font-semibold" style={{ color: "var(--navy)" }}>Global</h2>
         </div>
-        <LeaderboardList rows={global} />
+        {global.length === 0 ? (
+          <p className="text-xs text-center py-4" style={{ color: "var(--muted-foreground)" }}>
+            Sé el primero en el ranking global. Activa Premium y haz pública tu cartera.
+          </p>
+        ) : (
+          <LeaderboardList rows={global} />
+        )}
       </section>
 
       <PremiumBanner />
@@ -171,28 +193,49 @@ function HomePage() {
   );
 }
 
-function LeaderboardList({ rows }: { rows: typeof globalUsers }) {
+function LeaderboardList({ rows }: { rows: LeaderRow[] }) {
   return (
     <ul className="space-y-3">
-      {rows.map((u, idx) => (
-        <li key={u.code}>
-          <Link to="/u/$code" params={{ code: u.code }} className="flex items-center gap-3">
-            <span className="text-sm font-bold tabular-nums w-7" style={{ color: idx === 0 ? "var(--gold)" : "var(--navy)" }}>
-              {String(idx + 1).padStart(2, "0")}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{u.name}</p>
-              <p className="text-[10px] tracking-wider font-medium" style={{ color: "var(--muted-foreground)" }}>{u.strategy}</p>
-            </div>
-            <span className="text-sm font-semibold tabular-nums" style={{ color: u.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
-              {u.perf >= 0 ? "+" : ""}{fmt(u.perf)}%
-            </span>
-          </Link>
-        </li>
-      ))}
+      {rows.map((u, idx) => {
+        const perfText =
+          u.perf == null ? "Privada" : `${u.perf >= 0 ? "+" : ""}${fmt(u.perf)}%`;
+        const perfColor =
+          u.perf == null
+            ? "var(--muted-foreground)"
+            : u.perf >= 0
+              ? "var(--success)"
+              : "var(--danger)";
+        return (
+          <li
+            key={u.code}
+            className={u.isMe ? "rounded-xl -mx-2 px-2 py-1" : undefined}
+            style={
+              u.isMe
+                ? { background: "rgba(201,168,76,0.10)", borderLeft: "3px solid var(--gold)" }
+                : undefined
+            }
+          >
+            <Link to="/u/$code" params={{ code: u.code }} className="flex items-center gap-3">
+              <span className="text-sm font-bold tabular-nums w-7" style={{ color: idx === 0 ? "var(--gold)" : "var(--navy)" }}>
+                {String(idx + 1).padStart(2, "0")}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>
+                  {u.name}{u.isMe ? " · Tú" : ""}
+                </p>
+                <p className="text-[10px] tabular-nums" style={{ color: "var(--muted-foreground)" }}>#{u.code}</p>
+              </div>
+              <span className="text-sm font-semibold tabular-nums" style={{ color: perfColor }}>
+                {perfText}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }
+
 
 export function PremiumBanner() {
   const { isPremium } = useApp();

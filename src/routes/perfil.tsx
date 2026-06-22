@@ -2,13 +2,15 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Bell, Camera, Check, LogOut, Search, Star, X, Zap } from "lucide-react";
 import { useApp, madridDateISO } from "@/lib/app-context";
-import { investors, globalUsers, findUserByCode } from "@/lib/data";
+import { investors } from "@/lib/data";
+import { supabase } from "@/integrations/supabase/client";
 import { InvestorLogo } from "@/components/InvestorLogo";
 import { useServerFn } from "@tanstack/react-start";
 import { getNotificationPrefs, updateNotificationPrefs } from "@/lib/notifications.functions";
 import { createCheckoutSession, createPortalSession } from "@/lib/stripe.functions";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+
 
 
 
@@ -26,7 +28,8 @@ function PerfilPage() {
   const {
     fullName, setFullName, avatar, setAvatar, isPremium,
     friendCode, favoriteReferenteId, isPortfolioPublic, setIsPortfolioPublic,
-    friendCodes, addFriend, removeFriend, streak, streakReady,
+    friendsLeaderboard, addFriend, removeFriend, streak, streakReady,
+
     signOut, refreshProfile,
   } = useApp();
   const navigate = useNavigate();
@@ -115,8 +118,54 @@ function PerfilPage() {
   };
 
   const cleaned = search.replace(/[^0-9]/g, "");
-  const found = cleaned.length === 8 ? findUserByCode(cleaned) : undefined;
-  const myFriends = globalUsers.filter((u) => friendCodes.includes(u.code)).sort((a, b) => b.perf - a.perf);
+  const [found, setFound] = useState<{ code: string; name: string } | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    if (cleaned.length !== 8) { setFound(null); return; }
+    if (cleaned === friendCode) { setFound(null); return; }
+    let cancelled = false;
+    setSearching(true);
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("friend_code, display_name, username")
+        .eq("friend_code", cleaned)
+        .maybeSingle();
+      if (cancelled) return;
+      setSearching(false);
+      setFound(
+        data
+          ? { code: data.friend_code, name: data.display_name ?? data.username ?? "Sin nombre" }
+          : null,
+      );
+    })();
+    return () => { cancelled = true; };
+  }, [cleaned, friendCode]);
+
+  const myFriends = friendsLeaderboard;
+  const isAlreadyFriend = found ? myFriends.some((f) => f.code === found.code) : false;
+
+  const handleAdd = async () => {
+    if (!found) return;
+    setAdding(true);
+    const res = await addFriend(found.code);
+    setAdding(false);
+    if (res.ok) {
+      toast.success("Amigo añadido");
+      setSearch("");
+    } else if (res.reason === "already_added") {
+      toast.info("Ya es tu amigo");
+    } else if (res.reason === "self") {
+      toast.error("No puedes añadirte a ti mismo");
+    } else if (res.reason === "not_found") {
+      toast.error("Código no encontrado");
+    } else {
+      toast.error("No se pudo añadir");
+    }
+  };
+
 
   return (
     <div className="space-y-5 pb-6">
@@ -281,9 +330,18 @@ function PerfilPage() {
           <p className="text-[11px] mb-3" style={{ color: "var(--muted-foreground)" }}>Introduce los 8 dígitos</p>
         )}
 
-        {cleaned.length === 8 && !found && (
+        {cleaned.length === 8 && cleaned === friendCode && (
+          <p className="text-[11px] mb-3" style={{ color: "var(--muted-foreground)" }}>Ese es tu propio código</p>
+        )}
+
+        {cleaned.length === 8 && cleaned !== friendCode && searching && (
+          <p className="text-[11px] mb-3" style={{ color: "var(--muted-foreground)" }}>Buscando…</p>
+        )}
+
+        {cleaned.length === 8 && cleaned !== friendCode && !searching && !found && (
           <p className="text-[11px] mb-3" style={{ color: "var(--danger)" }}>Código no encontrado</p>
         )}
+
 
         {found && (
           <div className="flex items-center gap-3 p-3 rounded-2xl mb-3" style={{ background: "var(--muted)" }}>
@@ -294,17 +352,19 @@ function PerfilPage() {
               <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{found.name}</p>
               <p className="text-[11px] tabular-nums" style={{ color: "var(--muted-foreground)" }}>#{found.code}</p>
             </div>
-            {friendCodes.includes(found.code) ? (
+            {isAlreadyFriend ? (
               <span className="text-[11px] font-medium" style={{ color: "var(--success)" }}>Añadido</span>
             ) : (
               <button
-                onClick={() => { addFriend(found.code); setSearch(""); }}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                onClick={handleAdd}
+                disabled={adding}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold disabled:opacity-60"
                 style={{ background: "var(--navy)", color: "var(--cream)" }}
               >
-                Agregar
+                {adding ? "Añadiendo…" : "Agregar"}
               </button>
             )}
+
           </div>
         )}
 
@@ -320,11 +380,12 @@ function PerfilPage() {
                   <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{f.name}</p>
                   <p className="text-[10px] tabular-nums" style={{ color: "var(--muted-foreground)" }}>#{f.code}</p>
                 </div>
-                <span className="text-sm font-semibold tabular-nums" style={{ color: f.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
-                  {f.perf >= 0 ? "+" : ""}{f.perf.toFixed(1)}%
+                <span className="text-sm font-semibold tabular-nums" style={{ color: f.perf == null ? "var(--muted-foreground)" : f.perf >= 0 ? "var(--success)" : "var(--danger)" }}>
+                  {f.perf == null ? "Privada" : `${f.perf >= 0 ? "+" : ""}${f.perf.toFixed(1)}%`}
                 </span>
               </Link>
-              <button onClick={() => removeFriend(f.code)} className="p-1" aria-label="Eliminar">
+              <button onClick={() => { void removeFriend(f.code); }} className="p-1" aria-label="Eliminar">
+
                 <X size={14} color="#9A9AAB" />
               </button>
             </li>

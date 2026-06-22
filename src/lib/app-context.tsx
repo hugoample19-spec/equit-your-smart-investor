@@ -1,7 +1,23 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  addFriend as addFriendFn,
+  removeFriend as removeFriendFn,
+  getFriendsLeaderboard,
+} from "@/lib/friends.functions";
+
+export type FriendLeaderRow = {
+  code: string;
+  name: string;
+  perf: number | null;
+  totalValue: number | null;
+  isPublic: boolean;
+};
+
 
 export type Holding = {
   ticker: string;
@@ -78,9 +94,11 @@ type AppState = {
   setFavoriteReferente: (id: string | null) => void;
   isPortfolioPublic: boolean;
   setIsPortfolioPublic: (b: boolean) => void;
-  friendCodes: string[];
-  addFriend: (code: string) => void;
-  removeFriend: (code: string) => void;
+  friendsLeaderboard: FriendLeaderRow[];
+  friendsLoading: boolean;
+  addFriend: (code: string) => Promise<{ ok: boolean; reason?: string }>;
+  removeFriend: (code: string) => Promise<void>;
+
   chats: Record<string, ChatMessage[]>;
   sendMessage: (code: string, text: string) => void;
   streak: { current: number; longest: number; lastReadDate: string | null };
@@ -140,7 +158,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [friendCode, setFriendCode] = useState<string>("00000000");
   const [favoriteReferenteId, setFavoriteState] = useState<string | null>(null);
   const [isPortfolioPublic, setPortfolioPublicState] = useState(true);
-  const [friendCodes, setFriendCodes] = useState<string[]>([]);
+  
   const [chats, setChats] = useState<Record<string, ChatMessage[]>>({});
   const [streak, setStreak] = useState<{ current: number; longest: number; lastReadDate: string | null }>({ current: 0, longest: 0, lastReadDate: null });
   const [streakReady, setStreakReady] = useState(false);
@@ -156,7 +174,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFriendCode(code);
     setFavoriteState(load<string | null>("equit_fav_ref", null));
     setPortfolioPublicState(load<boolean>("equit_portfolio_public", true));
-    setFriendCodes(load<string[]>("equit_friends", ["47392810", "82910374", "65103982"]));
+    
     setChats(load<Record<string, ChatMessage[]>>("equit_chats", {}));
     // Do NOT hydrate streak from localStorage — we wait for the authoritative
     // Supabase rebuild to avoid a flash of stale value (streakReady gates UI).
@@ -299,21 +317,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     save("equit_portfolio_public", b);
     if (user) supabase.from("profiles").update({ is_portfolio_public: b }).eq("id", user.id);
   };
-  const addFriend = (code: string) => {
-    setFriendCodes((prev) => {
-      if (prev.includes(code)) return prev;
-      const next = [...prev, code];
-      save("equit_friends", next);
-      return next;
-    });
+  const addFriendCall = useServerFn(addFriendFn);
+  const removeFriendCall = useServerFn(removeFriendFn);
+  const getFriendsLeaderboardFn = useServerFn(getFriendsLeaderboard);
+  const queryClient = useQueryClient();
+
+  const friendsQuery = useQuery({
+    queryKey: ["friends-leaderboard", user?.id ?? null],
+    queryFn: () => getFriendsLeaderboardFn(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+  const friendsLeaderboard: FriendLeaderRow[] = friendsQuery.data ?? [];
+  const invalidateFriends = () =>
+    queryClient.invalidateQueries({ queryKey: ["friends-leaderboard"] });
+
+  const addFriend = async (code: string) => {
+    try {
+      const res = await addFriendCall({ data: { code } });
+      if (res.ok) invalidateFriends();
+      return res;
+    } catch (e) {
+      console.error("[friends] addFriend failed:", e);
+      return { ok: false, reason: "error" };
+    }
   };
-  const removeFriend = (code: string) => {
-    setFriendCodes((prev) => {
-      const next = prev.filter((c) => c !== code);
-      save("equit_friends", next);
-      return next;
-    });
+  const removeFriend = async (code: string) => {
+    try {
+      await removeFriendCall({ data: { code } });
+      invalidateFriends();
+    } catch (e) {
+      console.error("[friends] removeFriend failed:", e);
+    }
   };
+
   const sendMessage = (code: string, text: string) => {
     setChats((prev) => {
       const list = prev[code] ?? [];
@@ -391,7 +428,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       pendingCopy, setPendingCopy,
       friendCode, favoriteReferenteId, setFavoriteReferente,
       isPortfolioPublic, setIsPortfolioPublic,
-      friendCodes, addFriend, removeFriend,
+      friendsLeaderboard, friendsLoading: friendsQuery.isLoading, addFriend, removeFriend,
       chats, sendMessage,
       streak, streakReady, markNewsRead,
       seenFilingDates, markFilingSeen,
