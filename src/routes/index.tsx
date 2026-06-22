@@ -69,8 +69,9 @@ function HomePage() {
         </div>
       </section>
 
+      <WeeklyReport isPremium={isPremium} />
 
-      {/* Trending stocks */}
+
       <section>
         <div className="mb-3">
           <h2 className="text-lg font-semibold" style={{ color: "var(--navy)" }}>Lo más comprado</h2>
