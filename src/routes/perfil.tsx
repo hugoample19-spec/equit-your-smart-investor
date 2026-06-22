@@ -342,23 +342,39 @@ function PerfilPage() {
       />
 
 
-      {/* Plan + logout */}
-      <div className="flex items-center justify-between bg-card rounded-2xl p-4 shadow-soft">
-        <div>
-          <p className="text-[10px] tracking-widest" style={{ color: "var(--muted-foreground)" }}>PLAN</p>
-          <p className="text-sm font-semibold mt-0.5" style={{ color: isPremium ? "var(--gold)" : "var(--navy)" }}>
-            {isPremium ? "Equit Premium" : "Free"}
-          </p>
-        </div>
-        <button
-          onClick={handleCheckout}
-          disabled={checkoutLoading}
-          className="px-4 py-2 rounded-full border text-xs font-medium disabled:opacity-70"
-          style={{ borderColor: "var(--border)", color: "var(--navy)" }}
-        >
-          {checkoutLoading ? "Procesando…" : (isPremium ? "Gestionar" : "Probar Premium")}
-        </button>
-      </div>
+      {/* Plan */}
+      <section className="bg-card rounded-2xl p-5 shadow-soft">
+        <p className="text-[10px] tracking-widest" style={{ color: "var(--muted-foreground)" }}>PLAN</p>
+        <p className="text-lg font-semibold mt-1" style={{ color: isPremium ? "var(--gold)" : "var(--navy)" }}>
+          {isPremium ? "Equit Premium" : "Plan Free"}
+        </p>
+        {isPremium ? (
+          <>
+            <button
+              onClick={handlePortal}
+              disabled={portalLoading}
+              className="mt-4 w-full px-4 py-2.5 rounded-full text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-70"
+              style={{ background: "var(--navy)", color: "var(--cream)" }}
+            >
+              {portalLoading && <Loader2 size={14} className="animate-spin" />}
+              {portalLoading ? "Abriendo…" : "Gestionar suscripción"}
+            </button>
+            <p className="text-[11px] mt-2 text-center" style={{ color: "var(--muted-foreground)" }}>
+              Cancela cuando quieras. Tu acceso Premium se mantiene hasta el fin del período.
+            </p>
+          </>
+        ) : (
+          <button
+            onClick={handleCheckout}
+            disabled={checkoutLoading}
+            className="mt-4 w-full px-4 py-2.5 rounded-full text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-70"
+            style={{ background: "var(--gold)", color: "var(--navy)" }}
+          >
+            {checkoutLoading && <Loader2 size={14} className="animate-spin" />}
+            {checkoutLoading ? "Procesando…" : "Activar Premium — 3,99€/mes"}
+          </button>
+        )}
+      </section>
 
       <NotificationSettings />
 
