@@ -343,17 +343,19 @@ function PerfilPage() {
               <p className="text-sm font-medium truncate" style={{ color: "var(--navy)" }}>{found.name}</p>
               <p className="text-[11px] tabular-nums" style={{ color: "var(--muted-foreground)" }}>#{found.code}</p>
             </div>
-            {friendCodes.includes(found.code) ? (
+            {isAlreadyFriend ? (
               <span className="text-[11px] font-medium" style={{ color: "var(--success)" }}>Añadido</span>
             ) : (
               <button
-                onClick={() => { addFriend(found.code); setSearch(""); }}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                onClick={handleAdd}
+                disabled={adding}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold disabled:opacity-60"
                 style={{ background: "var(--navy)", color: "var(--cream)" }}
               >
-                Agregar
+                {adding ? "Añadiendo…" : "Agregar"}
               </button>
             )}
+
           </div>
         )}
 
