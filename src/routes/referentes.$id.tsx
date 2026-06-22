@@ -102,10 +102,14 @@ function InvestorDetail() {
         <div className="absolute bottom-0 left-0 right-0 p-5 text-left">
           <p className="text-[10px] uppercase tracking-widest" style={{ color: "var(--gold)" }}>{investor.fund}</p>
           <h1 className="text-3xl font-semibold mt-1" style={{ color: "var(--cream)" }}>{investor.name}</h1>
-          <p className="text-sm mt-1" style={{ color: "rgba(250,248,245,0.8)" }}>{investor.bio}</p>
           <p className="mt-3 text-sm font-semibold" style={{ color: "var(--gold)" }}>Patrimonio · {investor.netWorth}</p>
         </div>
       </div>
+
+      <section className="bg-card rounded-2xl p-5 shadow-soft">
+        <h2 className="font-semibold mb-2" style={{ color: "var(--navy)" }}>Filosofía de inversión</h2>
+        <p className="text-sm leading-relaxed" style={{ color: "var(--muted-foreground)" }}>{investor.bio}</p>
+      </section>
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
         <h2 className="font-semibold mb-4" style={{ color: "var(--navy)" }}>Cartera</h2>
