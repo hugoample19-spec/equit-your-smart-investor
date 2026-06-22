@@ -32,7 +32,9 @@ function PerfilPage() {
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const checkout = useServerFn(createCheckoutSession);
+  const portal = useServerFn(createPortalSession);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(fullName);
@@ -50,6 +52,20 @@ function PerfilPage() {
       console.error("[perfil] checkout failed:", err);
       toast.error("Error al procesar el pago. Inténtalo de nuevo.");
       setCheckoutLoading(false);
+    }
+  };
+
+  const handlePortal = async () => {
+    setPortalLoading(true);
+    try {
+      const { url } = await portal();
+      if (!url) throw new Error("No portal URL");
+      window.location.href = url;
+    } catch (err) {
+      console.error("[perfil] portal failed:", err);
+      const msg = err instanceof Error ? err.message : "Error al abrir el portal.";
+      toast.error(msg);
+      setPortalLoading(false);
     }
   };
 
