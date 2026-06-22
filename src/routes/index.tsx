@@ -2,11 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Trophy, ArrowUpRight, Lock, Users } from "lucide-react";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useApp } from "@/lib/app-context";
-import { investors, globalUsers, trendingStocks } from "@/lib/data";
+import { investors, trendingStocks } from "@/lib/data";
 import { usePortfolioSummary } from "@/lib/portfolio";
 import { createCheckoutSession } from "@/lib/stripe.functions";
+import { getGlobalLeaderboard } from "@/lib/friends.functions";
 import { WeeklyReport } from "@/components/WeeklyReport";
 
 export const Route = createFileRoute("/")({
@@ -21,17 +23,31 @@ export const Route = createFileRoute("/")({
 
 const fmt = (n: number) => n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+type LeaderRow = {
+  code: string;
+  name: string;
+  perf: number | null;
+  totalValue: number | null;
+  isPublic: boolean;
+  isMe?: boolean;
+};
+
 function HomePage() {
-  const { fullName, username, profile, friendCodes, isPremium } = useApp();
+  const { fullName, username, profile, friendCode, friendsLeaderboard, isPremium, user } = useApp();
   const summary = usePortfolioSummary();
+  const getGlobalFn = useServerFn(getGlobalLeaderboard);
+  const globalQuery = useQuery({
+    queryKey: ["global-leaderboard", user?.id ?? null],
+    queryFn: () => getGlobalFn(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+  const global: LeaderRow[] = globalQuery.data ?? [];
+  const myFriends: LeaderRow[] = friendsLeaderboard;
 
   const displayName = (profile?.display_name?.trim() || fullName?.trim() || username || "").trim();
   const firstName = displayName.split(" ")[0] || displayName;
 
-  const myFriends = globalUsers
-    .filter((u) => friendCodes.includes(u.code))
-    .sort((a, b) => b.perf - a.perf);
-  const global = [...globalUsers].sort((a, b) => b.perf - a.perf).slice(0, 8);
 
   const eur = summary.totalValue.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const [intPart, decPart] = eur.split(",");
