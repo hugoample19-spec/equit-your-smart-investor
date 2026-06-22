@@ -1,5 +1,8 @@
-import { Check, Sparkles, X } from "lucide-react";
-import { useApp } from "@/lib/app-context";
+import { useState } from "react";
+import { Check, Loader2, Sparkles, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { createCheckoutSession } from "@/lib/stripe.functions";
 
 const BENEFITS = [
   "Todos los referentes desbloqueados (Buffett, Dalio, Ackman, Cathie Wood…)",
@@ -15,14 +18,26 @@ export function PremiumModal({
   onClose: () => void;
   onSubscribe?: () => void;
 }) {
-  const { setIsPremium } = useApp();
-  const handleSubscribe = () => {
-    if (onSubscribe) onSubscribe();
-    else {
-      setIsPremium(true);
-      onClose();
+  const checkout = useServerFn(createCheckoutSession);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (onSubscribe) {
+      onSubscribe();
+      return;
+    }
+    setLoading(true);
+    try {
+      const { url } = await checkout();
+      if (!url) throw new Error("No checkout URL");
+      window.location.href = url;
+    } catch (err) {
+      console.error("[premium] checkout failed:", err);
+      toast.error("Error al procesar el pago. Inténtalo de nuevo.");
+      setLoading(false);
     }
   };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
@@ -63,10 +78,17 @@ export function PremiumModal({
         </div>
         <button
           onClick={handleSubscribe}
-          className="mt-4 w-full rounded-2xl py-3.5 text-sm font-semibold shadow-soft"
+          disabled={loading}
+          className="mt-4 w-full rounded-2xl py-3.5 text-sm font-semibold shadow-soft flex items-center justify-center gap-2 disabled:opacity-70"
           style={{ background: "var(--gold)", color: "var(--navy)" }}
         >
-          Suscribirme
+          {loading ? (
+            <>
+              <Loader2 size={16} className="animate-spin" /> Procesando…
+            </>
+          ) : (
+            "Suscribirme"
+          )}
         </button>
         <p className="text-[10px] text-center mt-3" style={{ color: "var(--muted-foreground)" }}>
           Cancela cuando quieras desde tu perfil.
