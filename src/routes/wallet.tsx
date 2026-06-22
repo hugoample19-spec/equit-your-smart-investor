@@ -966,16 +966,22 @@ function BuyScreen({
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
         <p className="text-xs text-muted-foreground">{asset?.name}</p>
-        <p className="text-2xl font-semibold tabular-nums mt-1" style={{ color: "var(--navy)" }}>
-          {px > 0 ? fmtEUR(px) : "—"}
-        </p>
-        {price?.reference && (
-          <p className="text-xs mt-1 text-muted-foreground">Precio de referencia</p>
-        )}
-        {price?.stale && (
-          <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
-            ⚠ Precio desactualizado
-          </p>
+        {!price || loading ? (
+          <div className="h-8 w-32 rounded animate-pulse bg-black/10 mt-1" />
+        ) : (
+          <>
+            <p className="text-2xl font-semibold tabular-nums mt-1" style={{ color: "var(--navy)" }}>
+              {fmtEUR(px)}
+            </p>
+            {price.reference && (
+              <p className="text-xs mt-1 text-muted-foreground">Precio de referencia</p>
+            )}
+            {price.stale && (
+              <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
+                ⚠ Precio desactualizado
+              </p>
+            )}
+          </>
         )}
       </section>
 
