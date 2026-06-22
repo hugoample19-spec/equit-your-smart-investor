@@ -198,6 +198,7 @@ function WalletPage() {
         <BuyScreen
           ticker={screen.ticker}
           price={prices[screen.ticker]}
+          loading={pricesQuery.isLoading}
           cash={state.cash}
           onBack={() => {
             if (goBackToOrigin()) return;
@@ -284,6 +285,8 @@ function WalletPage() {
       <HomeScreen
         state={state}
         prices={prices}
+        pricesLoading={pricesQuery.isLoading}
+        pricesSuccess={pricesQuery.isSuccess}
         onBuy={() => setScreen({ kind: "buyList" })}
         onReset={reset}
         onOpenAsset={(t) => setScreen({ kind: "detail", ticker: t })}
@@ -374,6 +377,8 @@ function SetupScreen({ onPick }: { onPick: (n: number) => void }) {
 function HomeScreen({
   state,
   prices,
+  pricesLoading,
+  pricesSuccess,
   onBuy,
   onReset,
   onOpenAsset,
@@ -382,6 +387,8 @@ function HomeScreen({
 }: {
   state: ReturnType<typeof useWallet>["state"];
   prices: Record<string, PriceData>;
+  pricesLoading: boolean;
+  pricesSuccess: boolean;
   onBuy: () => void;
   onReset: () => void;
   onOpenAsset: (t: string) => void;
@@ -412,23 +419,32 @@ function HomeScreen({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs text-muted-foreground">Valor total de cartera</p>
-            <p
-              className="text-3xl font-semibold tracking-tight tabular-nums mt-1"
-              style={{ color: "var(--navy)" }}
-            >
-              {fmtEUR(totalValue)}
-              <span style={{ color: "var(--gold)" }}>.</span>
-            </p>
-            <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
-              <span
-                className="tabular-nums font-medium"
-                style={{ color: totalReturn >= 0 ? "var(--success)" : "var(--danger)" }}
-              >
-                {totalReturn >= 0 ? "+" : ""}
-                {fmtEUR(totalReturn)} · {fmtPct(totalReturnPct)}
-              </span>
-              <span className="text-xs text-muted-foreground">Rendimiento total</span>
-            </div>
+            {!pricesSuccess ? (
+              <>
+                <div className="h-8 w-32 rounded animate-pulse bg-black/10 mt-1" />
+                <div className="h-4 w-24 rounded animate-pulse bg-black/10 mt-2" />
+              </>
+            ) : (
+              <>
+                <p
+                  className="text-3xl font-semibold tracking-tight tabular-nums mt-1"
+                  style={{ color: "var(--navy)" }}
+                >
+                  {fmtEUR(totalValue)}
+                  <span style={{ color: "var(--gold)" }}>.</span>
+                </p>
+                <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
+                  <span
+                    className="tabular-nums font-medium"
+                    style={{ color: totalReturn >= 0 ? "var(--success)" : "var(--danger)" }}
+                  >
+                    {totalReturn >= 0 ? "+" : ""}
+                    {fmtEUR(totalReturn)} · {fmtPct(totalReturnPct)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">Rendimiento total</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
         {summary.hasUnavailable && (
@@ -494,7 +510,12 @@ function HomeScreen({
                     </p>
                   </div>
                   <div className="text-right">
-                    {unavail ? (
+                    {pricesLoading ? (
+                      <div className="space-y-1">
+                        <div className="h-4 w-16 rounded animate-pulse bg-black/10 ml-auto" />
+                        <div className="h-3 w-10 rounded animate-pulse bg-black/10 ml-auto" />
+                      </div>
+                    ) : unavail ? (
                       <p className="text-xs font-medium flex items-center gap-1 justify-end" style={{ color: "var(--danger)" }}>
                         <AlertTriangle size={13} /> Precio no disponible
                       </p>
@@ -927,12 +948,14 @@ function BuyListScreen({
 function BuyScreen({
   ticker,
   price,
+  loading,
   cash,
   onBack,
   onConfirm,
 }: {
   ticker: string;
   price?: PriceData;
+  loading: boolean;
   cash: number;
   onBack: () => void;
   onConfirm: (qty: number, price: number) => void;
@@ -960,16 +983,22 @@ function BuyScreen({
 
       <section className="bg-card rounded-2xl p-5 shadow-soft">
         <p className="text-xs text-muted-foreground">{asset?.name}</p>
-        <p className="text-2xl font-semibold tabular-nums mt-1" style={{ color: "var(--navy)" }}>
-          {px > 0 ? fmtEUR(px) : "—"}
-        </p>
-        {price?.reference && (
-          <p className="text-xs mt-1 text-muted-foreground">Precio de referencia</p>
-        )}
-        {price?.stale && (
-          <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
-            ⚠ Precio desactualizado
-          </p>
+        {!price || loading ? (
+          <div className="h-8 w-32 rounded animate-pulse bg-black/10 mt-1" />
+        ) : (
+          <>
+            <p className="text-2xl font-semibold tabular-nums mt-1" style={{ color: "var(--navy)" }}>
+              {fmtEUR(px)}
+            </p>
+            {price.reference && (
+              <p className="text-xs mt-1 text-muted-foreground">Precio de referencia</p>
+            )}
+            {price.stale && (
+              <p className="text-xs mt-1" style={{ color: "var(--danger)" }}>
+                ⚠ Precio desactualizado
+              </p>
+            )}
+          </>
         )}
       </section>
 
