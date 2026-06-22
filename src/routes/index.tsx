@@ -7,6 +7,7 @@ import { useApp } from "@/lib/app-context";
 import { investors, globalUsers, trendingStocks } from "@/lib/data";
 import { usePortfolioSummary } from "@/lib/portfolio";
 import { createCheckoutSession } from "@/lib/stripe.functions";
+import { WeeklyReport } from "@/components/WeeklyReport";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/")({
 const fmt = (n: number) => n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function HomePage() {
-  const { fullName, username, profile, friendCodes } = useApp();
+  const { fullName, username, profile, friendCodes, isPremium } = useApp();
   const summary = usePortfolioSummary();
 
   const displayName = (profile?.display_name?.trim() || fullName?.trim() || username || "").trim();
@@ -68,8 +69,9 @@ function HomePage() {
         </div>
       </section>
 
+      <WeeklyReport isPremium={isPremium} />
 
-      {/* Trending stocks */}
+
       <section>
         <div className="mb-3">
           <h2 className="text-lg font-semibold" style={{ color: "var(--navy)" }}>Lo más comprado</h2>
