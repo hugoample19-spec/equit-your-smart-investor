@@ -330,9 +330,18 @@ function PerfilPage() {
           <p className="text-[11px] mb-3" style={{ color: "var(--muted-foreground)" }}>Introduce los 8 dígitos</p>
         )}
 
-        {cleaned.length === 8 && !found && (
+        {cleaned.length === 8 && cleaned === friendCode && (
+          <p className="text-[11px] mb-3" style={{ color: "var(--muted-foreground)" }}>Ese es tu propio código</p>
+        )}
+
+        {cleaned.length === 8 && cleaned !== friendCode && searching && (
+          <p className="text-[11px] mb-3" style={{ color: "var(--muted-foreground)" }}>Buscando…</p>
+        )}
+
+        {cleaned.length === 8 && cleaned !== friendCode && !searching && !found && (
           <p className="text-[11px] mb-3" style={{ color: "var(--danger)" }}>Código no encontrado</p>
         )}
+
 
         {found && (
           <div className="flex items-center gap-3 p-3 rounded-2xl mb-3" style={{ background: "var(--muted)" }}>
