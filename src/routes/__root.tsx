@@ -37,6 +37,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+import { CONTENT_SECURITY_POLICY } from "../lib/csp";
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -45,6 +47,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Equit · Invierte como los grandes" },
       { name: "description", content: "Equit: plataforma de inversión social para jóvenes en España. Sigue a los grandes inversores, genera carteras con IA y mejora tus finanzas." },
       { name: "theme-color", content: "#FAF8F5" },
+      { httpEquiv: "Content-Security-Policy", content: CONTENT_SECURITY_POLICY },
       { property: "og:title", content: "Equit · Invierte como los grandes" },
       { property: "og:description", content: "Sigue a los grandes inversores y genera carteras con IA." },
       { property: "og:type", content: "website" },
