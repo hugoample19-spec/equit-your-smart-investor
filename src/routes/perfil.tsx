@@ -30,12 +30,27 @@ function PerfilPage() {
   } = useApp();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  const checkout = useServerFn(createCheckoutSession);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(fullName);
   const [nameError, setNameError] = useState<string | null>(null);
   const [avatarMenu, setAvatarMenu] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const { url } = await checkout();
+      if (!url) throw new Error("No checkout URL");
+      window.location.href = url;
+    } catch (err) {
+      console.error("[perfil] checkout failed:", err);
+      toast.error("Error al procesar el pago. Inténtalo de nuevo.");
+      setCheckoutLoading(false);
+    }
+  };
 
   useEffect(() => { setNameDraft(fullName); }, [fullName]);
 
