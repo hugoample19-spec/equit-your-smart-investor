@@ -142,6 +142,32 @@ async function translateToSpanish(text: string): Promise<string> {
 }
 
 
+const KNOWN_SOURCES: Array<{ match: RegExp; label: string }> = [
+  { match: /reuters\./i, label: "Reuters" },
+  { match: /cnbc\./i, label: "CNBC" },
+  { match: /bloomberg\./i, label: "Bloomberg" },
+  { match: /ft\.com/i, label: "FT" },
+  { match: /wsj\.com/i, label: "WSJ" },
+  { match: /nytimes\./i, label: "NY Times" },
+  { match: /marketwatch\./i, label: "MarketWatch" },
+  { match: /seekingalpha\./i, label: "Seeking Alpha" },
+];
+
+function displaySource(item: NewsItem): string {
+  const raw = (item.source || "").trim();
+  const isGeneric = !raw || /^finnhub$/i.test(raw);
+  if (!isGeneric) return raw;
+  try {
+    const host = new URL(item.url).hostname.toLowerCase().replace(/^www\./, "");
+    for (const { match, label } of KNOWN_SOURCES) {
+      if (match.test(host)) return label;
+    }
+    return host || raw;
+  } catch {
+    return raw;
+  }
+}
+
 type DisplayNews = NewsItem & { displayTitle: string; displaySummary: string };
 
 function NoticiasPage() {
