@@ -158,7 +158,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [friendCode, setFriendCode] = useState<string>("00000000");
   const [favoriteReferenteId, setFavoriteState] = useState<string | null>(null);
   const [isPortfolioPublic, setPortfolioPublicState] = useState(true);
-  const [friendCodes, setFriendCodes] = useState<string[]>([]);
+  
   const [chats, setChats] = useState<Record<string, ChatMessage[]>>({});
   const [streak, setStreak] = useState<{ current: number; longest: number; lastReadDate: string | null }>({ current: 0, longest: 0, lastReadDate: null });
   const [streakReady, setStreakReady] = useState(false);
