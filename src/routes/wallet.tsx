@@ -374,6 +374,7 @@ function SetupScreen({ onPick }: { onPick: (n: number) => void }) {
 function HomeScreen({
   state,
   prices,
+  pricesSuccess,
   onBuy,
   onReset,
   onOpenAsset,
@@ -382,6 +383,7 @@ function HomeScreen({
 }: {
   state: ReturnType<typeof useWallet>["state"];
   prices: Record<string, PriceData>;
+  pricesSuccess: boolean;
   onBuy: () => void;
   onReset: () => void;
   onOpenAsset: (t: string) => void;
