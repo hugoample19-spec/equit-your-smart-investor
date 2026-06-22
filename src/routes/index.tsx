@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
 const fmt = (n: number) => n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function HomePage() {
-  const { fullName, username, profile, friendCodes } = useApp();
+  const { fullName, username, profile, friendCodes, isPremium } = useApp();
   const summary = usePortfolioSummary();
 
   const displayName = (profile?.display_name?.trim() || fullName?.trim() || username || "").trim();
