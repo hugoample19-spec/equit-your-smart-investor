@@ -1,7 +1,23 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  addFriend as addFriendFn,
+  removeFriend as removeFriendFn,
+  getFriendsLeaderboard,
+} from "@/lib/friends.functions";
+
+export type FriendLeaderRow = {
+  code: string;
+  name: string;
+  perf: number | null;
+  totalValue: number | null;
+  isPublic: boolean;
+};
+
 
 export type Holding = {
   ticker: string;
