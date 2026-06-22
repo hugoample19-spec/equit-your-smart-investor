@@ -284,6 +284,7 @@ function WalletPage() {
       <HomeScreen
         state={state}
         prices={prices}
+        pricesSuccess={pricesQuery.isSuccess}
         onBuy={() => setScreen({ kind: "buyList" })}
         onReset={reset}
         onOpenAsset={(t) => setScreen({ kind: "detail", ticker: t })}
