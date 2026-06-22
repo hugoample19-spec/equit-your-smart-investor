@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bell, Camera, Check, LogOut, Search, Star, X, Zap } from "lucide-react";
 import { useApp, madridDateISO } from "@/lib/app-context";
 import { investors, globalUsers, findUserByCode } from "@/lib/data";
+import { InvestorLogo } from "@/components/InvestorLogo";
 import { useServerFn } from "@tanstack/react-start";
 import { getNotificationPrefs, updateNotificationPrefs } from "@/lib/notifications.functions";
 import { toast } from "sonner";
@@ -102,7 +103,7 @@ function PerfilPage() {
             style={{ background: "var(--cream)", borderColor: "var(--cream)" }}
           >
             {favRef ? (
-              <img src={favRef.photo} alt={favRef.name} className="w-full h-full object-cover" />
+              <InvestorLogo src={favRef.photo} name={favRef.name} />
             ) : (
               <Star size={14} color="var(--gold)" />
             )}
