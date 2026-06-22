@@ -193,16 +193,33 @@ function LeaderboardList({ rows }: { rows: typeof globalUsers }) {
 }
 
 export function PremiumBanner() {
-  const { isPremium, setIsPremium } = useApp();
+  const { isPremium } = useApp();
+  const checkout = useServerFn(createCheckoutSession);
+  const [loading, setLoading] = useState(false);
+
   if (isPremium) return null;
+
+  const handleCheckout = async () => {
+    setLoading(true);
+    try {
+      const { url } = await checkout();
+      if (!url) throw new Error("No checkout URL");
+      window.location.href = url;
+    } catch (err) {
+      console.error("[home] checkout failed:", err);
+      toast.error("Error al procesar el pago. Inténtalo de nuevo.");
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="rounded-2xl p-4 flex items-center justify-between" style={{ background: "var(--navy)", color: "var(--cream)" }}>
       <div>
         <p className="text-[10px] tracking-widest font-medium" style={{ color: "var(--gold)" }}>EQUIT PREMIUM</p>
         <p className="text-sm font-semibold mt-0.5">€3,99/mes · todos los referentes</p>
       </div>
-      <button onClick={() => setIsPremium(true)} className="px-4 py-1.5 rounded-full border text-xs font-medium" style={{ borderColor: "rgba(250,248,245,0.3)" }}>
-        Probar
+      <button onClick={handleCheckout} disabled={loading} className="px-4 py-1.5 rounded-full border text-xs font-medium disabled:opacity-70" style={{ borderColor: "rgba(250,248,245,0.3)" }}>
+        {loading ? "Procesando…" : "Probar"}
       </button>
     </div>
   );
