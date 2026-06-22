@@ -2,13 +2,15 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Bell, Camera, Check, LogOut, Search, Star, X, Zap } from "lucide-react";
 import { useApp, madridDateISO } from "@/lib/app-context";
-import { investors, globalUsers, findUserByCode } from "@/lib/data";
+import { investors } from "@/lib/data";
+import { supabase } from "@/integrations/supabase/client";
 import { InvestorLogo } from "@/components/InvestorLogo";
 import { useServerFn } from "@tanstack/react-start";
 import { getNotificationPrefs, updateNotificationPrefs } from "@/lib/notifications.functions";
 import { createCheckoutSession, createPortalSession } from "@/lib/stripe.functions";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+
 
 
 
