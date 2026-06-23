@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { validateDisplayName } from "@/lib/profile.functions";
@@ -120,87 +121,133 @@ function AuthPage() {
     }
   };
 
+  const pillStyle = { borderColor: "rgba(139,69,19,0.3)", color: "#8B4513" };
+  const navy = "var(--navy)";
+  const cream = "var(--cream)";
+
   return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center px-2">
-      <div className="w-full">
-        <h1 className="text-[28px] font-semibold tracking-tight text-center" style={{ color: "var(--navy)", letterSpacing: "-0.02em" }}>
-          Bienvenido a Equit
-        </h1>
-        <p className="mt-2 text-sm text-center" style={{ color: "var(--muted-foreground)" }}>
-          Invierte como los grandes. Empieza en segundos.
-        </p>
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--cream)" }}>
+      <div className="flex-[1.25] flex flex-col items-center justify-center px-6 pt-8 pb-6">
+        <img src="/logo.png" alt="Equit" className="w-48 h-48 object-contain mx-auto mt-8" />
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <span className="border rounded-full px-3 py-1 text-[11px] font-medium" style={pillStyle}>
+            Invierte sin riesgo real
+          </span>
+          <span className="border rounded-full px-3 py-1 text-[11px] font-medium" style={pillStyle}>
+            Compite con amigos
+          </span>
+          <span className="border rounded-full px-3 py-1 text-[11px] font-medium" style={pillStyle}>
+            Aprende de los grandes
+          </span>
+        </div>
+      </div>
 
-        <div className="mt-8 space-y-3">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onGoogle}
-            className="w-full h-12 rounded-2xl flex items-center justify-center gap-3 bg-white border shadow-card text-[15px] font-medium disabled:opacity-60"
-            style={{ borderColor: "var(--border)", color: "var(--navy)" }}
-          >
-            <GoogleIcon />
-            Continuar con Google
-          </button>
-
-          {!showEmail ? (
+      <div
+        className="w-full rounded-t-3xl shadow-lg px-6 pt-6 pb-8"
+        style={{ background: "#fff" }}
+      >
+        {!showEmail ? (
+          <div className="space-y-3">
             <button
               type="button"
-              onClick={() => setShowEmail(true)}
-              className="w-full text-xs underline mt-3"
-              style={{ color: "var(--muted-foreground)" }}
+              disabled={busy}
+              onClick={onGoogle}
+              className="h-[52px] w-full rounded-2xl flex items-center justify-center gap-3 bg-white border-2 text-[15px] font-semibold shadow-card disabled:opacity-60"
+              style={{ borderColor: navy, color: navy }}
             >
-              o usar email y contraseña
+              <GoogleIcon />
+              Continuar con Google
             </button>
-          ) : (
-            <form onSubmit={onEmail} className="space-y-2 pt-2">
-              {mode === "signup" && (
-                <input
-                  type="text" required placeholder="Tu nombre en Equit" maxLength={20}
-                  value={displayName} onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
-                  style={{ borderColor: "var(--border)" }}
-                />
-              )}
-              <input
-                type="email" required placeholder="email"
-                value={email} onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
-                style={{ borderColor: "var(--border)" }}
-              />
-              <input
-                type="password" required placeholder="contraseña" minLength={6}
-                value={password} onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
-                style={{ borderColor: "var(--border)" }}
-              />
-              {mode === "signup" && (
-                <input
-                  type="password" required placeholder="Confirma tu contraseña" minLength={6}
-                  value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
-                  style={{ borderColor: "var(--border)" }}
-                />
-              )}
-              <button
-                type="submit" disabled={busy}
-                className="w-full h-11 rounded-xl text-sm font-medium disabled:opacity-60"
-                style={{ background: "var(--navy)", color: "var(--cream)" }}
-              >
-                {mode === "signup" ? "Crear cuenta" : "Iniciar sesión"}
-              </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signup");
+                setShowEmail(true);
+              }}
+              className="h-12 w-full rounded-2xl text-[15px] font-semibold"
+              style={{ background: navy, color: cream }}
+            >
+              Crear una cuenta
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signin");
+                setShowEmail(true);
+              }}
+              className="h-12 w-full rounded-2xl border text-[15px] font-medium bg-transparent"
+              style={{ borderColor: navy, color: navy }}
+            >
+              Iniciar sesión
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={onEmail} className="space-y-3">
+            <div className="flex items-center justify-between mb-2">
               <button
                 type="button"
-                onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-                className="w-full text-xs"
-                style={{ color: "var(--muted-foreground)" }}
+                onClick={() => setShowEmail(false)}
+                className="p-2 -ml-2 rounded-full"
+                style={{ color: navy }}
+                aria-label="Volver"
               >
-                {mode === "signup" ? "¿Ya tienes cuenta? Inicia sesión" : "¿Nuevo en Equit? Crea una cuenta"}
+                <ChevronLeft size={22} />
               </button>
-            </form>
-          )}
-        </div>
+              <h2 className="text-[17px] font-semibold" style={{ color: navy }}>
+                {mode === "signup" ? "Crear cuenta" : "Iniciar sesión"}
+              </h2>
+              <div className="w-6" />
+            </div>
 
-        <p className="mt-8 text-[11px] text-center" style={{ color: "var(--muted-foreground)" }}>
+            {mode === "signup" && (
+              <input
+                type="text" required placeholder="Tu nombre en Equit" maxLength={20}
+                value={displayName} onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
+                style={{ borderColor: "var(--border)" }}
+              />
+            )}
+            <input
+              type="email" required placeholder="email"
+              value={email} onChange={(e) => setEmail(e.target.value)}
+              className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
+              style={{ borderColor: "var(--border)" }}
+            />
+            <input
+              type="password" required placeholder="contraseña" minLength={6}
+              value={password} onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
+              style={{ borderColor: "var(--border)" }}
+            />
+            {mode === "signup" && (
+              <input
+                type="password" required placeholder="Confirma tu contraseña" minLength={6}
+                value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
+                style={{ borderColor: "var(--border)" }}
+              />
+            )}
+            <button
+              type="submit" disabled={busy}
+              className="w-full h-12 rounded-2xl text-[15px] font-semibold disabled:opacity-60"
+              style={{ background: navy, color: cream }}
+            >
+              {mode === "signup" ? "Crear cuenta" : "Iniciar sesión"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
+              className="w-full text-xs"
+              style={{ color: "var(--muted-foreground)" }}
+            >
+              {mode === "signup" ? "¿Ya tienes cuenta? Inicia sesión" : "¿Nuevo en Equit? Crea una cuenta"}
+            </button>
+          </form>
+        )}
+
+        <p className="mt-6 text-[11px] text-center" style={{ color: "var(--muted-foreground)" }}>
           Al continuar aceptas los términos y la política de privacidad de Equit.
         </p>
       </div>
