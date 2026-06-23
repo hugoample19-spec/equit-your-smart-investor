@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, MessageCircle, Star, UserPlus, Lock } from "lucide-react";
-import { findUserByCode, investors } from "@/lib/data";
+import { ArrowLeft, MessageCircle, UserPlus, Lock } from "lucide-react";
+import { findUserByCode } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
 
 export const Route = createFileRoute("/u/$code")({
