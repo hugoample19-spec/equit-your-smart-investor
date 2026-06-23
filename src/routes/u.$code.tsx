@@ -38,9 +38,6 @@ function PublicProfile() {
       <div className="flex flex-col items-center pt-2">
         <div className="relative w-24 h-24 rounded-full overflow-hidden flex items-center justify-center shadow-card" style={{ background: "var(--navy)" }}>
           <span className="text-2xl font-semibold" style={{ color: "var(--cream)" }}>{initials}</span>
-          <span className="absolute -top-1 -right-1 w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border-2" style={{ background: "var(--cream)", borderColor: "var(--cream)" }}>
-            {favRef ? <img src={favRef.photo} alt={favRef.name} className="w-full h-full object-cover" /> : <Star size={14} color="var(--gold)" />}
-          </span>
         </div>
         <h1 className="mt-3 text-xl font-semibold" style={{ color: "var(--navy)" }}>{user.name}</h1>
         <p className="text-[10px] tracking-wider mt-1" style={{ color: "var(--muted-foreground)" }}>{user.strategy}</p>
