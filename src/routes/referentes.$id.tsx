@@ -97,7 +97,7 @@ function InvestorDetail() {
       </div>
 
       <div className="rounded-3xl overflow-hidden relative aspect-[4/5] shadow-card">
-        <InvestorLogo src={investor.photo} name={investor.name} />
+        <InvestorLogo bgColor={investor.color} name={investor.name} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(26,26,46,0) 40%, rgba(26,26,46,0.9) 100%)" }} />
         <div className="absolute bottom-0 left-0 right-0 p-5 text-left">
           <p className="text-[10px] uppercase tracking-widest" style={{ color: "var(--gold)" }}>{investor.fund}</p>

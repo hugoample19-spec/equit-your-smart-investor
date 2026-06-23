@@ -190,7 +190,7 @@ function PerfilPage() {
             style={{ background: "var(--cream)", borderColor: "var(--cream)" }}
           >
             {favRef ? (
-              <InvestorLogo src={favRef.photo} name={favRef.name} />
+              <InvestorLogo bgColor={favRef.color} name={favRef.name} />
             ) : (
               <Star size={14} color="var(--gold)" />
             )}

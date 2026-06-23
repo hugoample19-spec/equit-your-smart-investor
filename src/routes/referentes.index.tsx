@@ -66,7 +66,7 @@ function ReferentesPage() {
                 >
                   <div className="aspect-[3/4] relative" style={{ background: "var(--navy)" }}>
                     <div className="absolute inset-0" style={{ filter: "blur(10px)" }}>
-                      <InvestorLogo src={i.photo} name={i.name} />
+                      <InvestorLogo bgColor={i.color} name={i.name} />
                     </div>
                     <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(26,26,46,0) 35%, rgba(26,26,46,0.85) 100%)" }} />
                     <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(26,26,46,0.35)" }}>
@@ -85,7 +85,7 @@ function ReferentesPage() {
               ) : (
                 <Link to="/referentes/$id" params={{ id: i.id }}>
                   <div className="aspect-[3/4] relative" style={{ background: "var(--navy)" }}>
-                    <InvestorLogo src={i.photo} name={i.name} />
+                    <InvestorLogo bgColor={i.color} name={i.name} />
                     <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(26,26,46,0) 35%, rgba(26,26,46,0.85) 100%)" }} />
                     <div className="absolute bottom-0 left-0 right-0 p-3 text-left z-10">
                       <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--gold)" }}>{i.fund}</p>

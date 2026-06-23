@@ -10,6 +10,7 @@ import { usePortfolioSummary } from "@/lib/portfolio";
 import { createCheckoutSession } from "@/lib/stripe.functions";
 import { getGlobalLeaderboard } from "@/lib/friends.functions";
 import { WeeklyReport } from "@/components/WeeklyReport";
+import { InvestorLogo } from "@/components/InvestorLogo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -43,10 +44,26 @@ function HomePage() {
     staleTime: 60_000,
   });
   const global: LeaderRow[] = globalQuery.data ?? [];
-  const myFriends: LeaderRow[] = friendsLeaderboard;
 
   const displayName = (profile?.display_name?.trim() || fullName?.trim() || username || "").trim();
   const firstName = displayName.split(" ")[0] || displayName;
+
+  const meRow: LeaderRow = {
+    code: friendCode,
+    name: displayName || "Tú",
+    perf: summary.hasWallet ? summary.totalReturnPct : null,
+    totalValue: summary.hasWallet ? summary.totalValue : null,
+    isPublic: true,
+    isMe: true,
+  };
+  const myFriends: LeaderRow[] = [
+    meRow,
+    ...friendsLeaderboard.filter((f) => f.code !== friendCode),
+  ].sort((a, b) => {
+    const pa = a.perf ?? -Infinity;
+    const pb = b.perf ?? -Infinity;
+    return pb - pa;
+  });
 
 
   const eur = summary.totalValue.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -143,7 +160,7 @@ function HomePage() {
               className="snap-start min-w-[150px] w-[150px] rounded-2xl bg-card shadow-soft p-3 relative"
             >
               <div className="aspect-square w-full rounded-xl overflow-hidden mb-2 relative" style={{ background: "var(--muted)" }}>
-                <img src={i.photo} alt={i.name} className="w-full h-full object-cover" />
+                <InvestorLogo bgColor={i.color} name={i.name} />
                 {i.locked && (
                   <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm" style={{ background: "rgba(26,26,46,0.45)" }}>
                     <Lock size={18} color="var(--gold)" />
@@ -164,12 +181,11 @@ function HomePage() {
           <Users size={18} style={{ color: "var(--navy)" }} />
           <h2 className="font-semibold" style={{ color: "var(--navy)" }}>Mis amigos</h2>
         </div>
-        {myFriends.length === 0 ? (
-          <p className="text-xs text-center py-4" style={{ color: "var(--muted-foreground)" }}>
-            Aún no tienes amigos en Equit. Comparte tu código #{friendCode} para empezar.
+        <LeaderboardList rows={myFriends} />
+        {myFriends.length <= 1 && (
+          <p className="mt-3 text-xs text-center" style={{ color: "var(--muted-foreground)" }}>
+            Comparte tu código #{friendCode} para añadir amigos
           </p>
-        ) : (
-          <LeaderboardList rows={myFriends} />
         )}
       </section>
 
