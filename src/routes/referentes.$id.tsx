@@ -47,10 +47,9 @@ export const Route = createFileRoute("/referentes/$id")({
 function InvestorDetail() {
   const data = Route.useLoaderData() as { investor: typeof investors[number] };
   const investor = data.investor;
-  const { isPremium, setPendingCopy, favoriteReferenteId, setFavoriteReferente } = useApp();
+  const { isPremium, setPendingCopy } = useApp();
   const navigate = useNavigate();
   const locked = investor.locked && !isPremium;
-  const isFav = favoriteReferenteId === investor.id;
   const [showPremium, setShowPremium] = useState(locked);
 
   useEffect(() => {
