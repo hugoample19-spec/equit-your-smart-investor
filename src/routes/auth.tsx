@@ -2,7 +2,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { validateDisplayName } from "@/lib/profile.functions";
 import { toast } from "sonner";
+
+const DISPLAY_NAME_RE = /^[a-zA-ZÀ-ÿ0-9 _.\-]+$/;
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -30,6 +33,8 @@ function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
 
@@ -60,16 +65,48 @@ function AuthPage() {
 
   const onEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup") {
+      const name = displayName.trim();
+      if (name.length < 2) {
+        toast.error("El nombre debe tener al menos 2 caracteres");
+        return;
+      }
+      if (!DISPLAY_NAME_RE.test(name)) {
+        toast.error("El nombre contiene caracteres no permitidos");
+        return;
+      }
+      if (password.length < 6) {
+        toast.error("La contraseña debe tener al menos 6 caracteres");
+        return;
+      }
+      if (password !== confirmPassword) {
+        toast.error("Las contraseñas no coinciden");
+        return;
+      }
+    }
     setBusy(true);
     try {
       if (mode === "signup") {
+        const name = displayName.trim();
+        const check = await validateDisplayName({ data: { name } });
+        if (!check.ok) {
+          if (check.reason === "taken") toast.error("Ese nombre ya está en uso. Elige otro.");
+          else if (check.reason === "profanity") toast.error("Ese nombre no está permitido.");
+          else toast.error("Nombre no válido");
+          setBusy(false);
+          return;
+        }
+        // Email confirmation disabled during beta — re-enable before public launch
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: { display_name: name },
+          },
         });
         if (error) throw error;
-        toast.success("Cuenta creada correctamente. Revisa tu correo electrónico para confirmar tu cuenta antes de iniciar sesión.");
+        toast.success("Cuenta creada. ¡Bienvenido a Equit!");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -116,6 +153,14 @@ function AuthPage() {
             </button>
           ) : (
             <form onSubmit={onEmail} className="space-y-2 pt-2">
+              {mode === "signup" && (
+                <input
+                  type="text" required placeholder="Tu nombre en Equit" maxLength={20}
+                  value={displayName} onChange={(e) => setDisplayName(e.target.value)}
+                  className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
+                  style={{ borderColor: "var(--border)" }}
+                />
+              )}
               <input
                 type="email" required placeholder="email"
                 value={email} onChange={(e) => setEmail(e.target.value)}
@@ -128,6 +173,14 @@ function AuthPage() {
                 className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
                 style={{ borderColor: "var(--border)" }}
               />
+              {mode === "signup" && (
+                <input
+                  type="password" required placeholder="Confirma tu contraseña" minLength={6}
+                  value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
+                  style={{ borderColor: "var(--border)" }}
+                />
+              )}
               <button
                 type="submit" disabled={busy}
                 className="w-full h-11 rounded-xl text-sm font-medium disabled:opacity-60"

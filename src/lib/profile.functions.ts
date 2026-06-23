@@ -1,6 +1,34 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
 import { z } from "zod";
+
+export const validateDisplayName = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ name: z.string().min(1).max(40) }).parse(d))
+  .handler(async ({ data }) => {
+    const name = data.name.trim();
+    // Profanity check
+    const { Filter } = await import("bad-words");
+    try {
+      if (new Filter().isProfane(name)) {
+        return { ok: false as const, reason: "profanity" as const };
+      }
+    } catch {
+      // ignore filter errors
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabase = supabaseAdmin;
+    const { data: existing, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .ilike("display_name", name)
+      .limit(1);
+    if (error) throw error;
+    if (existing && existing.length > 0) {
+      return { ok: false as const, reason: "taken" as const };
+    }
+    return { ok: true as const };
+  });
 
 export const getMyProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
