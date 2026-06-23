@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
 import { useEffect, useState, type ComponentType } from "react";
 import {
-  ArrowLeft, Star, ArrowUpRight, ArrowDownRight,
+  ArrowLeft, ArrowUpRight, ArrowDownRight,
   Cpu, Zap, HeartPulse, Landmark, ShoppingBag, Bitcoin, Building2,
   Globe2, Factory, TrendingUp,
 } from "lucide-react";
