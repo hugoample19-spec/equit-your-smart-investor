@@ -129,7 +129,6 @@ function AuthPage() {
     <div className="min-h-screen flex flex-col" style={{ background: "var(--cream)" }}>
       <div className="flex-1 flex flex-col items-center justify-center px-6 pt-8 pb-6">
         <img src="/logo.png" alt="Equit" className="w-48 h-48 object-contain mx-auto mt-8" />
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           <span className="border rounded-full px-3 py-1 text-[11px] font-medium" style={pillStyle}>
             Invierte sin riesgo real
           </span>
@@ -139,7 +138,6 @@ function AuthPage() {
           <span className="border rounded-full px-3 py-1 text-[11px] font-medium" style={pillStyle}>
             Aprende de los grandes
           </span>
-        </div>
       </div>
 
       <div
