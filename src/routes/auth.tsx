@@ -153,6 +153,14 @@ function AuthPage() {
             </button>
           ) : (
             <form onSubmit={onEmail} className="space-y-2 pt-2">
+              {mode === "signup" && (
+                <input
+                  type="text" required placeholder="Tu nombre en Equit" maxLength={20}
+                  value={displayName} onChange={(e) => setDisplayName(e.target.value)}
+                  className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
+                  style={{ borderColor: "var(--border)" }}
+                />
+              )}
               <input
                 type="email" required placeholder="email"
                 value={email} onChange={(e) => setEmail(e.target.value)}
@@ -165,6 +173,14 @@ function AuthPage() {
                 className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
                 style={{ borderColor: "var(--border)" }}
               />
+              {mode === "signup" && (
+                <input
+                  type="password" required placeholder="Confirma tu contraseña" minLength={6}
+                  value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full h-11 rounded-xl px-4 border bg-white text-sm"
+                  style={{ borderColor: "var(--border)" }}
+                />
+              )}
               <button
                 type="submit" disabled={busy}
                 className="w-full h-11 rounded-xl text-sm font-medium disabled:opacity-60"
