@@ -150,6 +150,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [username, setUsername] = useState("alexmtz");
   const [fullName, setFullName] = useState("Alejandro Martínez");
+  const [nameChangedAt, setNameChangedAt] = useState<string | null>(null);
   const [avatar, setAvatarState] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [budget, setBudget] = useState(5000);
