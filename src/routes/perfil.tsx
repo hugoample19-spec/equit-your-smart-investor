@@ -1,15 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Bell, Camera, Check, LogOut, Search, Star, X, Zap } from "lucide-react";
+import { Bell, Camera, Check, LogOut, Search, Sparkles, Star, X, Zap } from "lucide-react";
 import { useApp, madridDateISO } from "@/lib/app-context";
 import { investors } from "@/lib/data";
 import { supabase } from "@/integrations/supabase/client";
 import { InvestorLogo } from "@/components/InvestorLogo";
+import { PremiumModal } from "@/components/PremiumModal";
 import { useServerFn } from "@tanstack/react-start";
 import { getNotificationPrefs, updateNotificationPrefs } from "@/lib/notifications.functions";
-import { createCheckoutSession, createPortalSession } from "@/lib/stripe.functions";
+import { createPortalSession } from "@/lib/stripe.functions";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+
 
 
 
@@ -34,9 +35,7 @@ function PerfilPage() {
   } = useApp();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
-  const checkout = useServerFn(createCheckoutSession);
   const portal = useServerFn(createPortalSession);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [editingName, setEditingName] = useState(false);
@@ -44,19 +43,8 @@ function PerfilPage() {
   const [nameError, setNameError] = useState<string | null>(null);
   const [avatarMenu, setAvatarMenu] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [premiumModalOpen, setPremiumModalOpen] = useState(false);
 
-  const handleCheckout = async () => {
-    setCheckoutLoading(true);
-    try {
-      const { url } = await checkout();
-      if (!url) throw new Error("No checkout URL");
-      window.location.href = url;
-    } catch (err) {
-      console.error("[perfil] checkout failed:", err);
-      toast.error("Error al procesar el pago. Inténtalo de nuevo.");
-      setCheckoutLoading(false);
-    }
-  };
 
   const handlePortal = async () => {
     setPortalLoading(true);
@@ -404,37 +392,33 @@ function PerfilPage() {
 
 
       {/* Plan */}
-      <section className="bg-card rounded-2xl p-5 shadow-soft">
-        <p className="text-[10px] tracking-widest" style={{ color: "var(--muted-foreground)" }}>PLAN</p>
-        <p className="text-lg font-semibold mt-1" style={{ color: isPremium ? "var(--gold)" : "var(--navy)" }}>
-          {isPremium ? "Equit Premium" : "Plan Free"}
-        </p>
-        {isPremium ? (
-          <>
+      <section className="bg-card rounded-2xl p-4 shadow-soft">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] tracking-widest" style={{ color: "var(--muted-foreground)" }}>PLAN</p>
+            <p className="text-base font-semibold mt-0.5" style={{ color: isPremium ? "var(--gold)" : "var(--navy)" }}>
+              {isPremium ? "Equit Premium" : "Free"}
+            </p>
+          </div>
+          {isPremium ? (
             <button
               onClick={handlePortal}
               disabled={portalLoading}
-              className="mt-4 w-full px-4 py-2.5 rounded-full text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-70"
-              style={{ background: "var(--navy)", color: "var(--cream)" }}
+              className="text-sm font-medium disabled:opacity-70"
+              style={{ color: "var(--muted-foreground)" }}
             >
-              {portalLoading && <Loader2 size={14} className="animate-spin" />}
-              {portalLoading ? "Abriendo…" : "Gestionar suscripción"}
+              Gestionar →
             </button>
-            <p className="text-[11px] mt-2 text-center" style={{ color: "var(--muted-foreground)" }}>
-              Cancela cuando quieras. Tu acceso Premium se mantiene hasta el fin del período.
-            </p>
-          </>
-        ) : (
-          <button
-            onClick={handleCheckout}
-            disabled={checkoutLoading}
-            className="mt-4 w-full px-4 py-2.5 rounded-full text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-70"
-            style={{ background: "var(--gold)", color: "var(--navy)" }}
-          >
-            {checkoutLoading && <Loader2 size={14} className="animate-spin" />}
-            {checkoutLoading ? "Procesando…" : "Activar Premium — 3,99€/mes"}
-          </button>
-        )}
+          ) : (
+            <button
+              onClick={() => setPremiumModalOpen(true)}
+              className="px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 border"
+              style={{ color: "var(--gold)", borderColor: "color-mix(in srgb, var(--gold) 40%, transparent)" }}
+            >
+              Premium <Sparkles size={12} />
+            </button>
+          )}
+        </div>
       </section>
 
       <NotificationSettings />
@@ -501,6 +485,9 @@ function PerfilPage() {
             </div>
           </div>
         </div>
+      )}
+      {premiumModalOpen && (
+        <PremiumModal onClose={() => setPremiumModalOpen(false)} />
       )}
     </div>
   );
