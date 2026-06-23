@@ -204,7 +204,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (data.friend_code) setFriendCode(data.friend_code);
     if (data.starting_balance) setBudget(Number(data.starting_balance));
     setPortfolioPublicState(data.is_portfolio_public);
-    setFavoriteState(data.favorite_referente_id);
+    
     setIsPremium(!!(data as { is_premium?: boolean }).is_premium);
 
     // Rebuild streak from authoritative server-side news_reads log,
