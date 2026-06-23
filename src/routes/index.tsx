@@ -181,12 +181,11 @@ function HomePage() {
           <Users size={18} style={{ color: "var(--navy)" }} />
           <h2 className="font-semibold" style={{ color: "var(--navy)" }}>Mis amigos</h2>
         </div>
-        {myFriends.length === 0 ? (
-          <p className="text-xs text-center py-4" style={{ color: "var(--muted-foreground)" }}>
-            Aún no tienes amigos en Equit. Comparte tu código #{friendCode} para empezar.
+        <LeaderboardList rows={myFriends} />
+        {myFriends.length <= 1 && (
+          <p className="mt-3 text-xs text-center" style={{ color: "var(--muted-foreground)" }}>
+            Comparte tu código #{friendCode} para añadir amigos
           </p>
-        ) : (
-          <LeaderboardList rows={myFriends} />
         )}
       </section>
 
