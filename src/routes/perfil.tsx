@@ -25,7 +25,7 @@ export const Route = createFileRoute("/perfil")({
 
 function PerfilPage() {
   const {
-    fullName, setFullName, avatar, setAvatar, isPremium,
+    fullName, nameChangedAt, setFullName, avatar, setAvatar, isPremium,
     friendCode, isPortfolioPublic, setIsPortfolioPublic,
     friendsLeaderboard, addFriend, removeFriend, streak, streakReady,
 
