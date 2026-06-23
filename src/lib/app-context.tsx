@@ -63,6 +63,7 @@ export type Profile = {
   is_portfolio_public: boolean;
   favorite_referente_id: string | null;
   is_premium: boolean;
+  name_changed_at: string | null;
 };
 
 type AppState = {
