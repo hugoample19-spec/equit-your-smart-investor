@@ -152,7 +152,7 @@ function AuthPage() {
               type="button"
               disabled={busy}
               onClick={onGoogle}
-              className="h-13 w-full rounded-2xl flex items-center justify-center gap-3 bg-white border-2 text-[15px] font-semibold shadow-card disabled:opacity-60"
+              className="h-[52px] w-full rounded-2xl flex items-center justify-center gap-3 bg-white border-2 text-[15px] font-semibold shadow-card disabled:opacity-60"
               style={{ borderColor: navy, color: navy }}
             >
               <GoogleIcon />
