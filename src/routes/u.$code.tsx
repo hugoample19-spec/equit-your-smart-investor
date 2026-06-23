@@ -26,8 +26,6 @@ function PublicProfile() {
   const { user } = Route.useLoaderData() as { user: ReturnType<typeof findUserByCode> & object };
   const { friendsLeaderboard, addFriend } = useApp();
   const isFriend = friendsLeaderboard.some((f) => f.code === user.code);
-
-  const favRef = investors.find((i) => i.id === user.favoriteReferenteId);
   const initials = user.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("");
   const isPublic = user.isPublic;
 
