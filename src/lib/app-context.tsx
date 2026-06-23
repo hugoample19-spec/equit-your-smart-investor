@@ -424,7 +424,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{
       user, profile, isAuthenticated: !!user, authLoading, signOut, refreshProfile,
-      username, setUsername, fullName, setFullName: setFullNamePersist,
+      username, setUsername, fullName, nameChangedAt, setFullName: setFullNamePersist,
       avatar, setAvatar, isPremium, setIsPremium: setIsPremiumPersist,
       budget, setBudget, portfolio, setPortfolio,
       pendingCopy, setPendingCopy,
