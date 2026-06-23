@@ -1,10 +1,7 @@
-import { useState } from "react";
-
 type Props = {
-  src: string;
   name: string;
+  bgColor?: string;
   className?: string;
-  imgClassName?: string;
 };
 
 function initials(name: string) {
@@ -16,31 +13,29 @@ function initials(name: string) {
     .join("");
 }
 
-export function InvestorLogo({ src, name, className, imgClassName }: Props) {
-  const [failed, setFailed] = useState(false);
+export function InvestorLogo({ name, bgColor, className }: Props) {
   return (
     <div
-      className={
-        "w-full h-full flex items-center justify-center " + (className ?? "")
-      }
-      style={{ background: "var(--navy)" }}
+      className={"relative w-full h-full flex items-center justify-center overflow-hidden " + (className ?? "")}
+      style={{ background: bgColor ?? "var(--navy)" }}
     >
-      {failed || !src ? (
-        <span
-          className="text-3xl font-bold tracking-wide"
-          style={{ color: "var(--gold)" }}
-        >
-          {initials(name)}
-        </span>
-      ) : (
-        <img
-          src={src}
-          alt={name}
-          onError={() => setFailed(true)}
-          className={"max-w-[65%] max-h-[55%] object-contain " + (imgClassName ?? "")}
-          style={{ filter: "brightness(0) invert(1)" }}
-        />
-      )}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 70%)",
+        }}
+      />
+      <span
+        className="relative text-3xl font-bold tracking-wide"
+        style={{
+          color: "#ffffff",
+          textShadow: "0 1px 3px rgba(0,0,0,0.4)",
+        }}
+      >
+        {initials(name)}
+      </span>
     </div>
   );
 }

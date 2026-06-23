@@ -37,6 +37,7 @@ export type Investor = {
   fund: string;
   netWorth: string;
   photo: string;
+  color: string;
   locked: boolean;
   bio: string;
   holdings: Holding[];
