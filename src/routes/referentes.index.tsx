@@ -47,17 +47,9 @@ function ReferentesPage() {
       <div className="grid grid-cols-2 gap-3">
         {investors.map((i) => {
           const locked = i.locked && !isPremium;
-          const isFav = favoriteReferenteId === i.id;
           return (
             <div key={i.id} className="relative rounded-2xl overflow-hidden shadow-soft bg-card">
-              <button
-                aria-label={isFav ? "Quitar favorito" : "Marcar favorito"}
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFavoriteReferente(isFav ? null : i.id); }}
-                className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md"
-                style={{ background: "rgba(26,26,46,0.45)" }}
-              >
-                <Star size={16} fill={isFav ? "var(--gold)" : "none"} color="var(--gold)" strokeWidth={2} />
-              </button>
+
               {locked ? (
                 <button
                   type="button"
