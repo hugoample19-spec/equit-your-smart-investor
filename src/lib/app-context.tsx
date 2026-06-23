@@ -301,10 +301,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     } catch { /* allow offline */ }
     setFullName(trimmed);
+    const nowIso = new Date().toISOString();
     if (user) {
-      const { error } = await supabase.from("profiles").update({ display_name: trimmed }).eq("id", user.id);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: trimmed, name_changed_at: nowIso })
+        .eq("id", user.id);
       if (error) return { ok: false, error: "No se pudo guardar" };
     }
+    setNameChangedAt(nowIso);
     return { ok: true };
   };
 
