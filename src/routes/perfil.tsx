@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Bell, Camera, Check, LogOut, Search, Sparkles, Star, X, Zap } from "lucide-react";
+import { Bell, Camera, Check, LogOut, Search, Sparkles, X, Zap } from "lucide-react";
 import { useApp, madridDateISO } from "@/lib/app-context";
 import { investors } from "@/lib/data";
 import { supabase } from "@/integrations/supabase/client";
