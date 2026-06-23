@@ -171,7 +171,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let code = localStorage.getItem("equit_friend_code");
     if (!code) { code = genCode(); localStorage.setItem("equit_friend_code", code); }
     setFriendCode(code);
-    setFavoriteState(load<string | null>("equit_fav_ref", null));
     setPortfolioPublicState(load<boolean>("equit_portfolio_public", true));
     
     setChats(load<Record<string, ChatMessage[]>>("equit_chats", {}));
