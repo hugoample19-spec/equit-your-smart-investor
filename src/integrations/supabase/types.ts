@@ -249,6 +249,7 @@ export type Database = {
           id: string
           is_portfolio_public: boolean
           is_premium: boolean
+          name_changed_at: string | null
           onboarded: boolean
           starting_balance: number | null
           stripe_customer_id: string | null
@@ -265,6 +266,7 @@ export type Database = {
           id: string
           is_portfolio_public?: boolean
           is_premium?: boolean
+          name_changed_at?: string | null
           onboarded?: boolean
           starting_balance?: number | null
           stripe_customer_id?: string | null
@@ -281,6 +283,7 @@ export type Database = {
           id?: string
           is_portfolio_public?: boolean
           is_premium?: boolean
+          name_changed_at?: string | null
           onboarded?: boolean
           starting_balance?: number | null
           stripe_customer_id?: string | null

@@ -63,6 +63,7 @@ export type Profile = {
   is_portfolio_public: boolean;
   favorite_referente_id: string | null;
   is_premium: boolean;
+  name_changed_at: string | null;
 };
 
 type AppState = {
@@ -78,6 +79,7 @@ type AppState = {
   // Existing local state
   username: string;
   fullName: string;
+  nameChangedAt: string | null;
   setFullName: (s: string) => Promise<{ ok: boolean; error?: string }>;
   setUsername: (s: string) => void;
   avatar: string | null;
@@ -148,6 +150,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [username, setUsername] = useState("alexmtz");
   const [fullName, setFullName] = useState("Alejandro Martínez");
+  const [nameChangedAt, setNameChangedAt] = useState<string | null>(null);
   const [avatar, setAvatarState] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [budget, setBudget] = useState(5000);
@@ -206,6 +209,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPortfolioPublicState(data.is_portfolio_public);
     
     setIsPremium(!!(data as { is_premium?: boolean }).is_premium);
+    setNameChangedAt((data as { name_changed_at?: string | null }).name_changed_at ?? null);
 
     // Rebuild streak from authoritative server-side news_reads log,
     // using Europe/Madrid as the canonical calendar day.
@@ -297,10 +301,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     } catch { /* allow offline */ }
     setFullName(trimmed);
+    const nowIso = new Date().toISOString();
     if (user) {
-      const { error } = await supabase.from("profiles").update({ display_name: trimmed }).eq("id", user.id);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: trimmed, name_changed_at: nowIso })
+        .eq("id", user.id);
       if (error) return { ok: false, error: "No se pudo guardar" };
     }
+    setNameChangedAt(nowIso);
     return { ok: true };
   };
 
@@ -415,7 +424,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{
       user, profile, isAuthenticated: !!user, authLoading, signOut, refreshProfile,
-      username, setUsername, fullName, setFullName: setFullNamePersist,
+      username, setUsername, fullName, nameChangedAt, setFullName: setFullNamePersist,
       avatar, setAvatar, isPremium, setIsPremium: setIsPremiumPersist,
       budget, setBudget, portfolio, setPortfolio,
       pendingCopy, setPendingCopy,
