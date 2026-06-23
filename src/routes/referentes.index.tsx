@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Info, Lock, Star, X } from "lucide-react";
+import { Info, Lock, X } from "lucide-react";
 import { investors } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
 import { PremiumBanner } from "./index";
