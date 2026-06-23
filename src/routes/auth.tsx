@@ -65,16 +65,48 @@ function AuthPage() {
 
   const onEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup") {
+      const name = displayName.trim();
+      if (name.length < 2) {
+        toast.error("El nombre debe tener al menos 2 caracteres");
+        return;
+      }
+      if (!DISPLAY_NAME_RE.test(name)) {
+        toast.error("El nombre contiene caracteres no permitidos");
+        return;
+      }
+      if (password.length < 6) {
+        toast.error("La contraseña debe tener al menos 6 caracteres");
+        return;
+      }
+      if (password !== confirmPassword) {
+        toast.error("Las contraseñas no coinciden");
+        return;
+      }
+    }
     setBusy(true);
     try {
       if (mode === "signup") {
+        const name = displayName.trim();
+        const check = await validateDisplayName({ data: { name } });
+        if (!check.ok) {
+          if (check.reason === "taken") toast.error("Ese nombre ya está en uso. Elige otro.");
+          else if (check.reason === "profanity") toast.error("Ese nombre no está permitido.");
+          else toast.error("Nombre no válido");
+          setBusy(false);
+          return;
+        }
+        // Email confirmation disabled during beta — re-enable before public launch
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: { display_name: name },
+          },
         });
         if (error) throw error;
-        toast.success("Cuenta creada correctamente. Revisa tu correo electrónico para confirmar tu cuenta antes de iniciar sesión.");
+        toast.success("Cuenta creada. ¡Bienvenido a Equit!");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
