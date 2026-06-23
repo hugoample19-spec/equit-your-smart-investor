@@ -183,17 +183,6 @@ function PerfilPage() {
             <Camera size={14} color="var(--navy)" />
           </button>
 
-          {/* Favorite referente badge — bottom-right */}
-          <span
-            className="absolute -bottom-0.5 -right-0.5 w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border-2 z-10 shadow-soft"
-            style={{ background: "var(--cream)", borderColor: "var(--cream)" }}
-          >
-            {favRef ? (
-              <InvestorLogo bgColor={favRef.color} name={favRef.name} />
-            ) : (
-              <Star size={14} color="var(--gold)" />
-            )}
-          </span>
 
           {avatarMenu && (
             <>
