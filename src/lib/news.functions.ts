@@ -25,7 +25,6 @@ const fallback: NewsItem[] = [
   { cat: "CRIPTO", time: "hace 1 h", source: "Equit", url: "#", title: "Bitcoin rompe los $74.000 con flujos récord en ETFs spot", summary: "BlackRock IBIT acumula más de $2.400M en una semana mientras la oferta en exchanges cae." },
   { cat: "EMPRESAS", time: "hace 2 h", source: "Equit", url: "#", title: "Nvidia presenta su nueva familia Blackwell B300 para inferencia", summary: "Las acciones suben un 4,2% en pre-market tras superar las expectativas del mercado." },
   { cat: "MACRO", time: "hace 3 h", source: "Equit", url: "#", title: "El BCE mantiene tipos y abre la puerta a un recorte en septiembre", summary: "Lagarde subraya la moderación de la inflación subyacente en la eurozona durante el último trimestre." },
-  { cat: "FUSIONES", time: "hace 5 h", source: "Equit", url: "#", title: "Cierre de adquisición millonaria en el sector tecnológico", summary: "Una de las mayores operaciones del año redefine el mapa competitivo del software empresarial." },
 ];
 
 function relTime(ts: number): string {
@@ -72,6 +71,8 @@ function sha256Hex(input: string): string {
   return createHash("sha256").update(input).digest("hex");
 }
 
+const EN_STOPWORDS = ["the", "and", "of", "in", "to", "for", "on", "with", "is", "are", "was", "were", "will", "from", "by", "at", "as", "this", "that"];
+
 function isLikelyEnglish(text: string): boolean {
   if (!text) return false;
   const lower = text.toLowerCase();
@@ -80,25 +81,38 @@ function isLikelyEnglish(text: string): boolean {
   return /\b(the|and|of|to|in|for|on|with|is|are|was|were|will|from|by|at|as|this|that|after|before)\b/.test(lower);
 }
 
-async function translateViaMyMemory(chunk: string): Promise<string | null> {
+// Stronger check used to validate cached translations: if >40% of words are English stopwords,
+// treat the cache entry as a failed/untranslated string and force re-translation.
+function cachedLooksEnglish(text: string): boolean {
+  if (!text) return false;
+  const lower = text.toLowerCase();
+  if (/[áéíóúñ¿¡]/.test(lower)) return false;
+  const words = lower.replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean);
+  if (words.length < 4) return isLikelyEnglish(text);
+  const stopCount = words.filter((w) => EN_STOPWORDS.includes(w)).length;
+  const ratio = stopCount / words.length;
+  return ratio > 0.4 || isLikelyEnglish(text);
+}
+
+async function translateViaMyMemory(chunk: string): Promise<{ text: string | null; quota: boolean }> {
   try {
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=en|es`;
     const res = await fetch(url);
     if (!res.ok) {
-      console.warn("[translate] MyMemory HTTP error:", res.status);
-      return null;
+      console.warn("[translate-fail] MyMemory HTTP error:", res.status);
+      return { text: null, quota: res.status === 429 };
     }
-    const json = (await res.json()) as { responseData?: { translatedText?: string } };
+    const json = (await res.json()) as { responseData?: { translatedText?: string }; responseStatus?: number };
     const translated = json?.responseData?.translatedText;
-    if (!translated || /MYMEMORY WARNING/i.test(translated)) {
-      console.warn("[translate] MyMemory quota/warning:", translated?.slice(0, 100));
-      return null;
+    const quotaHit = !!translated && /MYMEMORY WARNING|QUOTA/i.test(translated);
+    if (!translated || quotaHit) {
+      console.warn("[translate-fail] MyMemory quota/warning:", translated?.slice(0, 120));
+      return { text: null, quota: quotaHit };
     }
-    console.log("[translate] MyMemory OK");
-    return translated;
+    return { text: translated, quota: false };
   } catch (e) {
-    console.warn("[translate] MyMemory threw:", e);
-    return null;
+    console.warn("[translate-fail] MyMemory threw:", e);
+    return { text: null, quota: false };
   }
 }
 
@@ -107,7 +121,7 @@ async function translateViaGoogle(chunk: string): Promise<string | null> {
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(chunk)}`;
     const res = await fetch(url);
     if (!res.ok) {
-      console.warn("[translate] Google HTTP error:", res.status);
+      console.warn("[translate-fail] Google HTTP error:", res.status);
       return null;
     }
     const data = (await res.json()) as unknown;
@@ -116,10 +130,9 @@ async function translateViaGoogle(chunk: string): Promise<string | null> {
       .map((seg) => (Array.isArray(seg) && typeof seg[0] === "string" ? (seg[0] as string) : ""))
       .join("");
     if (!joined) return null;
-    console.log("[translate] Google fallback OK");
     return joined;
   } catch (e) {
-    console.warn("[translate] Google threw:", e);
+    console.warn("[translate-fail] Google threw:", e);
     return null;
   }
 }
@@ -150,6 +163,7 @@ async function translateChunk(text: string, targetLang: "es" = "es"): Promise<st
   const out: string[] = [];
   for (const chunk of chunks) {
     const hash = sha256Hex(chunk);
+    let cachedText: string | null = null;
     try {
       const { data: cached } = await supabaseAdmin
         .from("news_translations")
@@ -157,19 +171,30 @@ async function translateChunk(text: string, targetLang: "es" = "es"): Promise<st
         .eq("content_hash", hash)
         .eq("lang", targetLang)
         .maybeSingle();
-      if (cached?.translated_text) {
-        console.log("[translate] cache hit");
-        out.push(cached.translated_text);
-        continue;
-      }
+      if (cached?.translated_text) cachedText = cached.translated_text;
     } catch (e) {
-      console.warn("[translate] cache read threw:", e);
+      console.warn("[translate-fail] cache read threw:", e);
     }
 
-    let translated = await translateViaMyMemory(chunk);
-    if (!translated) translated = await translateViaGoogle(chunk);
+    if (cachedText && !cachedLooksEnglish(cachedText)) {
+      out.push(cachedText);
+      continue;
+    }
+    if (cachedText) {
+      console.warn("[translate-fail] cached value looks English, re-translating:", cachedText.slice(0, 80));
+    }
+
+    const mm = await translateViaMyMemory(chunk);
+    let translated = mm.text;
     if (!translated) {
-      console.warn("[translate] both providers failed; returning original");
+      if (mm.quota) {
+        // MyMemory hit quota — pause then go straight to Google.
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      translated = await translateViaGoogle(chunk);
+    }
+    if (!translated) {
+      console.warn("[translate-fail] both providers failed; returning original:", chunk.slice(0, 80));
       out.push(chunk);
       continue;
     }
@@ -177,12 +202,13 @@ async function translateChunk(text: string, targetLang: "es" = "es"): Promise<st
     try {
       const { error } = await supabaseAdmin
         .from("news_translations")
-        .insert({ content_hash: hash, lang: targetLang, translated_text: translated });
-      if (error && error.code !== "23505") {
-        console.warn("[translate] cache write error:", error.message);
-      }
+        .upsert(
+          { content_hash: hash, lang: targetLang, translated_text: translated },
+          { onConflict: "content_hash,lang" },
+        );
+      if (error) console.warn("[translate-fail] cache write error:", error.message);
     } catch (e) {
-      console.warn("[translate] cache write threw:", e);
+      console.warn("[translate-fail] cache write threw:", e);
     }
     out.push(translated);
   }
@@ -196,8 +222,7 @@ function toItem(n: Raw, forcedCat?: string): NewsItem {
   let cat = forcedCat ?? "MERCADOS";
   if (!forcedCat) {
     if (rawCat.includes("crypto")) cat = "CRIPTO";
-    else if (rawCat.includes("merger")) cat = "FUSIONES";
-    else if (rawCat.includes("company")) cat = "EMPRESAS";
+    else if (rawCat.includes("company") || rawCat.includes("ipo") || rawCat.includes("earnings")) cat = "EMPRESAS";
     else if (rawCat.includes("forex") || rawCat.includes("economy")) cat = "MACRO";
   }
   return {
@@ -222,16 +247,14 @@ function isYahoo(item: NewsItem): boolean {
 
 async function translateItems(items: NewsItem[]): Promise<NewsItem[]> {
   const result: NewsItem[] = [];
-  // Sequential with small delay between provider-bound items to avoid rate limits.
-  // Cache hits don't hit any network so they fly through.
   for (const it of items) {
     const [title, summary] = await Promise.all([
       translateChunk(it.title),
       it.summary ? translateChunk(it.summary) : Promise.resolve(""),
     ]);
     result.push({ ...it, title, summary });
-    // tiny pacing for live calls; harmless on cache hits
-    await new Promise((r) => setTimeout(r, 40));
+    // pacing for live provider calls; cache hits still incur this but it's negligible
+    await new Promise((r) => setTimeout(r, 300));
   }
   return result;
 }
@@ -244,9 +267,9 @@ export const getMarketNews = createServerFn({ method: "GET" }).handler(async ():
   const from = new Date(today.getTime() - 7 * 86400_000).toISOString().slice(0, 10);
   const to = today.toISOString().slice(0, 10);
 
-  const [general, mergers, crypto, ...companyLists] = await Promise.all([
+  const [general, ipo, crypto, ...companyLists] = await Promise.all([
     fetchJson<Raw[]>(`https://finnhub.io/api/v1/news?category=general&token=${key}`),
-    fetchJson<Raw[]>(`https://finnhub.io/api/v1/news?category=merger&token=${key}`),
+    fetchJson<Raw[]>(`https://finnhub.io/api/v1/news?category=ipo&token=${key}`),
     fetchJson<Raw[]>(`https://finnhub.io/api/v1/news?category=crypto&token=${key}`),
     ...COMPANY_TICKERS.map((t) =>
       fetchJson<Raw[]>(`https://finnhub.io/api/v1/company-news?symbol=${t}&from=${from}&to=${to}&token=${key}`),
@@ -254,25 +277,24 @@ export const getMarketNews = createServerFn({ method: "GET" }).handler(async ():
   ]);
 
   const generalItems = (general ?? []).map((n) => toItem(n, "MERCADOS")).filter((x) => !isYahoo(x));
-  const mergerItems = (mergers ?? []).map((n) => toItem(n, "FUSIONES")).filter((x) => !isYahoo(x));
+  const ipoItems = (ipo ?? []).map((n) => toItem(n, "EMPRESAS")).filter((x) => !isYahoo(x));
   const cryptoItems = (crypto ?? []).map((n) => toItem(n, "CRIPTO")).filter((x) => !isYahoo(x));
   const companyItems = companyLists
     .flatMap((arr) => arr ?? [])
     .map((n) => toItem(n, "EMPRESAS"))
     .filter((x) => !isYahoo(x));
 
-  if (!generalItems.length && !mergerItems.length && !cryptoItems.length && !companyItems.length) {
+  if (!generalItems.length && !ipoItems.length && !cryptoItems.length && !companyItems.length) {
     return { items: fallback, fallback: true };
   }
 
   const TOTAL = 30;
   const MAX_PER_CAT = Math.floor(TOTAL * 0.4); // 12
 
-  // Dedupe across the whole pool, prefer freshness (per-bucket order from Finnhub is newest-first).
   const pool: NewsItem[] = [
     ...generalItems,
     ...cryptoItems,
-    ...mergerItems,
+    ...ipoItems,
     ...companyItems,
   ];
 
@@ -289,7 +311,6 @@ export const getMarketNews = createServerFn({ method: "GET" }).handler(async ():
     deduped.push(item);
   }
 
-  // Cap each category to MAX_PER_CAT, preserving freshness order within each.
   const counts: Record<string, number> = {};
   const capped: NewsItem[] = [];
   for (const it of deduped) {
@@ -298,8 +319,7 @@ export const getMarketNews = createServerFn({ method: "GET" }).handler(async ():
     capped.push(it);
   }
 
-  // Interleave categories for visual variety.
-  const order = ["EMPRESAS", "MERCADOS", "CRIPTO", "FUSIONES", "MACRO"];
+  const order = ["EMPRESAS", "MERCADOS", "CRIPTO", "MACRO"];
   const byCat: Record<string, NewsItem[]> = {};
   for (const it of capped) (byCat[it.cat] ||= []).push(it);
   const interleaved: NewsItem[] = [];
