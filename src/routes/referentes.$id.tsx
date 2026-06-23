@@ -85,14 +85,6 @@ function InvestorDetail() {
         <Link to="/referentes" className="inline-flex items-center gap-1 text-sm" style={{ color: "var(--navy)" }}>
           <ArrowLeft size={16} /> Referentes
         </Link>
-        <button
-          onClick={() => setFavoriteReferente(isFav ? null : investor.id)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium"
-          style={{ borderColor: "var(--gold)", color: "var(--navy)" }}
-        >
-          <Star size={14} fill={isFav ? "var(--gold)" : "none"} color="var(--gold)" />
-          {isFav ? "Favorito" : "Marcar favorito"}
-        </button>
       </div>
 
       <div className="rounded-3xl overflow-hidden relative aspect-[4/5] shadow-card">
