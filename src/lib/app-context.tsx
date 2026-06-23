@@ -209,6 +209,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPortfolioPublicState(data.is_portfolio_public);
     
     setIsPremium(!!(data as { is_premium?: boolean }).is_premium);
+    setNameChangedAt((data as { name_changed_at?: string | null }).name_changed_at ?? null);
 
     // Rebuild streak from authoritative server-side news_reads log,
     // using Europe/Madrid as the canonical calendar day.
