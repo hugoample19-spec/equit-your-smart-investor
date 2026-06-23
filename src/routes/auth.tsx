@@ -2,7 +2,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { validateDisplayName } from "@/lib/profile.functions";
 import { toast } from "sonner";
+
+const DISPLAY_NAME_RE = /^[a-zA-ZÀ-ÿ0-9 _.\-]+$/;
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
