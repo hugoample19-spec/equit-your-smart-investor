@@ -96,16 +96,6 @@ function PublicProfile() {
             </div>
           </section>
 
-          {favRef && (
-            <section className="bg-card rounded-2xl p-4 shadow-soft flex items-center gap-3">
-              <img src={favRef.photo} alt={favRef.name} className="w-12 h-12 rounded-xl object-cover" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] tracking-widest" style={{ color: "var(--gold)" }}>REFERENTE FAVORITO</p>
-                <p className="text-sm font-semibold" style={{ color: "var(--navy)" }}>{favRef.name}</p>
-                <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{favRef.fund}</p>
-              </div>
-            </section>
-          )}
         </>
       ) : (
         <section className="bg-card rounded-2xl p-6 shadow-soft text-center">
