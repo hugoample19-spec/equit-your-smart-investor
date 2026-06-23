@@ -241,15 +241,32 @@ function PerfilPage() {
             style={{ color: "var(--navy)", borderColor: "var(--gold)" }}
           />
         ) : (
-          <button
-            type="button"
-            onClick={() => setEditingName(true)}
-            className="mt-3 text-xl font-semibold"
-            style={{ color: "var(--navy)" }}
-            aria-label="Editar nombre"
-          >
-            {fullName}
-          </button>
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-xl font-semibold" style={{ color: "var(--navy)" }}>
+              {fullName}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (nameChangedAt) {
+                  const last = new Date(nameChangedAt).getTime();
+                  const diff = Date.now() - last;
+                  const THIRTY = 30 * 24 * 60 * 60 * 1000;
+                  if (diff < THIRTY) {
+                    const next = new Date(last + THIRTY);
+                    const formatted = next.toLocaleDateString("es-ES", { day: "2-digit", month: "long" }).replace(" ", " de ");
+                    toast.error(`Solo puedes cambiar tu nombre una vez al mes. Podrás cambiarlo de nuevo el ${formatted}.`);
+                    return;
+                  }
+                }
+                setEditingName(true);
+              }}
+              aria-label="Editar nombre"
+              className="p-1"
+            >
+              <Pencil size={14} style={{ color: "var(--gold)" }} />
+            </button>
+          </div>
         )}
         {nameError && (
           <p className="text-[11px] mt-1" style={{ color: "var(--danger)" }}>{nameError}</p>
