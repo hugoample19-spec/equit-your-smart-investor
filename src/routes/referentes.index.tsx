@@ -20,7 +20,7 @@ export const Route = createFileRoute("/referentes/")({
 });
 
 function ReferentesPage() {
-  const { isPremium, favoriteReferenteId, setFavoriteReferente } = useApp();
+  const { isPremium } = useApp();
   const [showPremium, setShowPremium] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
 
