@@ -16,11 +16,8 @@ export const validateDisplayName = createServerFn({ method: "POST" })
     } catch {
       // ignore filter errors
     }
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    );
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabase = supabaseAdmin;
     const { data: existing, error } = await supabase
       .from("profiles")
       .select("id")
