@@ -305,11 +305,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
 
-  const setFavoriteReferente = (id: string | null) => {
-    setFavoriteState(id);
-    save("equit_fav_ref", id);
-    if (user) supabase.from("profiles").update({ favorite_referente_id: id }).eq("id", user.id);
-  };
   const setIsPortfolioPublic = (b: boolean) => {
     setPortfolioPublicState(b);
     save("equit_portfolio_public", b);
