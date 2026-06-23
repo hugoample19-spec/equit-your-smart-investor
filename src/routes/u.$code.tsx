@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, MessageCircle, Star, UserPlus, Lock } from "lucide-react";
-import { findUserByCode, investors } from "@/lib/data";
+import { ArrowLeft, MessageCircle, UserPlus, Lock } from "lucide-react";
+import { findUserByCode } from "@/lib/data";
 import { useApp } from "@/lib/app-context";
 
 export const Route = createFileRoute("/u/$code")({
@@ -26,8 +26,6 @@ function PublicProfile() {
   const { user } = Route.useLoaderData() as { user: ReturnType<typeof findUserByCode> & object };
   const { friendsLeaderboard, addFriend } = useApp();
   const isFriend = friendsLeaderboard.some((f) => f.code === user.code);
-
-  const favRef = investors.find((i) => i.id === user.favoriteReferenteId);
   const initials = user.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("");
   const isPublic = user.isPublic;
 
@@ -40,9 +38,6 @@ function PublicProfile() {
       <div className="flex flex-col items-center pt-2">
         <div className="relative w-24 h-24 rounded-full overflow-hidden flex items-center justify-center shadow-card" style={{ background: "var(--navy)" }}>
           <span className="text-2xl font-semibold" style={{ color: "var(--cream)" }}>{initials}</span>
-          <span className="absolute -top-1 -right-1 w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border-2" style={{ background: "var(--cream)", borderColor: "var(--cream)" }}>
-            {favRef ? <img src={favRef.photo} alt={favRef.name} className="w-full h-full object-cover" /> : <Star size={14} color="var(--gold)" />}
-          </span>
         </div>
         <h1 className="mt-3 text-xl font-semibold" style={{ color: "var(--navy)" }}>{user.name}</h1>
         <p className="text-[10px] tracking-wider mt-1" style={{ color: "var(--muted-foreground)" }}>{user.strategy}</p>
@@ -101,16 +96,6 @@ function PublicProfile() {
             </div>
           </section>
 
-          {favRef && (
-            <section className="bg-card rounded-2xl p-4 shadow-soft flex items-center gap-3">
-              <img src={favRef.photo} alt={favRef.name} className="w-12 h-12 rounded-xl object-cover" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] tracking-widest" style={{ color: "var(--gold)" }}>REFERENTE FAVORITO</p>
-                <p className="text-sm font-semibold" style={{ color: "var(--navy)" }}>{favRef.name}</p>
-                <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{favRef.fund}</p>
-              </div>
-            </section>
-          )}
         </>
       ) : (
         <section className="bg-card rounded-2xl p-6 shadow-soft text-center">

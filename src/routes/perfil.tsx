@@ -1,10 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Bell, Camera, Check, LogOut, Search, Sparkles, Star, X, Zap } from "lucide-react";
+import { Bell, Camera, Check, LogOut, Search, Sparkles, X, Zap } from "lucide-react";
 import { useApp, madridDateISO } from "@/lib/app-context";
-import { investors } from "@/lib/data";
 import { supabase } from "@/integrations/supabase/client";
-import { InvestorLogo } from "@/components/InvestorLogo";
 import { PremiumModal } from "@/components/PremiumModal";
 import { useServerFn } from "@tanstack/react-start";
 import { getNotificationPrefs, updateNotificationPrefs } from "@/lib/notifications.functions";
@@ -28,7 +26,7 @@ export const Route = createFileRoute("/perfil")({
 function PerfilPage() {
   const {
     fullName, setFullName, avatar, setAvatar, isPremium,
-    friendCode, favoriteReferenteId, isPortfolioPublic, setIsPortfolioPublic,
+    friendCode, isPortfolioPublic, setIsPortfolioPublic,
     friendsLeaderboard, addFriend, removeFriend, streak, streakReady,
 
     signOut, refreshProfile,
@@ -80,7 +78,6 @@ function PerfilPage() {
   }, []);
 
   const initials = fullName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-  const favRef = investors.find((i) => i.id === favoriteReferenteId);
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -184,17 +181,6 @@ function PerfilPage() {
             <Camera size={14} color="var(--navy)" />
           </button>
 
-          {/* Favorite referente badge — bottom-right */}
-          <span
-            className="absolute -bottom-0.5 -right-0.5 w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border-2 z-10 shadow-soft"
-            style={{ background: "var(--cream)", borderColor: "var(--cream)" }}
-          >
-            {favRef ? (
-              <InvestorLogo bgColor={favRef.color} name={favRef.name} />
-            ) : (
-              <Star size={14} color="var(--gold)" />
-            )}
-          </span>
 
           {avatarMenu && (
             <>

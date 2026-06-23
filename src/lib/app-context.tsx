@@ -91,8 +91,6 @@ type AppState = {
   pendingCopy: Investor | null;
   setPendingCopy: (i: Investor | null) => void;
   friendCode: string;
-  favoriteReferenteId: string | null;
-  setFavoriteReferente: (id: string | null) => void;
   isPortfolioPublic: boolean;
   setIsPortfolioPublic: (b: boolean) => void;
   friendsLeaderboard: FriendLeaderRow[];
@@ -157,8 +155,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pendingCopy, setPendingCopy] = useState<Investor | null>(null);
 
   const [friendCode, setFriendCode] = useState<string>("00000000");
-  const [favoriteReferenteId, setFavoriteState] = useState<string | null>(null);
   const [isPortfolioPublic, setPortfolioPublicState] = useState(true);
+
   
   const [chats, setChats] = useState<Record<string, ChatMessage[]>>({});
   const [streak, setStreak] = useState<{ current: number; longest: number; lastReadDate: string | null }>({ current: 0, longest: 0, lastReadDate: null });
@@ -173,7 +171,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let code = localStorage.getItem("equit_friend_code");
     if (!code) { code = genCode(); localStorage.setItem("equit_friend_code", code); }
     setFriendCode(code);
-    setFavoriteState(load<string | null>("equit_fav_ref", null));
     setPortfolioPublicState(load<boolean>("equit_portfolio_public", true));
     
     setChats(load<Record<string, ChatMessage[]>>("equit_chats", {}));
@@ -207,7 +204,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (data.friend_code) setFriendCode(data.friend_code);
     if (data.starting_balance) setBudget(Number(data.starting_balance));
     setPortfolioPublicState(data.is_portfolio_public);
-    setFavoriteState(data.favorite_referente_id);
+    
     setIsPremium(!!(data as { is_premium?: boolean }).is_premium);
 
     // Rebuild streak from authoritative server-side news_reads log,
@@ -308,11 +305,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
 
-  const setFavoriteReferente = (id: string | null) => {
-    setFavoriteState(id);
-    save("equit_fav_ref", id);
-    if (user) supabase.from("profiles").update({ favorite_referente_id: id }).eq("id", user.id);
-  };
   const setIsPortfolioPublic = (b: boolean) => {
     setPortfolioPublicState(b);
     save("equit_portfolio_public", b);
@@ -427,7 +419,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       avatar, setAvatar, isPremium, setIsPremium: setIsPremiumPersist,
       budget, setBudget, portfolio, setPortfolio,
       pendingCopy, setPendingCopy,
-      friendCode, favoriteReferenteId, setFavoriteReferente,
+      friendCode,
       isPortfolioPublic, setIsPortfolioPublic,
       friendsLeaderboard, friendsLoading: friendsQuery.isLoading, addFriend, removeFriend,
       chats, sendMessage,
