@@ -91,8 +91,6 @@ type AppState = {
   pendingCopy: Investor | null;
   setPendingCopy: (i: Investor | null) => void;
   friendCode: string;
-  favoriteReferenteId: string | null;
-  setFavoriteReferente: (id: string | null) => void;
   isPortfolioPublic: boolean;
   setIsPortfolioPublic: (b: boolean) => void;
   friendsLeaderboard: FriendLeaderRow[];
