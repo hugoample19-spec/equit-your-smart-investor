@@ -419,7 +419,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       avatar, setAvatar, isPremium, setIsPremium: setIsPremiumPersist,
       budget, setBudget, portfolio, setPortfolio,
       pendingCopy, setPendingCopy,
-      friendCode, favoriteReferenteId, setFavoriteReferente,
+      friendCode,
       isPortfolioPublic, setIsPortfolioPublic,
       friendsLeaderboard, friendsLoading: friendsQuery.isLoading, addFriend, removeFriend,
       chats, sendMessage,
