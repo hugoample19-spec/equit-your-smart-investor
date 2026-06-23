@@ -80,7 +80,6 @@ function PerfilPage() {
   }, []);
 
   const initials = fullName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-  const favRef = investors.find((i) => i.id === favoriteReferenteId);
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
