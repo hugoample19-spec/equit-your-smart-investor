@@ -44,9 +44,13 @@ function HomePage() {
     staleTime: 60_000,
   });
   const global: LeaderRow[] = globalQuery.data ?? [];
+
+  const displayName = (profile?.display_name?.trim() || fullName?.trim() || username || "").trim();
+  const firstName = displayName.split(" ")[0] || displayName;
+
   const meRow: LeaderRow = {
     code: friendCode,
-    name: (displayName || "Tú"),
+    name: displayName || "Tú",
     perf: summary.hasWallet ? summary.totalReturnPct : null,
     totalValue: summary.hasWallet ? summary.totalValue : null,
     isPublic: true,
@@ -60,9 +64,6 @@ function HomePage() {
     const pb = b.perf ?? -Infinity;
     return pb - pa;
   });
-
-  const displayName = (profile?.display_name?.trim() || fullName?.trim() || username || "").trim();
-  const firstName = displayName.split(" ")[0] || displayName;
 
 
   const eur = summary.totalValue.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
