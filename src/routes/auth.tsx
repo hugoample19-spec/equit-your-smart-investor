@@ -128,18 +128,32 @@ function AuthPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--cream)" }}>
       <div className="flex-[1.25] flex flex-col items-center justify-center px-6 pt-8 pb-6">
-        <img src="/logo.png" alt="Equit" className="w-[180px] h-[180px] object-contain mx-auto mt-8" />
-        <div style={{ maxWidth: 270, margin: "24px auto 0" }}>
+        <h1
+          style={{
+            fontFamily: "Georgia, serif",
+            fontSize: "1.8rem",
+            fontWeight: 700,
+            color: "#7B2D0A",
+            letterSpacing: "0.2em",
+            textAlign: "center",
+            marginTop: "1.8rem",
+            marginBottom: "0.2rem",
+          }}
+        >
+          EQUIT.
+        </h1>
+        <img src="/logo.png" alt="Equit" className="w-[110px] h-[110px] object-contain mx-auto" />
+        <div style={{ maxWidth: 320, margin: "24px auto 0" }}>
           {[
             "Invierte con una cartera simulada y mantente informado con noticias e informes",
             "Las carteras de Buffett, Dalio y los 10 mejores inversores del mundo",
             "Compite con amigos, informe IA semanal y noticias diarias",
           ].map((line) => (
             <div key={line} className="flex items-start gap-2" style={{ marginBottom: "8px" }}>
-              <span style={{ color: "#C9A84C", fontWeight: 600, fontSize: "13px", lineHeight: "1.8", flexShrink: 0 }}>
+              <span style={{ color: "#C9A84C", fontWeight: 600, fontSize: "12px", lineHeight: "1.75", flexShrink: 0 }}>
                 ·
               </span>
-              <span style={{ fontSize: "13px", color: "#5C3A1E", lineHeight: "1.8" }}>{line}</span>
+              <span style={{ fontSize: "12px", color: "#5C3A1E", lineHeight: "1.75" }}>{line}</span>
             </div>
           ))}
         </div>
