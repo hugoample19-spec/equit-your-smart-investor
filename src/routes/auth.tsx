@@ -128,28 +128,12 @@ function AuthPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--cream)" }}>
       <div className="flex-[1.25] flex flex-col items-center justify-center px-6 pt-8 pb-6">
-        <h1
-          style={{
-            fontFamily: "serif",
-            fontSize: "2.2rem",
-            fontWeight: 700,
-            color: "#7B2D0A",
-            letterSpacing: "0.15em",
-            textAlign: "center",
-            marginTop: "2.5rem",
-            marginBottom: "0.5rem",
-          }}
-        >
-          EQUIT.
-        </h1>
-        <img src="/logo.png" alt="Equit" className="w-48 h-48 object-contain mx-auto mt-8" />
-        <div style={{ maxWidth: 280, margin: "24px auto 0" }}>
+        <img src="/logo.png" alt="Equit" className="w-[180px] h-[180px] object-contain mx-auto mt-8" />
+        <div style={{ maxWidth: 270, margin: "24px auto 0" }}>
           {[
-            "Invierte en bolsa con una cartera simulada y sin riesgo",
-            "Noticias financieras internacionales diarias",
-            "Copia las carteras de Buffett, Elon Musk y los 10 mejores inversores del mundo",
-            "Informe semanal de mercados generado con IA",
-            "Compite con amigos a ver quién consigue más rentabilidad",
+            "Invierte con una cartera simulada y mantente informado con noticias e informes",
+            "Las carteras de Buffett, Dalio y los 10 mejores inversores del mundo",
+            "Compite con amigos, informe IA semanal y noticias diarias",
           ].map((line) => (
             <div key={line} className="flex items-start gap-2" style={{ marginBottom: "8px" }}>
               <span style={{ color: "#C9A84C", fontWeight: 600, fontSize: "13px", lineHeight: "1.8", flexShrink: 0 }}>
