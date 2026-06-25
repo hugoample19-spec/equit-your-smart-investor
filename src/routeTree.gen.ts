@@ -16,6 +16,7 @@ import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificacionesRouteImport } from './routes/notificaciones'
 import { Route as NoticiasRouteImport } from './routes/noticias'
+import { Route as LegalRouteImport } from './routes/legal'
 import { Route as InformeRouteImport } from './routes/informe'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
@@ -58,6 +59,11 @@ const NotificacionesRoute = NotificacionesRouteImport.update({
 const NoticiasRoute = NoticiasRouteImport.update({
   id: '/noticias',
   path: '/noticias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalRoute = LegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InformeRoute = InformeRouteImport.update({
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/informe': typeof InformeRoute
+  '/legal': typeof LegalRoute
   '/noticias': typeof NoticiasRoute
   '/notificaciones': typeof NotificacionesRoute
   '/onboarding': typeof OnboardingRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/informe': typeof InformeRoute
+  '/legal': typeof LegalRoute
   '/noticias': typeof NoticiasRoute
   '/notificaciones': typeof NotificacionesRoute
   '/onboarding': typeof OnboardingRoute
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/informe': typeof InformeRoute
+  '/legal': typeof LegalRoute
   '/noticias': typeof NoticiasRoute
   '/notificaciones': typeof NotificacionesRoute
   '/onboarding': typeof OnboardingRoute
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/informe'
+    | '/legal'
     | '/noticias'
     | '/notificaciones'
     | '/onboarding'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/informe'
+    | '/legal'
     | '/noticias'
     | '/notificaciones'
     | '/onboarding'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/informe'
+    | '/legal'
     | '/noticias'
     | '/notificaciones'
     | '/onboarding'
@@ -212,6 +224,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   InformeRoute: typeof InformeRoute
+  LegalRoute: typeof LegalRoute
   NoticiasRoute: typeof NoticiasRoute
   NotificacionesRoute: typeof NotificacionesRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -277,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NoticiasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/legal': {
+      id: '/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof LegalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/informe': {
       id: '/informe'
       path: '/informe'
@@ -340,6 +360,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   InformeRoute: InformeRoute,
+  LegalRoute: LegalRoute,
   NoticiasRoute: NoticiasRoute,
   NotificacionesRoute: NotificacionesRoute,
   OnboardingRoute: OnboardingRoute,
