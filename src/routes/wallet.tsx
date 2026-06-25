@@ -391,8 +391,8 @@ function HomeScreen({
   return (
     <div className="space-y-5 pb-6">
       <div
-        className="rounded-xl"
-        style={{ background: "var(--muted)", color: "var(--muted-foreground)", fontSize: "11px", padding: "6px 12px", opacity: 0.7, textAlign: "center" }}
+        className="rounded-full"
+        style={{ background: "transparent", color: "var(--muted-foreground)", fontSize: "10px", padding: "3px 10px", opacity: 0.5, textAlign: "center", lineHeight: 1.3 }}
       >
         Si no ves variación en los precios, puede deberse a que el mercado esté cerrado o la operativa de algún activo esté pausada.
       </div>
