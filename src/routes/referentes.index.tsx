@@ -30,9 +30,6 @@ function ReferentesPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Referentes</h1>
           <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>Aprende y copia a los grandes</p>
-          <p className="mt-1.5" style={{ fontSize: "10px", color: "var(--muted-foreground)", opacity: 0.75, lineHeight: 1.45 }}>
-            Carteras basadas en declaraciones públicas (13F SEC). Los inversores mencionados no están afiliados a Equit ni constituyen asesoramiento financiero.
-          </p>
         </div>
         <button
           type="button"
@@ -127,6 +124,10 @@ function ReferentesPage() {
             </div>
             <p className="text-sm mt-3 leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
               Las carteras que ves provienen de los informes 13F que todos los grandes fondos de EE. UU. deben presentar públicamente ante la SEC cada trimestre. Los datos se actualizan cada ~3 meses, unos 45 días después de cerrar cada trimestre, por lo que reflejan la última posición pública declarada y no las tenencias en tiempo real.
+            </p>
+            <div className="mt-4" style={{ height: 1, background: "var(--border)" }} />
+            <p className="mt-3" style={{ fontSize: "11px", color: "var(--muted-foreground)", opacity: 0.75, lineHeight: 1.45 }}>
+              Carteras basadas en declaraciones públicas (13F SEC). Los inversores mencionados no están afiliados a Equit ni constituyen asesoramiento financiero.
             </p>
           </div>
         </div>
