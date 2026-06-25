@@ -189,14 +189,14 @@ function Onboarding() {
             />
             <span className="text-xs leading-relaxed" style={{ color: "var(--navy)" }}>
               Acepto los{" "}
-              <a href="/terms" className="underline font-medium">
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline font-medium">
                 Términos y Condiciones
               </a>{" "}
               y la{" "}
-              <a href="/privacy" className="underline font-medium">
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline font-medium">
                 Política de Privacidad
-              </a>
-              .
+              </a>{" "}
+              de Equit.
             </span>
           </label>
         )}
