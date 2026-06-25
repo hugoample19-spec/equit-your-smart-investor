@@ -145,7 +145,7 @@ function AuthPage() {
         <img src="/logo.png" alt="Equit" className="w-[110px] h-[110px] object-contain mx-auto" />
         <div style={{ maxWidth: 320, margin: "24px auto 0" }}>
           {[
-            "Invierte con una cartera simulada y mantente informado con noticias e informes",
+            "Aprende a invertir practicando con activos y precios reales de bolsa",
             "Las carteras de Buffett, Dalio y los 10 mejores inversores del mundo",
             "Compite con amigos, informe IA semanal y noticias diarias",
           ].map((line) => (
