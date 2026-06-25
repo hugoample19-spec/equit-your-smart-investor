@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificacionesRouteImport } from './routes/notificaciones'
@@ -32,6 +33,11 @@ const WalletRoute = WalletRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PerfilRoute = PerfilRouteImport.update({
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/notificaciones': typeof NotificacionesRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
+  '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/chat/$code': typeof ChatCodeRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/notificaciones': typeof NotificacionesRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
+  '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/chat/$code': typeof ChatCodeRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/notificaciones': typeof NotificacionesRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
+  '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/chat/$code': typeof ChatCodeRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/notificaciones'
     | '/onboarding'
     | '/perfil'
+    | '/privacy'
     | '/terms'
     | '/wallet'
     | '/chat/$code'
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/notificaciones'
     | '/onboarding'
     | '/perfil'
+    | '/privacy'
     | '/terms'
     | '/wallet'
     | '/chat/$code'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/notificaciones'
     | '/onboarding'
     | '/perfil'
+    | '/privacy'
     | '/terms'
     | '/wallet'
     | '/chat/$code'
@@ -204,6 +216,7 @@ export interface RootRouteChildren {
   NotificacionesRoute: typeof NotificacionesRoute
   OnboardingRoute: typeof OnboardingRoute
   PerfilRoute: typeof PerfilRoute
+  PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
   WalletRoute: typeof WalletRoute
   ChatCodeRoute: typeof ChatCodeRoute
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/perfil': {
@@ -324,6 +344,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificacionesRoute: NotificacionesRoute,
   OnboardingRoute: OnboardingRoute,
   PerfilRoute: PerfilRoute,
+  PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
   WalletRoute: WalletRoute,
   ChatCodeRoute: ChatCodeRoute,
