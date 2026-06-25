@@ -30,6 +30,9 @@ function ReferentesPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Referentes</h1>
           <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>Aprende y copia a los grandes</p>
+          <p className="mt-1.5" style={{ fontSize: "10px", color: "var(--muted-foreground)", opacity: 0.75, lineHeight: 1.45 }}>
+            Carteras basadas en declaraciones públicas (13F SEC). Los inversores mencionados no están afiliados a Equit ni constituyen asesoramiento financiero.
+          </p>
         </div>
         <button
           type="button"
