@@ -88,6 +88,17 @@ export function Layout({ children }: { children: ReactNode }) {
         )}
         <main className={`flex-1 px-5 ${showChrome ? "pb-24" : "pb-6"}`}>{children}</main>
         {showChrome && (
+          <div
+            className="px-5 pb-20 pt-2 text-center"
+            style={{ fontSize: "10px", opacity: 0.5, color: "var(--navy)" }}
+          >
+            © 2026 Equit ·{" "}
+            <Link to="/terms" className="underline">Términos</Link> ·{" "}
+            <Link to="/privacy" className="underline">Privacidad</Link> ·{" "}
+            <Link to="/legal" className="underline">Aviso legal</Link>
+          </div>
+        )}
+        {showChrome && (
           <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] border-t z-50" style={{ background: "var(--cream)", borderColor: "var(--border)" }}>
             <div className="grid grid-cols-5 py-2 pb-3">
               {tabs.map(({ to, label, icon: Icon }) => {

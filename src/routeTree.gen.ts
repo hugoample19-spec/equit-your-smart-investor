@@ -10,10 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificacionesRouteImport } from './routes/notificaciones'
 import { Route as NoticiasRouteImport } from './routes/noticias'
+import { Route as LegalRouteImport } from './routes/legal'
 import { Route as InformeRouteImport } from './routes/informe'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
@@ -26,6 +29,16 @@ import { Route as ApiPublicCronNotificationsRouteImport } from './routes/api/pub
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PerfilRoute = PerfilRouteImport.update({
@@ -46,6 +59,11 @@ const NotificacionesRoute = NotificacionesRouteImport.update({
 const NoticiasRoute = NoticiasRouteImport.update({
   id: '/noticias',
   path: '/noticias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalRoute = LegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InformeRoute = InformeRouteImport.update({
@@ -94,10 +112,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/informe': typeof InformeRoute
+  '/legal': typeof LegalRoute
   '/noticias': typeof NoticiasRoute
   '/notificaciones': typeof NotificacionesRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/chat/$code': typeof ChatCodeRoute
   '/referentes/$id': typeof ReferentesIdRoute
@@ -109,10 +130,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/informe': typeof InformeRoute
+  '/legal': typeof LegalRoute
   '/noticias': typeof NoticiasRoute
   '/notificaciones': typeof NotificacionesRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/chat/$code': typeof ChatCodeRoute
   '/referentes/$id': typeof ReferentesIdRoute
@@ -125,10 +149,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/informe': typeof InformeRoute
+  '/legal': typeof LegalRoute
   '/noticias': typeof NoticiasRoute
   '/notificaciones': typeof NotificacionesRoute
   '/onboarding': typeof OnboardingRoute
   '/perfil': typeof PerfilRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/chat/$code': typeof ChatCodeRoute
   '/referentes/$id': typeof ReferentesIdRoute
@@ -142,10 +169,13 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/informe'
+    | '/legal'
     | '/noticias'
     | '/notificaciones'
     | '/onboarding'
     | '/perfil'
+    | '/privacy'
+    | '/terms'
     | '/wallet'
     | '/chat/$code'
     | '/referentes/$id'
@@ -157,10 +187,13 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/informe'
+    | '/legal'
     | '/noticias'
     | '/notificaciones'
     | '/onboarding'
     | '/perfil'
+    | '/privacy'
+    | '/terms'
     | '/wallet'
     | '/chat/$code'
     | '/referentes/$id'
@@ -172,10 +205,13 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/informe'
+    | '/legal'
     | '/noticias'
     | '/notificaciones'
     | '/onboarding'
     | '/perfil'
+    | '/privacy'
+    | '/terms'
     | '/wallet'
     | '/chat/$code'
     | '/referentes/$id'
@@ -188,10 +224,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   InformeRoute: typeof InformeRoute
+  LegalRoute: typeof LegalRoute
   NoticiasRoute: typeof NoticiasRoute
   NotificacionesRoute: typeof NotificacionesRoute
   OnboardingRoute: typeof OnboardingRoute
   PerfilRoute: typeof PerfilRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   WalletRoute: typeof WalletRoute
   ChatCodeRoute: typeof ChatCodeRoute
   ReferentesIdRoute: typeof ReferentesIdRoute
@@ -207,6 +246,20 @@ declare module '@tanstack/react-router' {
       path: '/wallet'
       fullPath: '/wallet'
       preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/perfil': {
@@ -235,6 +288,13 @@ declare module '@tanstack/react-router' {
       path: '/noticias'
       fullPath: '/noticias'
       preLoaderRoute: typeof NoticiasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal': {
+      id: '/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof LegalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/informe': {
@@ -300,10 +360,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   InformeRoute: InformeRoute,
+  LegalRoute: LegalRoute,
   NoticiasRoute: NoticiasRoute,
   NotificacionesRoute: NotificacionesRoute,
   OnboardingRoute: OnboardingRoute,
   PerfilRoute: PerfilRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   WalletRoute: WalletRoute,
   ChatCodeRoute: ChatCodeRoute,
   ReferentesIdRoute: ReferentesIdRoute,
