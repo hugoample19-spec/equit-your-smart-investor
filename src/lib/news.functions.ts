@@ -180,15 +180,7 @@ async function translateChunk(text: string, targetLang: "es" = "es"): Promise<st
       console.warn("[translate-fail] cached value looks English, re-translating:", cachedText.slice(0, 80));
     }
 
-    const mm = await translateViaMyMemory(chunk);
-    let translated = mm.text;
-    if (!translated) {
-      if (mm.quota) {
-        // MyMemory hit quota — pause then go straight to Google.
-        await new Promise((r) => setTimeout(r, 1000));
-      }
-      translated = await translateViaGoogle(chunk);
-    }
+    const translated = await translateViaGemini(chunk);
     if (!translated) {
       console.warn("[translate-fail] both providers failed; returning original:", chunk.slice(0, 80));
       out.push(chunk);
