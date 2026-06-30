@@ -24,6 +24,7 @@ import { Route as ReferentesIndexRouteImport } from './routes/referentes.index'
 import { Route as UCodeRouteImport } from './routes/u.$code'
 import { Route as ReferentesIdRouteImport } from './routes/referentes.$id'
 import { Route as ChatCodeRouteImport } from './routes/chat.$code'
+import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 import { Route as ApiPublicCronNotificationsRouteImport } from './routes/api/public/cron.notifications'
 
 const WalletRoute = WalletRouteImport.update({
@@ -101,6 +102,11 @@ const ChatCodeRoute = ChatCodeRouteImport.update({
   path: '/chat/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
+  id: '/api/public/stripe-webhook',
+  path: '/api/public/stripe-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronNotificationsRoute =
   ApiPublicCronNotificationsRouteImport.update({
     id: '/api/public/cron/notifications',
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/referentes/$id': typeof ReferentesIdRoute
   '/u/$code': typeof UCodeRoute
   '/referentes/': typeof ReferentesIndexRoute
+  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/cron/notifications': typeof ApiPublicCronNotificationsRoute
 }
 export interface FileRoutesByTo {
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/referentes/$id': typeof ReferentesIdRoute
   '/u/$code': typeof UCodeRoute
   '/referentes': typeof ReferentesIndexRoute
+  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/cron/notifications': typeof ApiPublicCronNotificationsRoute
 }
 export interface FileRoutesById {
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/referentes/$id': typeof ReferentesIdRoute
   '/u/$code': typeof UCodeRoute
   '/referentes/': typeof ReferentesIndexRoute
+  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/cron/notifications': typeof ApiPublicCronNotificationsRoute
 }
 export interface FileRouteTypes {
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/referentes/$id'
     | '/u/$code'
     | '/referentes/'
+    | '/api/public/stripe-webhook'
     | '/api/public/cron/notifications'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/referentes/$id'
     | '/u/$code'
     | '/referentes'
+    | '/api/public/stripe-webhook'
     | '/api/public/cron/notifications'
   id:
     | '__root__'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/referentes/$id'
     | '/u/$code'
     | '/referentes/'
+    | '/api/public/stripe-webhook'
     | '/api/public/cron/notifications'
   fileRoutesById: FileRoutesById
 }
@@ -236,6 +248,7 @@ export interface RootRouteChildren {
   ReferentesIdRoute: typeof ReferentesIdRoute
   UCodeRoute: typeof UCodeRoute
   ReferentesIndexRoute: typeof ReferentesIndexRoute
+  ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
   ApiPublicCronNotificationsRoute: typeof ApiPublicCronNotificationsRoute
 }
 
@@ -346,6 +359,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/stripe-webhook': {
+      id: '/api/public/stripe-webhook'
+      path: '/api/public/stripe-webhook'
+      fullPath: '/api/public/stripe-webhook'
+      preLoaderRoute: typeof ApiPublicStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/notifications': {
       id: '/api/public/cron/notifications'
       path: '/api/public/cron/notifications'
@@ -372,6 +392,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReferentesIdRoute: ReferentesIdRoute,
   UCodeRoute: UCodeRoute,
   ReferentesIndexRoute: ReferentesIndexRoute,
+  ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
   ApiPublicCronNotificationsRoute: ApiPublicCronNotificationsRoute,
 }
 export const routeTree = rootRouteImport
