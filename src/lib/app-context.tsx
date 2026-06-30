@@ -293,8 +293,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const { data: taken } = await supabase.rpc("is_display_name_taken", {
         _name: trimmed,
-        _exclude_id: user?.id ?? null,
+        _exclude_id: user?.id ?? "00000000-0000-0000-0000-000000000000",
       });
+
       if (taken) {
         return { ok: false, error: "Este nombre ya está en uso" };
       }
