@@ -96,12 +96,9 @@ export const addFriend = createServerFn({ method: "POST" })
       .maybeSingle();
     if (me?.friend_code === data.code) return { ok: false as const, reason: "self" as const };
 
-    const { data: target } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("friend_code", data.code)
-      .maybeSingle();
+    const { data: target } = await supabase.rpc("lookup_profile_by_friend_code", { _code: data.code }).maybeSingle();
     if (!target) return { ok: false as const, reason: "not_found" as const };
+
 
     const { error } = await supabase
       .from("friendships")
@@ -118,12 +115,9 @@ export const removeFriend = createServerFn({ method: "POST" })
   .inputValidator((d: { code: string }) => ({ code: String(d.code).trim() }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: target } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("friend_code", data.code)
-      .maybeSingle();
+    const { data: target } = await supabase.rpc("lookup_profile_by_friend_code", { _code: data.code }).maybeSingle();
     if (!target) return { ok: true as const };
+
     await supabase
       .from("friendships")
       .delete()
@@ -143,12 +137,8 @@ export const getFriendsLeaderboard = createServerFn({ method: "GET" })
     const ids = (friendships ?? []).map((f) => f.friend_id as string);
     if (ids.length === 0) return [];
 
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select(
-        "id, display_name, username, friend_code, is_portfolio_public, wallet_cash, wallet_starting, starting_balance",
-      )
-      .in("id", ids);
+    const { data: profiles } = await supabase.rpc("get_leaderboard_profiles", { _ids: ids });
+
     const list = (profiles ?? []) as ProfileLite[];
     const perfs = await computePerf(supabase, list);
     const rows: LeaderRow[] = list.map((p) => {
@@ -169,13 +159,8 @@ export const getGlobalLeaderboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<LeaderRow[]> => {
     const { supabase, userId } = context;
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select(
-        "id, display_name, username, friend_code, is_portfolio_public, wallet_cash, wallet_starting, starting_balance",
-      )
-      .eq("is_premium", true)
-      .eq("is_portfolio_public", true);
+    const { data: profiles } = await supabase.rpc("get_global_leaderboard_profiles");
+
     const list = (profiles ?? []) as ProfileLite[];
     const perfs = await computePerf(supabase, list);
     const rows: LeaderRow[] = list.map((p) => {

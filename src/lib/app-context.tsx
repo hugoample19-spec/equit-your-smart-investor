@@ -291,15 +291,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (trimmed === fullName) return { ok: true };
     // Uniqueness check
     try {
-      const { data: existing } = await supabase
-        .from("profiles")
-        .select("id")
-        .ilike("display_name", trimmed)
-        .limit(1);
-      if (existing && existing.length > 0 && (!user || existing[0].id !== user.id)) {
+      const { data: taken } = await supabase.rpc("is_display_name_taken", {
+        _name: trimmed,
+        _exclude_id: user?.id ?? null,
+      });
+      if (taken) {
         return { ok: false, error: "Este nombre ya está en uso" };
       }
     } catch { /* allow offline */ }
+
     setFullName(trimmed);
     const nowIso = new Date().toISOString();
     if (user) {
