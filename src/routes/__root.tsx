@@ -71,6 +71,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Sigue a los grandes inversores y genera carteras con IA.",
       },
       { property: "og:type", content: "website" },
+      { name: "twitter:title", content: "Equit · Invierte como los grandes" },
+      { name: "description", content: "Equit is a mobile-first financial app for young Spanish investors." },
+      { property: "og:description", content: "Equit is a mobile-first financial app for young Spanish investors." },
+      { name: "twitter:description", content: "Equit is a mobile-first financial app for young Spanish investors." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/88d5a4c5-32cd-489c-8b29-cb6f68e49676/id-preview-1fd0cb6b--f80304b0-47f6-42e1-990f-412ba9221ca9.lovable.app-1782839182954.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/88d5a4c5-32cd-489c-8b29-cb6f68e49676/id-preview-1fd0cb6b--f80304b0-47f6-42e1-990f-412ba9221ca9.lovable.app-1782839182954.png" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
