@@ -94,45 +94,41 @@ function cachedLooksEnglish(text: string): boolean {
   return ratio > 0.4 || isLikelyEnglish(text);
 }
 
-async function translateViaMyMemory(chunk: string): Promise<{ text: string | null; quota: boolean }> {
-  try {
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=en|es`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.warn("[translate-fail] MyMemory HTTP error:", res.status);
-      return { text: null, quota: res.status === 429 };
-    }
-    const json = (await res.json()) as { responseData?: { translatedText?: string }; responseStatus?: number };
-    const translated = json?.responseData?.translatedText;
-    const quotaHit = !!translated && /MYMEMORY WARNING|QUOTA/i.test(translated);
-    if (!translated || quotaHit) {
-      console.warn("[translate-fail] MyMemory quota/warning:", translated?.slice(0, 120));
-      return { text: null, quota: quotaHit };
-    }
-    return { text: translated, quota: false };
-  } catch (e) {
-    console.warn("[translate-fail] MyMemory threw:", e);
-    return { text: null, quota: false };
+async function translateViaGemini(chunk: string): Promise<string | null> {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) {
+    console.warn("[translate] missing LOVABLE_API_KEY");
+    return null;
   }
-}
-
-async function translateViaGoogle(chunk: string): Promise<string | null> {
   try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(chunk)}`;
-    const res = await fetch(url);
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Eres un traductor profesional especializado en noticias financieras. Traduce el siguiente texto del inglés al español de forma natural y precisa, manteniendo el tono periodístico. Responde ÚNICAMENTE con la traducción, sin comentarios ni explicaciones.",
+          },
+          { role: "user", content: chunk },
+        ],
+      }),
+    });
     if (!res.ok) {
-      console.warn("[translate-fail] Google HTTP error:", res.status);
+      console.warn("[translate] Gemini HTTP error:", res.status, await res.text().catch(() => ""));
       return null;
     }
-    const data = (await res.json()) as unknown;
-    if (!Array.isArray(data) || !Array.isArray(data[0])) return null;
-    const joined = (data[0] as unknown[])
-      .map((seg) => (Array.isArray(seg) && typeof seg[0] === "string" ? (seg[0] as string) : ""))
-      .join("");
-    if (!joined) return null;
-    return joined;
+    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const translated = json.choices?.[0]?.message?.content?.trim();
+    if (!translated) {
+      console.warn("[translate] Gemini empty response");
+      return null;
+    }
+    return translated;
   } catch (e) {
-    console.warn("[translate-fail] Google threw:", e);
+    console.warn("[translate] Gemini threw:", e);
     return null;
   }
 }
