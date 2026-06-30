@@ -114,9 +114,7 @@ function PerfilPage() {
     setSearching(true);
     (async () => {
       const { data } = await supabase
-        .from("profiles")
-        .select("friend_code, display_name, username")
-        .eq("friend_code", cleaned)
+        .rpc("lookup_profile_by_friend_code", { _code: cleaned })
         .maybeSingle();
       if (cancelled) return;
       setSearching(false);
@@ -126,6 +124,7 @@ function PerfilPage() {
           : null,
       );
     })();
+
     return () => { cancelled = true; };
   }, [cleaned, friendCode]);
 

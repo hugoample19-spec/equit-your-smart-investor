@@ -356,6 +356,48 @@ export type Database = {
     }
     Functions: {
       generate_friend_code: { Args: never; Returns: string }
+      get_global_leaderboard_profiles: {
+        Args: never
+        Returns: {
+          display_name: string
+          friend_code: string
+          id: string
+          is_portfolio_public: boolean
+          is_premium: boolean
+          starting_balance: number
+          username: string
+          wallet_cash: number
+          wallet_starting: number
+        }[]
+      }
+      get_leaderboard_profiles: {
+        Args: { _ids: string[] }
+        Returns: {
+          display_name: string
+          friend_code: string
+          id: string
+          is_portfolio_public: boolean
+          is_premium: boolean
+          starting_balance: number
+          username: string
+          wallet_cash: number
+          wallet_starting: number
+        }[]
+      }
+      is_display_name_taken: {
+        Args: { _exclude_id: string; _name: string }
+        Returns: boolean
+      }
+      lookup_profile_by_friend_code: {
+        Args: { _code: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          friend_code: string
+          id: string
+          username: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
