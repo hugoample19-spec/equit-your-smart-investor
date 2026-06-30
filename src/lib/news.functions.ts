@@ -182,7 +182,7 @@ async function translateChunk(text: string, targetLang: "es" = "es"): Promise<st
 
     const translated = await translateViaGemini(chunk);
     if (!translated) {
-      console.warn("[translate-fail] both providers failed; returning original:", chunk.slice(0, 80));
+      console.warn("[translate] Gemini failed; returning original:", chunk.slice(0, 80));
       out.push(chunk);
       continue;
     }
