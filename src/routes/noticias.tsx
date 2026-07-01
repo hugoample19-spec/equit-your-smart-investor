@@ -332,7 +332,9 @@ function NoticiasPage() {
               <Lightbulb size={16} style={{ color: "var(--gold)" }} fill="var(--gold)" />
               <span className="text-[11px] tracking-widest font-bold" style={{ color: "var(--navy)" }}>POR QUÉ IMPORTA</span>
             </div>
-            <ReactMarkdown className="text-sm leading-relaxed markdown-navy" style={{ color: "var(--navy)" }}>{insight}</ReactMarkdown>
+            <div className="text-sm leading-relaxed markdown-navy" style={{ color: "var(--navy)" }}>
+              <ReactMarkdown>{insight}</ReactMarkdown>
+            </div>
           </div>
         )}
 
