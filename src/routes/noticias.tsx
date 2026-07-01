@@ -465,6 +465,10 @@ function DailyQuestionButton() {
   const alreadyAnswered = data?.ok && data.alreadyAnswered;
 
   useEffect(() => {
+    if (!open) setShowHelp(false);
+  }, [open]);
+
+  useEffect(() => {
     if (data?.ok && data.alreadyAnswered && data.correctIndex != null && data.explanation) {
       setResult({
         correctIndex: data.correctIndex,
@@ -514,10 +518,13 @@ function DailyQuestionButton() {
         <div
           className="fixed inset-0 z-50 flex items-end justify-center"
           style={{ background: "rgba(0,0,0,0.4)" }}
-          onClick={() => setOpen(false)}
+          onClick={() => {
+            setShowHelp(false);
+            setOpen(false);
+          }}
         >
           <div
-            className="w-full max-w-md rounded-t-3xl p-5 pb-8 shadow-lg animate-in slide-in-from-bottom duration-300"
+            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-3xl p-5 pb-8 shadow-lg animate-in slide-in-from-bottom duration-300"
             style={{ background: "var(--card)" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -535,7 +542,14 @@ function DailyQuestionButton() {
                 >
                   <HelpCircle size={16} style={{ color: "var(--muted-foreground)" }} />
                 </button>
-                <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowHelp(false);
+                    setOpen(false);
+                  }}
+                  aria-label="Cerrar"
+                >
                   <XIcon size={18} style={{ color: "var(--muted-foreground)" }} />
                 </button>
                 {showHelp && (
@@ -543,7 +557,7 @@ function DailyQuestionButton() {
                     className="absolute right-6 top-6 w-56 p-3 rounded-xl text-[11px] shadow-lg z-10"
                     style={{ background: "var(--navy)", color: "var(--cream)" }}
                   >
-                    Responde correctamente para ganar 3 puntos. Una pregunta por día.
+                    ¡Gana 3 puntos respondiendo esta pregunta técnica diaria y sube de rango! Solo una oportunidad por día — que no se te escape.
                   </div>
                 )}
               </div>
