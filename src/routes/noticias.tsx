@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, Zap, Lightbulb, Sparkles, Lock } from "lucide-react";
+import { ArrowLeft, Check, Zap, Lightbulb, Sparkles, Lock, Bell, HelpCircle, X as XIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { getMarketNews, type NewsItem } from "@/lib/news.functions";
 import { getNewsInsight } from "@/lib/news-insight.functions";
+import { getDailyQuestion, answerDailyQuestion } from "@/lib/daily-question.functions";
 import { useApp, madridDateISO } from "@/lib/app-context";
 import { PremiumModal } from "@/components/PremiumModal";
 import { supabase } from "@/integrations/supabase/client";
