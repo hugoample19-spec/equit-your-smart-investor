@@ -168,7 +168,7 @@ function WalletPage() {
       return (
         <BuyListScreen
           prices={prices}
-          loading={pricesQuery.isLoading}
+          loading={tickersToFetch.length > 0 && pricesQuery.isLoading}
           isPremium={isPremium}
           onBack={() => setScreen({ kind: "home" })}
           onPick={(t) => setScreen({ kind: "buy", ticker: t })}
@@ -180,7 +180,7 @@ function WalletPage() {
         <BuyScreen
           ticker={screen.ticker}
           price={prices[screen.ticker]}
-          loading={pricesQuery.isLoading}
+          loading={tickersToFetch.length > 0 && pricesQuery.isLoading}
           cash={state.cash}
           onBack={() => {
             if (goBackToOrigin()) return;
@@ -267,8 +267,8 @@ function WalletPage() {
       <HomeScreen
         state={state}
         prices={prices}
-        pricesLoading={pricesQuery.isLoading}
-        pricesSuccess={pricesQuery.isSuccess}
+        pricesLoading={tickersToFetch.length > 0 && pricesQuery.isLoading}
+        pricesSuccess={tickersToFetch.length === 0 || pricesQuery.isSuccess}
         onBuy={() => setScreen({ kind: "buyList" })}
         onReset={reset}
         onOpenAsset={(t) => setScreen({ kind: "detail", ticker: t })}
