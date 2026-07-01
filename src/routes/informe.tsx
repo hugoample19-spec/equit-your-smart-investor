@@ -3,9 +3,20 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Download, Lock, Sparkles } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import jsPDF from "jspdf";
 import { useApp } from "@/lib/app-context";
 import { getWeeklyReport, type WeeklyReportSections } from "@/lib/weekly-report.functions";
 import { createCheckoutSession } from "@/lib/stripe.functions";
+
+function stripMarkdown(s: string): string {
+  return s
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/^#+\s*/gm, "")
+    .replace(/^\s*[-•]\s+/gm, "• ");
+}
 
 export const Route = createFileRoute("/informe")({
   head: () => ({
@@ -103,29 +114,78 @@ function InformePage() {
 
   const handleDownload = () => {
     if (!report) return;
-    const lines: string[] = [];
-    lines.push("INFORME SEMANAL EQUIT");
-    lines.push(report.weekLabel);
-    lines.push("");
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marginX = 48;
+    const contentW = pageW - marginX * 2;
+    const navy: [number, number, number] = [26, 26, 46];
+    const gold: [number, number, number] = [201, 168, 76];
+    const muted: [number, number, number] = [120, 120, 135];
+    const cream: [number, number, number] = [250, 246, 238];
+
+    const drawBg = () => {
+      doc.setFillColor(...cream);
+      doc.rect(0, 0, pageW, pageH, "F");
+    };
+    const drawFooter = () => {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...muted);
+      doc.text("Análisis Equit · IA · Actualizado cada lunes", pageW / 2, pageH - 24, { align: "center" });
+    };
+
+    drawBg();
+    let y = 72;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.setTextColor(...navy);
+    doc.text("INFORME SEMANAL EQUIT", marginX, y);
+    y += 22;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(...gold);
+    doc.text(report.weekLabel, marginX, y);
+    y += 14;
+    doc.setDrawColor(...gold);
+    doc.setLineWidth(0.8);
+    doc.line(marginX, y, pageW - marginX, y);
+    y += 24;
+
+    const ensureSpace = (needed: number) => {
+      if (y + needed > pageH - 48) {
+        drawFooter();
+        doc.addPage();
+        drawBg();
+        y = 72;
+      }
+    };
+
     for (const { key, label } of SECTION_ORDER) {
-      const text = report.sections[key];
-      if (!text) continue;
-      lines.push(label);
-      lines.push("".padEnd(label.length, "─"));
-      lines.push(text);
-      lines.push("");
+      const raw = report.sections[key];
+      if (!raw) continue;
+      const clean = stripMarkdown(raw);
+      ensureSpace(40);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(...gold);
+      doc.text(label, marginX, y);
+      y += 14;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(...navy);
+      const wrapped = doc.splitTextToSize(clean, contentW);
+      for (const line of wrapped) {
+        ensureSpace(16);
+        doc.text(line, marginX, y);
+        y += 15;
+      }
+      y += 12;
     }
-    lines.push("— Análisis Equit · IA · Actualizado cada lunes");
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `informe-equit-${formatWeekShort(report.weekLabel).replace(/\s+/g, "-")}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    drawFooter();
+    doc.save(`informe-equit-${formatWeekShort(report.weekLabel).replace(/\s+/g, "-")}.pdf`);
   };
+
 
   const weekLabel = report?.weekLabel ?? "Esta semana";
   const displayShort = formatWeekShort(report?.weekLabel);
@@ -180,9 +240,9 @@ function InformePage() {
                   >
                     {label}
                   </p>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--navy)" }}>
-                    {PREVIEW_SECTIONS[key]}
-                  </p>
+                  <div className="text-sm leading-relaxed markdown-navy" style={{ color: "var(--navy)" }}>
+                    <ReactMarkdown>{PREVIEW_SECTIONS[key]}</ReactMarkdown>
+                  </div>
                 </section>
               ))}
             </div>
@@ -265,12 +325,12 @@ function InformePage() {
                   >
                     {label}
                   </p>
-                  <p
-                    className="text-[14px] leading-relaxed whitespace-pre-line"
+                  <div
+                    className="text-[14px] leading-relaxed markdown-navy"
                     style={{ color: "var(--navy)" }}
                   >
-                    {text}
-                  </p>
+                    <ReactMarkdown>{text}</ReactMarkdown>
+                  </div>
                 </section>
               );
             })}
