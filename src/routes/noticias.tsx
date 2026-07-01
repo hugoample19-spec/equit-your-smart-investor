@@ -482,7 +482,7 @@ function DailyQuestionButton() {
       const res = await answerFn({ data: { selectedIndex: idx } });
       setResult({
         correctIndex: res.correctIndex,
-        wasCorrect: "isCorrect" in res ? res.isCorrect : !!res.wasCorrect,
+        wasCorrect: ("isCorrect" in res ? res.isCorrect : res.wasCorrect) ?? false,
         explanation: res.explanation,
       });
       qc.invalidateQueries({ queryKey: ["daily-question"] });
