@@ -525,16 +525,19 @@ function DailyQuestionButton() {
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
+          className="fixed inset-0 z-50"
           style={{ background: "rgba(0,0,0,0.4)" }}
-          onClick={() => {
-            setShowHelp(false);
-            setOpen(false);
-          }}
+          onClick={() => { setShowHelp(false); setOpen(false); }}
         >
+          {/* Sheet — positioned at bottom, scrollable */}
           <div
-            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-3xl p-5 pb-8 shadow-lg animate-in slide-in-from-bottom duration-300"
-            style={{ background: "var(--card)" }}
+            className="absolute bottom-0 left-0 right-0 rounded-t-3xl shadow-lg animate-in slide-in-from-bottom duration-300"
+            style={{
+              background: "var(--card)",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              WebkitOverflowScrolling: "touch",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-2 mb-4">
