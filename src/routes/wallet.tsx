@@ -23,6 +23,7 @@ import {
 } from "@/lib/wallet-store";
 import { usePortfolioSummary } from "@/lib/portfolio";
 import { useApp } from "@/lib/app-context";
+import { supabase } from "@/integrations/supabase/client";
 import { getPrices, getHistory, type PriceData, type ChartRange } from "@/lib/prices.functions";
 import {
   AreaChart,
