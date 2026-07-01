@@ -379,6 +379,15 @@ function HomeScreen({
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
   const [fundsOpen, setFundsOpen] = useState(false);
+  const { user, profile, refreshProfile } = useApp();
+
+  // Reset cooldown: 7 natural days.
+  const lastResetAt = profile?.last_reset_at ? new Date(profile.last_reset_at) : null;
+  const cooldownUntil = lastResetAt ? new Date(lastResetAt.getTime() + 7 * 24 * 60 * 60 * 1000) : null;
+  const resetLocked = cooldownUntil ? cooldownUntil.getTime() > Date.now() : false;
+  const cooldownLabel = cooldownUntil
+    ? cooldownUntil.toLocaleDateString("es-ES", { day: "2-digit", month: "long" })
+    : "";
 
   // Single shared calculation — same numbers as Home (/) by construction.
   const summary = usePortfolioSummary();
