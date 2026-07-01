@@ -518,10 +518,13 @@ function DailyQuestionButton() {
         <div
           className="fixed inset-0 z-50 flex items-end justify-center"
           style={{ background: "rgba(0,0,0,0.4)" }}
-          onClick={() => setOpen(false)}
+          onClick={() => {
+            setShowHelp(false);
+            setOpen(false);
+          }}
         >
           <div
-            className="w-full max-w-md rounded-t-3xl p-5 pb-8 shadow-lg animate-in slide-in-from-bottom duration-300"
+            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-3xl p-5 pb-8 shadow-lg animate-in slide-in-from-bottom duration-300"
             style={{ background: "var(--card)" }}
             onClick={(e) => e.stopPropagation()}
           >
