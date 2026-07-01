@@ -566,7 +566,17 @@ function DailyQuestionButton() {
                     className="absolute right-6 top-6 w-56 p-3 rounded-xl text-[11px] shadow-lg z-10"
                     style={{ background: "var(--navy)", color: "var(--cream)" }}
                   >
-                    ¡Gana 3 puntos respondiendo esta pregunta técnica diaria y sube de rango! Solo una oportunidad por día — que no se te escape.
+                    <div className="flex items-start justify-between gap-1 mb-1">
+                      <span>¡Gana 3 puntos respondiendo esta pregunta técnica diaria y sube de rango! Solo una oportunidad por día — que no se te escape.</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowHelp(false)}
+                        className="shrink-0 ml-1 opacity-70 hover:opacity-100"
+                        aria-label="Cerrar ayuda"
+                      >
+                        <XIcon size={12} color="var(--cream)" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
