@@ -3,9 +3,20 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Download, Lock, Sparkles } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import jsPDF from "jspdf";
 import { useApp } from "@/lib/app-context";
 import { getWeeklyReport, type WeeklyReportSections } from "@/lib/weekly-report.functions";
 import { createCheckoutSession } from "@/lib/stripe.functions";
+
+function stripMarkdown(s: string): string {
+  return s
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/^#+\s*/gm, "")
+    .replace(/^\s*[-•]\s+/gm, "• ");
+}
 
 export const Route = createFileRoute("/informe")({
   head: () => ({
