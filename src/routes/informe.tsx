@@ -325,12 +325,12 @@ function InformePage() {
                   >
                     {label}
                   </p>
-                  <p
-                    className="text-[14px] leading-relaxed whitespace-pre-line"
+                  <div
+                    className="text-[14px] leading-relaxed markdown-navy"
                     style={{ color: "var(--navy)" }}
                   >
-                    {text}
-                  </p>
+                    <ReactMarkdown>{text}</ReactMarkdown>
+                  </div>
                 </section>
               );
             })}
