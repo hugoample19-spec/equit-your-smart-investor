@@ -64,6 +64,7 @@ export type Profile = {
   favorite_referente_id: string | null;
   is_premium: boolean;
   name_changed_at: string | null;
+  last_reset_at: string | null;
 };
 
 type AppState = {

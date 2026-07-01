@@ -23,6 +23,7 @@ import {
 } from "@/lib/wallet-store";
 import { usePortfolioSummary } from "@/lib/portfolio";
 import { useApp } from "@/lib/app-context";
+import { supabase } from "@/integrations/supabase/client";
 import { getPrices, getHistory, type PriceData, type ChartRange } from "@/lib/prices.functions";
 import {
   AreaChart,
@@ -379,6 +380,15 @@ function HomeScreen({
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
   const [fundsOpen, setFundsOpen] = useState(false);
+  const { user, profile, refreshProfile } = useApp();
+
+  // Reset cooldown: 7 natural days.
+  const lastResetAt = profile?.last_reset_at ? new Date(profile.last_reset_at) : null;
+  const cooldownUntil = lastResetAt ? new Date(lastResetAt.getTime() + 7 * 24 * 60 * 60 * 1000) : null;
+  const resetLocked = cooldownUntil ? cooldownUntil.getTime() > Date.now() : false;
+  const cooldownLabel = cooldownUntil
+    ? cooldownUntil.toLocaleDateString("es-ES", { day: "2-digit", month: "long" })
+    : "";
 
   // Single shared calculation — same numbers as Home (/) by construction.
   const summary = usePortfolioSummary();
@@ -544,11 +554,12 @@ function HomeScreen({
       </div>
 
       <button
-        onClick={() => setConfirmReset(true)}
-        className="w-full text-center text-xs font-medium py-2"
-        style={{ color: "var(--danger)" }}
+        onClick={() => !resetLocked && setConfirmReset(true)}
+        disabled={resetLocked}
+        className="w-full text-center text-xs font-medium py-2 disabled:cursor-default"
+        style={{ color: resetLocked ? "var(--muted-foreground)" : "var(--danger)" }}
       >
-        Resetear cartera
+        {resetLocked ? `Resetear cartera (disponible el ${cooldownLabel})` : "Resetear cartera"}
       </button>
 
       {confirmReset && (
@@ -560,8 +571,8 @@ function HomeScreen({
                 ¿Resetear cartera?
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Si reseteas tu cartera perderás todos tus activos y rendimientos conseguidos.
-                Volverás a tu saldo inicial. ¿Estás seguro?
+                Si reseteas tu cartera perderás todos tus activos y rendimientos.
+                Solo puedes resetear una vez cada 7 días. ¿Estás seguro?
               </p>
             </div>
           </div>
@@ -574,9 +585,20 @@ function HomeScreen({
               Cancelar
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
                 onReset();
                 setConfirmReset(false);
+                if (user) {
+                  try {
+                    await supabase
+                      .from("profiles")
+                      .update({ last_reset_at: new Date().toISOString() })
+                      .eq("id", user.id);
+                    await refreshProfile();
+                  } catch (e) {
+                    console.error("[wallet] failed to persist last_reset_at:", e);
+                  }
+                }
               }}
               className="flex-1 py-3 rounded-xl text-sm font-semibold text-white"
               style={{ background: "var(--danger)" }}

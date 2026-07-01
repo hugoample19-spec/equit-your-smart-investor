@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_question_answers: {
+        Row: {
+          answered_at: string
+          id: string
+          is_correct: boolean
+          question_date: string
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string
+          id?: string
+          is_correct: boolean
+          question_date: string
+          user_id: string
+        }
+        Update: {
+          answered_at?: string
+          id?: string
+          is_correct?: boolean
+          question_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_questions: {
+        Row: {
+          correct_index: number
+          created_at: string
+          date: string
+          explanation: string
+          id: string
+          options: Json
+          question: string
+        }
+        Insert: {
+          correct_index: number
+          created_at?: string
+          date: string
+          explanation: string
+          id?: string
+          options: Json
+          question: string
+        }
+        Update: {
+          correct_index?: number
+          created_at?: string
+          date?: string
+          explanation?: string
+          id?: string
+          options?: Json
+          question?: string
+        }
+        Relationships: []
+      }
       friendships: {
         Row: {
           created_at: string
@@ -249,6 +303,7 @@ export type Database = {
           id: string
           is_portfolio_public: boolean
           is_premium: boolean
+          last_reset_at: string | null
           name_changed_at: string | null
           onboarded: boolean
           starting_balance: number | null
@@ -266,6 +321,7 @@ export type Database = {
           id: string
           is_portfolio_public?: boolean
           is_premium?: boolean
+          last_reset_at?: string | null
           name_changed_at?: string | null
           onboarded?: boolean
           starting_balance?: number | null
@@ -283,6 +339,7 @@ export type Database = {
           id?: string
           is_portfolio_public?: boolean
           is_premium?: boolean
+          last_reset_at?: string | null
           name_changed_at?: string | null
           onboarded?: boolean
           starting_balance?: number | null

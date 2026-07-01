@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, Zap, Lightbulb, Sparkles, Lock } from "lucide-react";
+import { ArrowLeft, Check, Zap, Lightbulb, Sparkles, Lock, Bell, HelpCircle, X as XIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { getMarketNews, type NewsItem } from "@/lib/news.functions";
 import { getNewsInsight } from "@/lib/news-insight.functions";
+import { getDailyQuestion, answerDailyQuestion } from "@/lib/daily-question.functions";
 import { useApp, madridDateISO } from "@/lib/app-context";
 import { PremiumModal } from "@/components/PremiumModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -358,7 +360,10 @@ function NoticiasPage() {
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--navy)" }}>Noticias</h1>
           <p className="text-[11px] tracking-widest font-semibold mt-2" style={{ color: "var(--muted-foreground)" }}>HOY · {today}</p>
         </div>
-        <StreakBadge current={streak.current} readToday={readToday} ready={streakReady} />
+        <div className="flex items-center gap-2">
+          <DailyQuestionButton />
+          <StreakBadge current={streak.current} readToday={readToday} ready={streakReady} />
+        </div>
       </div>
 
       {isLoading ? (
@@ -408,34 +413,204 @@ function StreakBadge({ current, readToday, ready }: { current: number; readToday
   const boltFill = readToday ? "var(--navy)" : "none";
   return (
     <div
-      className="flex items-center gap-2 pl-3 pr-3.5 py-2 rounded-full"
+      className="flex items-center gap-1.5 pl-2.5 pr-3 py-1.5 rounded-full"
       style={{ background: bg, color: fg, border: readToday ? "none" : "1px solid var(--border)" }}
       title={readToday ? "Hoy leído" : "Hoy pendiente"}
     >
       <div className="relative">
-        <Zap size={18} fill={boltFill} color={boltColor} strokeWidth={2} />
+        <Zap size={15} fill={boltFill} color={boltColor} strokeWidth={2} />
         {readToday && (
           <span
-            className="absolute -bottom-0.5 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center"
+            className="absolute -bottom-0.5 -right-1 w-3 h-3 rounded-full flex items-center justify-center"
             style={{ background: "var(--navy)" }}
           >
-            <Check size={9} color="var(--gold)" strokeWidth={3} />
+            <Check size={8} color="var(--gold)" strokeWidth={3} />
           </span>
         )}
       </div>
       <div className="flex flex-col leading-tight">
-        <span className="text-[9px] tracking-wider font-semibold uppercase" style={{ opacity: 0.7 }}>
+        <span className="text-[8px] tracking-wider font-semibold uppercase" style={{ opacity: 0.7 }}>
           Racha
         </span>
         {ready ? (
-          <span className="text-sm font-bold tabular-nums">
+          <span className="text-[13px] font-bold tabular-nums">
             {current} · {readToday ? "Hoy leído" : "Hoy pendiente"}
           </span>
         ) : (
-          <span className="h-3.5 w-24 rounded animate-pulse mt-0.5" style={{ background: "rgba(0,0,0,0.08)" }} />
+          <span className="h-3 w-20 rounded animate-pulse mt-0.5" style={{ background: "rgba(0,0,0,0.08)" }} />
         )}
       </div>
     </div>
+  );
+}
+
+function DailyQuestionButton() {
+  const [open, setOpen] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [result, setResult] = useState<{ correctIndex: number; wasCorrect: boolean; explanation: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const getFn = useServerFn(getDailyQuestion);
+  const answerFn = useServerFn(answerDailyQuestion);
+  const qc = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ["daily-question", madridDateISO()],
+    queryFn: () => getFn(),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const data = query.data;
+  const alreadyAnswered = data?.ok && data.alreadyAnswered;
+
+  useEffect(() => {
+    if (data?.ok && data.alreadyAnswered && data.correctIndex != null && data.explanation) {
+      setResult({
+        correctIndex: data.correctIndex,
+        wasCorrect: !!data.wasCorrect,
+        explanation: data.explanation,
+      });
+    }
+  }, [data]);
+
+  const handleAnswer = async (idx: number) => {
+    if (selected != null || submitting) return;
+    setSelected(idx);
+    setSubmitting(true);
+    try {
+      const res = await answerFn({ data: { selectedIndex: idx } });
+      setResult({
+        correctIndex: res.correctIndex,
+        wasCorrect: ("isCorrect" in res ? res.isCorrect : res.wasCorrect) ?? false,
+        explanation: res.explanation,
+      });
+      qc.invalidateQueries({ queryKey: ["daily-question"] });
+    } catch (e) {
+      console.error("[daily-question] answer failed", e);
+      setSelected(null);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={`w-9 h-9 rounded-full flex items-center justify-center border transition-transform active:scale-95 ${!alreadyAnswered ? "animate-bounce" : ""}`}
+        style={{
+          background: "color-mix(in srgb, var(--gold) 18%, var(--card))",
+          borderColor: "color-mix(in srgb, var(--gold) 50%, transparent)",
+          color: "var(--gold)",
+        }}
+        aria-label="Pregunta diaria"
+      >
+        <Bell size={16} fill={!alreadyAnswered ? "var(--gold)" : "none"} strokeWidth={2.2} />
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-t-3xl p-5 pb-8 shadow-lg animate-in slide-in-from-bottom duration-300"
+            style={{ background: "var(--card)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] tracking-widest font-bold" style={{ color: "var(--gold)" }}>
+                  PREGUNTA DIARIA
+                </span>
+              </div>
+              <div className="flex items-center gap-2 relative">
+                <button
+                  type="button"
+                  onClick={() => setShowHelp((s) => !s)}
+                  aria-label="Ayuda"
+                >
+                  <HelpCircle size={16} style={{ color: "var(--muted-foreground)" }} />
+                </button>
+                <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar">
+                  <XIcon size={18} style={{ color: "var(--muted-foreground)" }} />
+                </button>
+                {showHelp && (
+                  <div
+                    className="absolute right-6 top-6 w-56 p-3 rounded-xl text-[11px] shadow-lg z-10"
+                    style={{ background: "var(--navy)", color: "var(--cream)" }}
+                  >
+                    Responde correctamente para ganar 3 puntos. Una pregunta por día.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {query.isLoading || !data ? (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-5 w-3/4 rounded" style={{ background: "var(--muted)" }} />
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-11 rounded-xl" style={{ background: "var(--muted)" }} />
+                ))}
+              </div>
+            ) : !data.ok ? (
+              <p className="text-sm text-center py-6" style={{ color: "var(--muted-foreground)" }}>
+                No se pudo cargar la pregunta de hoy. Vuelve a intentarlo en un momento.
+              </p>
+            ) : (
+              <>
+                <p className="text-base font-semibold mb-4" style={{ color: "var(--navy)" }}>
+                  {data.question.question}
+                </p>
+                <div className="space-y-2">
+                  {data.question.options.map((opt, idx) => {
+                    const answered = selected != null || alreadyAnswered;
+                    const isCorrectAnswer = result && idx === result.correctIndex;
+                    const isSelected = selected === idx;
+                    let bg = "var(--card)";
+                    let border = "var(--border)";
+                    let color = "var(--navy)";
+                    if (answered && result) {
+                      if (isCorrectAnswer) {
+                        bg = "color-mix(in srgb, var(--success) 18%, var(--card))";
+                        border = "var(--success)";
+                        color = "var(--success)";
+                      } else if (isSelected && !result.wasCorrect) {
+                        bg = "color-mix(in srgb, var(--danger) 15%, var(--card))";
+                        border = "var(--danger)";
+                        color = "var(--danger)";
+                      }
+                    }
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        disabled={answered}
+                        onClick={() => handleAnswer(idx)}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left text-sm font-medium disabled:cursor-default"
+                        style={{ background: bg, borderColor: border, color }}
+                      >
+                        <span>{opt}</span>
+                        {answered && result && isCorrectAnswer && <Check size={16} />}
+                        {answered && result && isSelected && !result.wasCorrect && <XIcon size={16} />}
+                      </button>
+                    );
+                  })}
+                </div>
+                {result && (
+                  <p className="text-xs mt-4 leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+                    {result.explanation}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
