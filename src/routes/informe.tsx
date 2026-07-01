@@ -240,9 +240,9 @@ function InformePage() {
                   >
                     {label}
                   </p>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--navy)" }}>
-                    {PREVIEW_SECTIONS[key]}
-                  </p>
+                  <div className="text-sm leading-relaxed markdown-navy" style={{ color: "var(--navy)" }}>
+                    <ReactMarkdown>{PREVIEW_SECTIONS[key]}</ReactMarkdown>
+                  </div>
                 </section>
               ))}
             </div>
