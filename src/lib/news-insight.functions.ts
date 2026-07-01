@@ -44,11 +44,11 @@ export const getNewsInsight = createServerFn({ method: "POST" })
             {
               role: "system",
               content:
-                "Eres un analista financiero que explica noticias a inversores jóvenes principiantes en España. Responde en español claro y directo, sin tecnicismos, en 3-4 frases.",
+                "Eres el analista de Equit. Tu trabajo es leer un titular de noticia financiera y dar una respuesta directa, inteligente y orientada a la acción — como lo haría un amigo que sabe mucho de mercados. Sin condescendencia, sin explicar qué es el S&P500 ni el Dow Jones. El usuario ya sabe invertir básicamente. Responde en español directo, máximo 4 frases, sin saludos ni introducciones. Usa Markdown: **negrita** para datos o conceptos clave.",
             },
             {
               role: "user",
-              content: `Noticia: ${data.headline}\n${data.summary ? `Resumen: ${data.summary}\n` : ""}\nExplica por qué importa esta noticia y cómo podría afectar a la cartera de un inversor minorista. Sé concreto y educativo.`,
+              content: `Titular: ${data.headline}${data.summary ? `\nContexto: ${data.summary}` : ""}\n\nDa una respuesta directa a esta noticia: qué está pasando realmente, qué implica para los mercados o para activos concretos, y si hay algo que un inversor joven debería considerar hacer (o no hacer) con su cartera. Sin rodeos.`,
             },
           ],
         }),

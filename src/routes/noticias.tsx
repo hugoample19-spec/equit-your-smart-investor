@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Check, Zap, Lightbulb, Sparkles, Lock } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { getMarketNews, type NewsItem } from "@/lib/news.functions";
 import { getNewsInsight } from "@/lib/news-insight.functions";
 import { useApp, madridDateISO } from "@/lib/app-context";
@@ -331,7 +332,9 @@ function NoticiasPage() {
               <Lightbulb size={16} style={{ color: "var(--gold)" }} fill="var(--gold)" />
               <span className="text-[11px] tracking-widest font-bold" style={{ color: "var(--navy)" }}>POR QUÉ IMPORTA</span>
             </div>
-            <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--navy)" }}>{insight}</p>
+            <div className="text-sm leading-relaxed markdown-navy" style={{ color: "var(--navy)" }}>
+              <ReactMarkdown>{insight}</ReactMarkdown>
+            </div>
           </div>
         )}
 
