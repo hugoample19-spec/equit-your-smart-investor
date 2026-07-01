@@ -542,7 +542,14 @@ function DailyQuestionButton() {
                 >
                   <HelpCircle size={16} style={{ color: "var(--muted-foreground)" }} />
                 </button>
-                <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowHelp(false);
+                    setOpen(false);
+                  }}
+                  aria-label="Cerrar"
+                >
                   <XIcon size={18} style={{ color: "var(--muted-foreground)" }} />
                 </button>
                 {showHelp && (
@@ -550,7 +557,7 @@ function DailyQuestionButton() {
                     className="absolute right-6 top-6 w-56 p-3 rounded-xl text-[11px] shadow-lg z-10"
                     style={{ background: "var(--navy)", color: "var(--cream)" }}
                   >
-                    Responde correctamente para ganar 3 puntos. Una pregunta por día.
+                    ¡Gana 3 puntos respondiendo esta pregunta técnica diaria y sube de rango! Solo una oportunidad por día — que no se te escape.
                   </div>
                 )}
               </div>
