@@ -451,6 +451,15 @@ function DailyQuestionButton() {
   const [result, setResult] = useState<{ correctIndex: number; wasCorrect: boolean; explanation: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
   const getFn = useServerFn(getDailyQuestion);
   const answerFn = useServerFn(answerDailyQuestion);
   const qc = useQueryClient();
