@@ -465,6 +465,10 @@ function DailyQuestionButton() {
   const alreadyAnswered = data?.ok && data.alreadyAnswered;
 
   useEffect(() => {
+    if (!open) setShowHelp(false);
+  }, [open]);
+
+  useEffect(() => {
     if (data?.ok && data.alreadyAnswered && data.correctIndex != null && data.explanation) {
       setResult({
         correctIndex: data.correctIndex,
